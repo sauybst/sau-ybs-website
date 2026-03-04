@@ -16,15 +16,12 @@ function parseSabisDate(dateStr: string) {
       let day, month, year;
 
       if (datePart.includes('.')) {
-        // Format: 22.12.2025 (GG.AA.YYYY)
         [day, month, year] = datePart.split('.');
       } else if (datePart.includes('/')) {
-        // Format: 11/28/2025 (AA/GG/YYYY)
         [month, day, year] = datePart.split('/');
       }
       
       if (year && month && day) {
-        // Türkiye saati (+03:00) olarak standart ISO formatına çeviriyoruz
         return new Date(`${year}-${month}-${day}T${timePart}:00+03:00`).toISOString();
       }
     }
@@ -39,24 +36,17 @@ export async function syncSabisData() {
   const url = 'https://topluluk.sabis.sakarya.edu.tr/sau-yonetim-bilisim-sistemleri-ogrenci-toplulugu'
 
   try {
-    // 1. SABIS sayfasına istek atıyoruz (Önbelleğe almadan en güncel haliyle)
     const response = await fetch(url, { cache: 'no-store' })
     const html = await response.text()
     
-    // 2. HTML'i Cheerio ile yüklüyoruz
     const $ = cheerio.load(html)
 
-    // --- ÜYE SAYISINI ÇEKME ---
-    // "ÜYE SAYISI" yazan başlığı bulup hemen altındaki p etiketini alıyoruz
     const memberText = $('h6:contains("ÜYE SAYISI")').next('p').text().trim() 
     const memberCount = parseInt(memberText.replace(/[^0-9]/g, '')) || 0
 
-    // --- FOTOĞRAFLI İLK 5 FAALİYETİ ÇEKME ---
     const activities: any[] = []
     
-    // slice(0, 5) kısmını kaldırdık, hepsini dönüyoruz ama 5 tane bulunca döngüyü durduracağız (.each içinde return false)
     $('#faaliyetContainer .col').each((index, element) => {
-      // Zaten 5 tane fotoğraflı etkinlik bulduysak döngüyü kırıp çıkıyoruz
       if (activities.length >= 5) return false;
 
       const title = $(element).find('.card-title').text().trim()
@@ -65,7 +55,6 @@ export async function syncSabisData() {
       const locationText = $(element).find('strong:contains("Yer:")').parent().text().replace('Yer:', '').trim()
       const imageUrl = $(element).find('img').attr('src')
       
-      // KURAL: Sadece Başlığı (title) VE Fotoğrafı (imageUrl) olanları ekle
       if (title && imageUrl) {
         activities.push({
           title: title,

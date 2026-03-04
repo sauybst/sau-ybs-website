@@ -17,16 +17,14 @@ export default async function PublicEventsPage() {
 
     return (
         <div className="bg-slate-50 min-h-screen pt-24 pb-16">
-            {/* Page Header */}
-            <div className="bg-brand-900 border-b border-brand-800 py-16 mb-16">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                    <h2 className="text-brand-300 font-semibold tracking-wide uppercase text-sm mb-3">Takvim</h2>
-                    <h1 className="text-4xl md:text-5xl font-heading font-extrabold text-white tracking-tight">Etkinliklerimiz</h1>
-                    <p className="mt-4 max-w-2xl text-lg text-brand-100 mx-auto font-light">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="text-center mb-16">
+                    <h2 className="text-brand-600 font-semibold tracking-wide uppercase text-sm mb-2">Takvim</h2>
+                    <h1 className="text-4xl md:text-5xl font-heading font-extrabold text-slate-900 tracking-tight">Etkinliklerimiz</h1>
+                    <p className="mt-4 max-w-2xl text-lg text-slate-600 mx-auto font-light">
                         İdeathonlar, eğitimler, seminerler ve anma programları. Geçmişten geleceğe tüm YBS buluşmaları.
                     </p>
                 </div>
-            </div>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
@@ -102,6 +100,7 @@ export default async function PublicEventsPage() {
                         })
                     )}
                 </div>
+            </div>
             </div>
         </div>
     )

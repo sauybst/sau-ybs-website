@@ -8,9 +8,11 @@ export default function Header() {
                     <div className="flex items-center">
                         <Link href="/" className="flex items-center gap-3 group">
                             <span className="sr-only">SAU YBS</span>
-                            <div className="h-10 w-10 bg-gradient-to-br from-brand-500 to-brand-700 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-md group-hover:scale-105 transition-transform duration-300">
-                                YBS
-                            </div>
+                            <img 
+                                src="/favicon.ico" 
+                                alt="SAU YBS Logo" 
+                                className="h-10 w-10 object-contain drop-shadow-lg rounded-md group-hover:scale-105 transition-transform duration-300" 
+                            />
                             <span className="font-heading font-extrabold text-2xl tracking-tight text-brand-900 hidden sm:block">SAU YBS</span>
                         </Link>
                         <div className="ml-12 hidden space-x-8 lg:flex">

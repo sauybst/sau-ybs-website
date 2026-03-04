@@ -6,7 +6,6 @@ export default function Footer() {
             <h2 id="footer-heading" className="sr-only">
                 Footer
             </h2>
-            {/* 1. DEĞİŞİKLİK: pt-16 ve sm:pt-24 değerleri pt-10 ve sm:pt-12 olarak küçültüldü */}
             <div className="mx-auto max-w-7xl px-6 pb-6 pt-10 sm:pt-12 lg:px-8">
                 <div className="xl:grid xl:grid-cols-3 xl:gap-8">
                     <div className="space-y-8">
