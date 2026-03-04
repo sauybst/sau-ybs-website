@@ -2,6 +2,7 @@ import { createClient } from '@/utils/supabase/server'
 import Link from 'next/link'
 import { Calendar as CalendarIcon, MapPin, ArrowRight, Target, Lightbulb, Trophy, Users, Briefcase, Clock, FileText, CheckCircle } from 'lucide-react'
 import { Montserrat } from 'next/font/google';
+import { syncSabisData } from '@/actions/sabisSync'
 
 // Font ayarlarını yapıyoruz 
 const montserrat = Montserrat({
@@ -24,6 +25,9 @@ export default async function Home() {
   const { count: membersCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true })
   const { count: eventsCount } = await supabase.from('events').select('*', { count: 'exact', head: true })
   const { count: projectsCount } = await supabase.from('projects').select('*', { count: 'exact', head: true })
+
+  const sabisData = await syncSabisData()
+  const actualMemberCount = sabisData.memberCount || 10 // Eğer çekemezse 10 varsayılanı
 
   return (
     <main className="min-h-screen flex flex-col pt-16">
@@ -195,12 +199,13 @@ export default async function Home() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-x divide-white/10">
             <div className="p-6">
               <Users className="w-12 h-12 mx-auto text-brand-300 mb-5 drop-shadow-md" />
-              <div className="text-5xl font-heading font-extrabold text-white mb-3 drop-shadow-md">{membersCount || '10+'}</div>
+              {/* SABIS'ten gelen sayının yanına + koyuyoruz */}
+              <div className="text-5xl font-heading font-extrabold text-white mb-3 drop-shadow-md">{actualMemberCount}+</div>
               <div className="text-brand-200 text-sm font-semibold tracking-wide uppercase">Aktif Üye</div>
             </div>
             <div className="p-6">
               <CalendarIcon className="w-12 h-12 mx-auto text-brand-300 mb-5 drop-shadow-md" />
-              <div className="text-5xl font-heading font-extrabold text-white mb-3 drop-shadow-md">{eventsCount || '25+'}</div>
+              <div className="text-5xl font-heading font-extrabold text-white mb-3 drop-shadow-md">{eventsCount || '50+'}</div>
               <div className="text-brand-200 text-sm font-semibold tracking-wide uppercase">Etkinlik</div>
             </div>
             <div className="p-6">
@@ -210,7 +215,7 @@ export default async function Home() {
             </div>
             <div className="p-6">
               <FileText className="w-12 h-12 mx-auto text-brand-300 mb-5 drop-shadow-md" />
-              <div className="text-5xl font-heading font-extrabold text-white mb-3 drop-shadow-md">{projectsCount || '5+'}</div>
+              <div className="text-5xl font-heading font-extrabold text-white mb-3 drop-shadow-md">{projectsCount || '55+'}</div>
               <div className="text-brand-200 text-sm font-semibold tracking-wide uppercase">Açık Kaynak Proje</div>
             </div>
           </div>
