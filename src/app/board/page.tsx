@@ -101,7 +101,7 @@ export default async function PublicBoardPage() {
                                         <div className="flex-1 h-px bg-gradient-to-r from-brand-200 to-transparent"></div>
                                     </div>
                                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-                                        {pastTerms[term].map(member => (
+                                        {pastTerms[term].map((member: any) => (
                                             <MemberCard key={member.id} member={member} />
                                         ))}
                                     </div>
