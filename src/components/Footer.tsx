@@ -1,46 +1,71 @@
+import { Facebook, Twitter, Instagram, Linkedin, Mail } from 'lucide-react'
+
 export default function Footer() {
     return (
-        <footer className="bg-slate-900" aria-labelledby="footer-heading">
+        <footer className="bg-brand-900 border-t border-brand-800" aria-labelledby="footer-heading">
             <h2 id="footer-heading" className="sr-only">
                 Footer
             </h2>
-            <div className="mx-auto max-w-7xl px-6 pb-8 pt-16 sm:pt-24 lg:px-8 lg:pt-32">
+            <div className="mx-auto max-w-7xl px-6 pb-8 pt-16 sm:pt-24 lg:px-8">
                 <div className="xl:grid xl:grid-cols-3 xl:gap-8">
                     <div className="space-y-8">
-                        <div className="flex items-center gap-2">
-                            <div className="h-10 w-10 bg-indigo-500 rounded-lg flex items-center justify-center text-white font-bold text-xl">
+                        <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 bg-brand-500 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
                                 YBS
                             </div>
-                            <span className="font-extrabold text-2xl tracking-tight text-white">SAU YBS</span>
+                            <span className="font-heading font-extrabold text-2xl tracking-tight text-white">SAU YBS</span>
                         </div>
-                        <p className="text-sm leading-6 text-gray-300">
+                        <p className="text-sm leading-6 text-brand-100 max-w-xs">
                             Sakarya Üniversitesi Yönetim Bilişim Sistemleri Topluluğu. <br />
-                            Geleceği şekillendiren bilişimciler.
+                            Gelecekte başarılı bir kariyerin arkasında, daima başarılı insanlar vardır.
                         </p>
+                        <div className="flex space-x-5">
+                            <a href="#" className="text-brand-100 hover:text-white transition-colors">
+                                <span className="sr-only">Facebook</span>
+                                <Facebook className="h-5 w-5" aria-hidden="true" />
+                            </a>
+                            <a href="#" className="text-brand-100 hover:text-white transition-colors">
+                                <span className="sr-only">Instagram</span>
+                                <Instagram className="h-5 w-5" aria-hidden="true" />
+                            </a>
+                            <a href="#" className="text-brand-100 hover:text-white transition-colors">
+                                <span className="sr-only">Twitter</span>
+                                <Twitter className="h-5 w-5" aria-hidden="true" />
+                            </a>
+                            <a href="#" className="text-brand-100 hover:text-white transition-colors">
+                                <span className="sr-only">LinkedIn</span>
+                                <Linkedin className="h-5 w-5" aria-hidden="true" />
+                            </a>
+                        </div>
                     </div>
                     <div className="mt-16 grid grid-cols-2 gap-8 xl:col-span-2 xl:mt-0">
                         <div className="md:grid md:grid-cols-2 md:gap-8">
                             <div>
-                                <h3 className="text-sm font-semibold leading-6 text-white">Topluluk</h3>
+                                <h3 className="text-sm font-semibold leading-6 text-white uppercase tracking-wider">Topluluk</h3>
                                 <ul role="list" className="mt-6 space-y-4">
-                                    <li><a href="/board" className="text-sm leading-6 text-gray-300 hover:text-white transition-colors">Hakkımızda</a></li>
-                                    <li><a href="/events" className="text-sm leading-6 text-gray-300 hover:text-white transition-colors">Etkinlikler</a></li>
-                                    <li><a href="/projects" className="text-sm leading-6 text-gray-300 hover:text-white transition-colors">Öğrenci Projeleri</a></li>
+                                    <li><a href="/board" className="text-sm leading-6 text-brand-100 hover:text-white transition-colors">Hakkımızda</a></li>
+                                    <li><a href="/events" className="text-sm leading-6 text-brand-100 hover:text-white transition-colors">Etkinlikler</a></li>
+                                    <li><a href="/projects" className="text-sm leading-6 text-brand-100 hover:text-white transition-colors">Öğrenci Projeleri</a></li>
                                 </ul>
                             </div>
                             <div className="mt-10 md:mt-0">
-                                <h3 className="text-sm font-semibold leading-6 text-white">Kariyer & İletişim</h3>
+                                <h3 className="text-sm font-semibold leading-6 text-white uppercase tracking-wider">Kariyer & İletişim</h3>
                                 <ul role="list" className="mt-6 space-y-4">
-                                    <li><a href="/jobs" className="text-sm leading-6 text-gray-300 hover:text-white transition-colors">Staj & İş İlanları</a></li>
-                                    <li><a href="/blogs" className="text-sm leading-6 text-gray-300 hover:text-white transition-colors">Duyurular</a></li>
-                                    <li><a href="mailto:info@sauybs.com" className="text-sm leading-6 text-gray-300 hover:text-white transition-colors">İletişime Geçin</a></li>
+                                    <li><a href="/jobs" className="text-sm leading-6 text-brand-100 hover:text-white transition-colors">Staj & İş İlanları</a></li>
+                                    <li><a href="/blogs" className="text-sm leading-6 text-brand-100 hover:text-white transition-colors">Duyurular & Blog</a></li>
+                                    <li><a href="mailto:info@sauybs.com" className="text-sm leading-6 text-brand-100 hover:text-white transition-colors flex items-center gap-2"><Mail className="h-4 w-4" /> İletişime Geçin</a></li>
                                 </ul>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div className="mt-16 border-t border-white/10 pt-8 sm:mt-20 lg:mt-24">
-                    <p className="text-xs leading-5 text-gray-400">&copy; {new Date().getFullYear()} Sakarya Üniversitesi YBS Topluluğu. Tüm hakları saklıdır.</p>
+                <div className="mt-16 border-t border-brand-800/50 pt-8 sm:mt-20 lg:mt-24 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <p className="text-xs leading-5 text-brand-200/60">
+                        &copy; {new Date().getFullYear()} Sakarya Üniversitesi YBS Topluluğu. Tüm hakları saklıdır.
+                    </p>
+                    <p className="text-xs leading-5 text-brand-200/60">
+                        Bilişim Komisyonu tarafından geliştirilmiştir.
+                    </p>
                 </div>
             </div>
         </footer>

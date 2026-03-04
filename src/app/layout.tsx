@@ -1,9 +1,21 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Poppins, Lato } from 'next/font/google'
 import './globals.css'
 import ConditionalLayout from '@/components/ConditionalLayout'
 
-const inter = Inter({ subsets: ['latin'] })
+const poppins = Poppins({
+  weight: ['300', '400', '500', '600', '700', '800'],
+  subsets: ['latin-ext'],
+  variable: '--font-poppins',
+  display: 'swap',
+})
+
+const lato = Lato({
+  weight: ['300', '400', '700'],
+  subsets: ['latin-ext'],
+  variable: '--font-lato',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'SAU YBS Topluluğu',
@@ -16,8 +28,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="tr" className="scroll-smooth">
-      <body className={`${inter.className} min-h-screen flex flex-col`}>
+    <html lang="tr" className={`scroll-smooth ${poppins.variable} ${lato.variable}`}>
+      <body className="font-sans antialiased bg-slate-50 text-slate-900 min-h-screen flex flex-col">
         <ConditionalLayout>
           {children}
         </ConditionalLayout>
