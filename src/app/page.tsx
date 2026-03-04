@@ -1,6 +1,13 @@
 import { createClient } from '@/utils/supabase/server'
 import Link from 'next/link'
-import { Calendar as CalendarIcon, MapPin, ArrowRight, Target, Lightbulb, Trophy, Users, Briefcase, Clock, FileText } from 'lucide-react'
+import { Calendar as CalendarIcon, MapPin, ArrowRight, Target, Lightbulb, Trophy, Users, Briefcase, Clock, FileText, CheckCircle } from 'lucide-react'
+import { Montserrat } from 'next/font/google';
+
+// Font ayarlarını yapıyoruz 
+const montserrat = Montserrat({
+  subsets: ['latin', 'latin-ext'],
+  weight: ['300', '400', '500', '600', '700'],
+});
 
 export default async function Home() {
   const supabase = await createClient()
@@ -34,13 +41,13 @@ export default async function Home() {
             Topluluğumuza Katılın
           </div>
           <h1 className="text-5xl md:text-7xl font-heading font-extrabold text-white tracking-tight mb-6 leading-tight">
-            Geleceği Şekillendiren <br />
+            Geleceği Analiz Et,<br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300">
-              Bilişimciler
+              Sistemi Yönet
             </span>
           </h1>
-          <p className="mt-4 max-w-2xl text-lg md:text-xl text-brand-100 font-light leading-relaxed">
-            Başarılı bir kariyerin arkasında, daima başarılı insanlar vardır. Sakarya Üniversitesi Yönetim Bilişim Sistemleri Topluluğu.
+          <p className={`mt-4 max-w-2xl text-lg md:text-xl text-brand-100 font-light leading-relaxed ${montserrat.className}`}>
+            Sakarya Üniversitesi Yönetim Bilişim Sistemleri Topluluğu; veriyi bilgiye, teknolojiyi stratejik bir güce dönüştüren yenilikçi analistlerin buluşma noktasıdır. İş dünyası ile dijital dünya arasındaki köprüyü birlikte inşa ediyoruz.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4 w-full sm:w-auto">
             <Link href="#events" className="rounded-full bg-brand-600 px-8 py-3.5 text-base font-semibold text-white shadow-lg hover:bg-brand-500 hover:-translate-y-1 transition-all duration-300 text-center">
@@ -58,45 +65,124 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* 2. Features / About Us Summary */}
-      <section className="py-24 bg-white relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-brand-600 font-semibold tracking-wide uppercase text-sm mb-2">Peki, Biz Kimiz?</h2>
-            <h3 className="text-3xl md:text-4xl font-heading font-bold text-slate-900">Önce biraz kendimizden bahsedelim</h3>
-          </div>
+        {/* 2. Features / About Us Summary */}
+              <section className="py-24 bg-white relative overflow-hidden">
+                {/* BPMN ve Kod Dizeleri Arka Plan Efekti - Sağa Sola Savrulan Animasyonlar */}
+                <div className="absolute inset-0 pointer-events-none opacity-[0.15] z-0 overflow-hidden text-slate-900">
+                  <svg className="w-full h-full" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                    
+                    {/* 1. Katman: Süzülen Kod Dizeleri */}
+                    <g>
+                      <animateTransform attributeName="transform" type="translate" values="0,0; -20,-30; 0,0" dur="20s" repeatCount="indefinite" />
+                      <text x="100" y="150" fontFamily="monospace" fontSize="18" fill="currentColor">&lt;Process id="erp_flow_01"&gt;</text>
+                      <text x="850" y="250" fontFamily="monospace" fontSize="16" fill="currentColor">SELECT strategy FROM future;</text>
+                      <text x="150" y="650" fontFamily="monospace" fontSize="18" fill="currentColor">const optimize = (data) =&gt; data.map(analyze);</text>
+                      <text x="750" y="650" fontFamily="monospace" fontSize="16" fill="currentColor">await system.automate();</text>
+                    </g>
 
-          <div className="grid md:grid-cols-3 gap-12">
-            <div className="text-center group hover:-translate-y-2 transition-transform duration-300">
-              <div className="mx-auto w-16 h-16 bg-brand-50 text-brand-600 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-brand-600 group-hover:text-white transition-colors duration-300 shadow-sm">
-                <Target className="w-8 h-8" />
-              </div>
-              <h4 className="text-xl font-heading font-bold text-slate-900 mb-4">Amacımız</h4>
-              <p className="text-slate-600 leading-relaxed font-light">
-                Öğrencilerde takım çalışması, liderlik ve analitik düşünme becerilerini geliştirmek. Bilişim ve yönetim bilimlerini harmanlayarak sektöre nitelikli yetenekler kazandırmak.
-              </p>
-            </div>
-            <div className="text-center group hover:-translate-y-2 transition-transform duration-300">
-              <div className="mx-auto w-16 h-16 bg-brand-50 text-brand-600 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-brand-600 group-hover:text-white transition-colors duration-300 shadow-sm">
-                <Lightbulb className="w-8 h-8" />
-              </div>
-              <h4 className="text-xl font-heading font-bold text-slate-900 mb-4">Vizyonumuz</h4>
-              <p className="text-slate-600 leading-relaxed font-light">
-                Sadece üniversite içinde değil, ulusal çapta teknoloji ve bilişim ekosistemine yön veren, yenilikçi projeler üreten öncü bir öğrenci topluluğu olmak.
-              </p>
-            </div>
-            <div className="text-center group hover:-translate-y-2 transition-transform duration-300">
-              <div className="mx-auto w-16 h-16 bg-brand-50 text-brand-600 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-brand-600 group-hover:text-white transition-colors duration-300 shadow-sm">
-                <Trophy className="w-8 h-8" />
-              </div>
-              <h4 className="text-xl font-heading font-bold text-slate-900 mb-4">Neden Biz?</h4>
-              <p className="text-slate-600 leading-relaxed font-light">
-                Düzenlediğimiz hackathonlar, zirveler, sektörel eğitimler ve güçlü mezun ağımız ile üyelerimize benzersiz bir kariyer hazırlık ortamı sunuyoruz.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+                    <g>
+                      <animateTransform attributeName="transform" type="translate" values="0,0; 30,20; 0,0" dur="25s" repeatCount="indefinite" />
+                      
+                      {/* BPMN Task (İşlem / Süreç) */}
+                      <rect x="300" y="200" width="120" height="60" rx="8" fill="none" stroke="currentColor" strokeWidth="3" />
+                      <line x1="320" y1="220" x2="380" y2="220" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                      <line x1="320" y1="235" x2="400" y2="235" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                      
+                      {/* BPMN Exclusive Gateway (Karar Elması) */}
+                      <polygon points="650,120 700,170 650,220 600,170" fill="none" stroke="currentColor" strokeWidth="3" />
+                      <path d="M635,155 L665,185 M665,155 L635,185" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+
+                      {/* BPMN Data Store (Veritabanı) */}
+                      <path d="M850,450 C850,440 900,440 950,450 C950,460 850,460 850,450 Z" fill="none" stroke="currentColor" strokeWidth="3" />
+                      <path d="M850,450 L850,510 C850,520 950,520 950,510 L950,450" fill="none" stroke="currentColor" strokeWidth="3" />
+                      <path d="M850,470 C850,480 950,480 950,470" fill="none" stroke="currentColor" strokeWidth="3" />
+
+                      {/* BPMN Intermediate Event (Olay Halkası) */}
+                      <circle cx="200" cy="450" r="25" fill="none" stroke="currentColor" strokeWidth="3" />
+                      <circle cx="200" cy="450" r="18" fill="none" stroke="currentColor" strokeWidth="2" />
+
+                      {/* Bağlantı Okları (Sequence Flows) */}
+                      <path d="M420,230 L550,230 L550,170 L600,170" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="6,6" />
+                      <polygon points="600,170 590,165 590,175" fill="currentColor" />
+
+                      <path d="M225,450 L360,450 L360,260" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="6,6" />
+                      <polygon points="360,260 355,270 365,270" fill="currentColor" />
+                    </g>
+                    
+                    <g>
+                      <animateTransform attributeName="transform" type="translate" values="0,0; -15,25; 0,0" dur="15s" repeatCount="indefinite" />
+                      <text x="400" y="550" fontFamily="monospace" fontSize="14" fill="currentColor">try {'{'} process.start(); {'}'} catch (e) {'{'} log(e); {'}'}</text>
+                      
+                      {/* BPMN End Event (Kalın Halkalı Bitiş) */}
+                      <circle cx="700" cy="400" r="25" fill="none" stroke="currentColor" strokeWidth="6" />
+                      <path d="M700,320 L700,375" fill="none" stroke="currentColor" strokeWidth="2" />
+                      <polygon points="700,375 695,365 705,365" fill="currentColor" />
+                    </g>
+                  </svg>
+                </div>
+
+                <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <div className="text-center max-w-3xl mx-auto mb-16">
+                    <h2 className="text-brand-600 font-semibold tracking-wide uppercase text-sm mb-2">Peki, Biz Kimiz?</h2>
+                    <h3 className="text-3xl md:text-4xl font-heading font-bold text-slate-900">Önce biraz kendimizden bahsedelim</h3>
+                  </div>
+
+                  <div className="grid md:grid-cols-3 gap-8">
+                    {/* Amacımız Kartı */}
+                    <div className="bg-white/80 backdrop-blur-md border border-slate-100 p-8 rounded-3xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 relative group overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-brand-50/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                      <div className="relative z-10 flex flex-col items-center text-center">
+                        <div className="w-16 h-16 bg-brand-50 text-brand-600 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-brand-600 group-hover:text-white group-hover:scale-110 transition-all duration-300 shadow-sm">
+                          <Target className="w-8 h-8" />
+                        </div>
+                        <h4 className="text-xl font-heading font-bold text-slate-900 mb-4">Amacımız</h4>
+                        <p className={`text-base md:text-m text-slate-700 font-normal leading-relaxed ${montserrat.className}`}>
+                          Öğrencilerde takım çalışması, liderlik ve analitik düşünme becerilerini geliştirmek. Bilişim ve yönetim bilimlerini harmanlayarak sektöre nitelikli yetenekler kazandırmak.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Vizyonumuz Kartı */}
+                    <div className="bg-white/80 backdrop-blur-md border border-slate-100 p-8 rounded-3xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 relative group overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-brand-50/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                      <div className="relative z-10 flex flex-col items-center text-center">
+                        <div className="w-16 h-16 bg-brand-50 text-brand-600 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-brand-600 group-hover:text-white group-hover:scale-110 transition-all duration-300 shadow-sm">
+                          <Lightbulb className="w-8 h-8" />
+                        </div>
+                        <h4 className="text-xl font-heading font-bold text-slate-900 mb-4">Vizyonumuz</h4>
+                        <p className={`text-base md:text-m text-slate-700 font-normal leading-relaxed ${montserrat.className}`}>
+                          Sadece üniversite içinde değil, ulusal çapta teknoloji ve bilişim ekosistemine yön veren, yenilikçi projeler üreten öncü bir öğrenci topluluğu olmak.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Neden Biz Kartı (Madde İşaretli) */}
+                    <div className="bg-white/80 backdrop-blur-md border border-slate-100 p-8 rounded-3xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 relative group overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-brand-50/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                      <div className="relative z-10 flex flex-col items-center text-center">
+                        <div className="w-16 h-16 bg-brand-50 text-brand-600 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-brand-600 group-hover:text-white group-hover:scale-110 transition-all duration-300 shadow-sm">
+                          <Trophy className="w-8 h-8" />
+                        </div>
+                        <h4 className="text-xl font-heading font-bold text-slate-900 mb-4">Neden Biz?</h4>
+                        <ul className={`mt-2 text-left space-y-4 text-sm md:text-base text-slate-700 font-normal leading-relaxed w-full ${montserrat.className}`}>
+                          <li className="flex items-start">
+                            <CheckCircle className="w-5 h-5 text-brand-600 mr-2 flex-shrink-0 mt-0.5" />
+                            <span>İdeathon ve kariyer zirveleriyle dolu dinamik bir ekosistem.</span>
+                          </li>
+                          <li className="flex items-start">
+                            <CheckCircle className="w-5 h-5 text-brand-600 mr-2 flex-shrink-0 mt-0.5" />
+                            <span>Yapay zeka (YAK) ve topluluk otomasyonu gibi pratik projeler geliştirme imkanı.</span>
+                          </li>
+                          <li className="flex items-start">
+                            <CheckCircle className="w-5 h-5 text-brand-600 mr-2 flex-shrink-0 mt-0.5" />
+                            <span>Proje yönetimi ve kurumsal sistem analizi alanlarında gerçek dünya tecrübesi.</span>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
 
       {/* 3. Counters / Parallax Stats */}
       <section className="relative py-24 bg-brand-950 overflow-hidden">
