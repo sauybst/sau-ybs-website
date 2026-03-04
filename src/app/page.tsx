@@ -21,7 +21,7 @@ export default async function Home() {
   return (
     <main className="min-h-screen flex flex-col pt-16">
       {/* 1. Hero Section (Parallax Video/Image Placeholder) */}
-      <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden bg-brand-900">
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-brand-900">
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 mix-blend-overlay"
           style={{ backgroundImage: "url('https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2070&auto=format&fit=crop')" }}

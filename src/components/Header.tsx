@@ -21,20 +21,6 @@ export default function Header() {
                             <Link href="/board" className="text-[15px] font-medium text-slate-600 hover:text-brand-600 transition-colors">Yönetim Kurulu</Link>
                         </div>
                     </div>
-                    <div className="ml-10 flex items-center gap-4">
-                        <Link
-                            href="/admin"
-                            className="hidden sm:inline-flex items-center justify-center rounded-full bg-brand-50 px-5 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-100 hover:text-brand-800 transition-all duration-200"
-                        >
-                            Giriş Yap
-                        </Link>
-                        <Link
-                            href="/jobs"
-                            className="inline-flex items-center justify-center rounded-full bg-brand-600 px-5 py-2 text-sm font-semibold text-white shadow-md hover:bg-brand-500 transition-all duration-200 hover:-translate-y-0.5"
-                        >
-                            Kariyer
-                        </Link>
-                    </div>
                 </div>
                 {/* Mobile Navigation */}
                 <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 py-3 border-t border-brand-50 lg:hidden">

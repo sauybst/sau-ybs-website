@@ -61,10 +61,7 @@ export default function Footer() {
                 </div>
                 <div className="mt-16 border-t border-brand-800/50 pt-8 sm:mt-20 lg:mt-24 flex flex-col md:flex-row justify-between items-center gap-4">
                     <p className="text-xs leading-5 text-brand-200/60">
-                        &copy; {new Date().getFullYear()} Sakarya Üniversitesi YBS Topluluğu. Tüm hakları saklıdır.
-                    </p>
-                    <p className="text-xs leading-5 text-brand-200/60">
-                        Bilişim Komisyonu tarafından geliştirilmiştir.
+                        &copy; {new Date().getFullYear()} Sakarya Üniversitesi Yönetim Bilişim Sistemler Öğrenci Topluluğu. Tüm hakları saklıdır.
                     </p>
                 </div>
             </div>
