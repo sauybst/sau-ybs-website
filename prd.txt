@@ -1,0 +1,88 @@
+Amaç ve Kapsam
+
+Bu web sitesinin temel amacı, SAU YBS topluluğunun vizyonunu, etkinliklerini, öğrenci projelerini ve geçmiş yönetim kurulları gibi kurumsal hafızasını profesyonelce sergileyen; aynı zamanda teknik olmayan üyelerin kolayca içerik yönetebileceği dinamik bir dijital vitrin ve operasyon merkezi yaratmaktır. Bu vizyonu sıfır maliyet ve yüksek performansla hayata geçirecek teknoloji ağacımız ise; arka planda kurumsal sistem mantığına uygun, esnek ve ilişkisel veri mimarisini (backend) sağlayacak Supabase (PostgreSQL) veritabanı ile, bu verileri ziyaretçilere en hızlı, modern ve SEO uyumlu şekilde sunup barındırma görevini (frontend & hosting) üstlenen Next.js ve Vercel ekosisteminden oluşmaktadır.
+
+1. Ziyaretçi Gereksinimleri (FR-Ziyaretçi)
+FR-Z01: Ziyaretçi; ana sayfada topluluğun vizyonunu, son duyuruları ve yaklaşan en yakın etkinliği görüntüleyebilmelidir.
+FR-Z02: Ziyaretçi; geçmiş ve gelecek tüm etkinliklerin detaylarını, afişlerini ve varsa dış bağlantı/kayıt linklerini "Etkinlikler" sayfasında listeleyebilmelidir.
+FR-Z03: Ziyaretçi; "Blog / Duyurular" sayfasında yayınlanan içerikleri tarih ve yazar bilgisiyle okuyabilmelidir.
+FR-Z04: Ziyaretçi; staj ve iş ilanlarını listeleyip detaylarını inceleyebilmelidir.
+FR-Z05: Ziyaretçi; öğrencilerin geliştirdiği projelerin sergilendiği "Proje Vitrini"ni inceleyebilmelidir.
+FR-Z06: Ziyaretçi; aktif dönemin "Yönetim Kurulu" listesini ve iletişim bilgilerini görüntüleyebilmelidir.
+
+2. İçerik Yöneticisi Gereksinimleri (FR-Editör)
+FR-E01: İçerik Yöneticisi; sisteme e-posta ve şifresi ile güvenli bir şekilde giriş yapabilmelidir.
+FR-E02: İçerik Yöneticisi; yeni bir "Etkinlik", "Blog Yazısı", "Öğrenci Projesi" veya "Staj İlanı" oluşturabilmeli, afiş/görsel yükleyebilmeli ve bunları yayınlayabilmelidir (Create).
+FR-E03: İçerik Yöneticisi; mevcut içerikler üzerinde metin, görsel veya tarih güncellemesi yapabilmelidir (Update).
+FR-E04: İçerik Yöneticisi; süresi geçen veya hatalı girilen bir içeriği yayından kaldırabilmeli veya silebilmelidir (Delete).
+FR-E05: İçerik Yöneticisi; sistem ayarlarına, diğer kullanıcıların şifrelerine veya yönetim kurulu listesine erişememelidir.
+
+3. Sistem Yöneticisi Gereksinimleri (FR-Admin)
+FR-A01: Admin; İçerik Yöneticisinin yapabildiği tüm işlemleri (FR-E01 - FR-E04) yapabilmelidir.
+FR-A02: Admin; sisteme yeni "İçerik Yöneticisi" hesapları açabilmeli, mevcut hesapların yetkilerini değiştirebilmeli veya silebilmelidir (Kullanıcı Yönetimi).
+FR-A03: Admin; her akademik yıl değişiminde "Devir İşlemi Başlat" (Yeni Dönem Ekle) fonksiyonunu kullanarak yeni bir "Yönetim Kurulu" dönemi tanımlayabilmelidir. Yeni kurul eklendiğinde, önceki dönemin yönetim kurulu listesi (isimler, görevler, fotoğraflar) silinmez veya üzerine yazılmaz; sistemin arşivinde "Geçmiş Dönem Yönetim Kurulları" (Örn: 2025-2026 Dönemi) olarak kurumsal kimliğin bir parçası şeklinde saklanmaya ve sitede sergilenmeye devam eder.
+
+Bölüm 4: Veritabanı Mimarisi ve İçerik Modelleri (Supabase - PostgreSQL)
+Sistemin arka planı (Backend) ve veritabanı yönetimi, kurumsal kaynak planlama (ERP) standartlarına uygun, tamamen ilişkisel (relational) bir SQL mimarisi üzerine inşa edilmiştir. Veri güvenliğini, hızını ve bütünlüğünü sağlamak amacıyla altyapı olarak Supabase (PostgreSQL) tercih edilmiştir. Bu mimari, topluluğun mevcut ihtiyaçlarını karşılarken gelecekte entegre edilecek otomasyon sistemleri (zaferOPS) için de sağlam bir temel oluşturur.
+
+Sistem, birbirine bağlı 6 temel veri tablosundan (Table) oluşmaktadır:
+
+1. Kullanıcılar ve Yetkiler (profiles): Sisteme giriş yapacak yönetim kurulu üyelerinin şifreleme altyapısını ve yetki seviyelerini (Admin veya İçerik Yöneticisi/Editör) denetleyen ana güvenlik tablosudur.
+id (UUID - Primary Key): Kimlik doğrulama sistemiyle eşleşen benzersiz ID.
+first_name (Text): Kullanıcının adı.
+last_name (Text): Kullanıcının soyadı.
+role (Text): Yetki seviyesi ('admin' veya 'editor').
+created_at (Timestamp): Hesabın oluşturulma tarihi.
+
+2. Kurumsal Hafıza ve Yönetim Kurulu (board_members): Topluluğun geçmiş ve mevcut tüm yönetim kurulu üyelerini, görevlerini ve dönem yıllarını (Örn: 2025-2026 Dönemi) arşivleyen tablodur. "Devir İşlemi" mantığıyla çalışarak eski kayıtları silmez, SAU YBS'nin tarihi kurumsal kimliğini korur.
+id (UUID - Primary Key): Benzersiz kimlik.
+term_year (Text): Dönem bilgisi (Örn: "2025-2026").
+is_active (Boolean): Aktif yönetim kurulu mu? (Geçmiş yönetimler için 'false' olur).
+full_name (Text): Üyenin ad-soyadı.
+board_role (Text): Kuruldaki görevi (Örn: Genel Sekreter).
+image_url (Text): Fotoğrafın sistemdeki bağlantısı.
+linkedin_url (Text): Profil bağlantısı.
+created_at (Timestamp): Kayıt tarihi.
+
+3. Etkinlik Yönetimi (events): İdeathonlar, eğitimler ve anma programları gibi tüm etkinliklerin tarih, mekan, afiş ve kayıt linki detaylarını tutan tablodur. Veriler, etkinliği ekleyen yöneticinin profiline (Foreign Key) bağlı olarak şeffaf bir şekilde işlenir.
+id (UUID - Primary Key): Benzersiz kimlik.
+title (Text): Etkinlik başlığı.
+slug (Text): URL dostu bağlantı uzantısı.
+event_date (Timestamp): Gerçekleşme tarihi ve saati.
+location (Text): Etkinlik mekanı.
+description (Text): Detaylı içerik açıklaması.
+image_url (Text): Afiş bağlantısı.
+registration_url (Text): Kayıt/Form bağlantısı.
+created_by (UUID - Foreign Key): İçeriği giren kullanıcının ID'si.
+created_at (Timestamp): İçeriğin oluşturulma tarihi.
+
+4. Blog ve Duyurular (blogs): Topluluk üyelerinin yazdığı makalelerin veya resmi duyuruların, zengin metin formatında ve yazar bilgisiyle birlikte tutulduğu içerik tablosudur.
+id (UUID - Primary Key): Benzersiz kimlik.
+title (Text): Yazı başlığı.
+slug (Text): URL dostu bağlantı uzantısı.
+content (Text): Yazının tam metni.
+cover_image_url (Text): Kapak görseli bağlantısı.
+published_at (Timestamp): Yayınlanma tarihi.
+author_id (UUID - Foreign Key): Yazarı belirten kullanıcı ID'si.
+
+5. Öğrenci Projeleri (projects): Sistem analizi, donanım veya TÜBİTAK kategorilerinde öğrencilerin geliştirdiği akademik ve kişisel projelerin sergilendiği, topluluğun vizyonunu yansıtan portfolyo tablosudur.
+id (UUID - Primary Key): Benzersiz kimlik.
+title (Text): Projenin adı.
+category (Text): Proje kategorisi.
+developer_names (Text): Geliştirici veya ekibin isimleri.
+description (Text): Projenin amacı ve teknik detayları.
+image_url (Text): Ekran görüntüsü veya logo bağlantısı.
+project_url (Text): Projenin canlı bağlantısı veya kaynak kodu adresi.
+created_at (Timestamp): Sisteme eklenme tarihi.
+
+6. Staj ve Kariyer İlanları (job_postings): Kurumsal partnerlerin veya topluluk ağındaki şirketlerin açtığı staj, yarı zamanlı veya tam zamanlı iş pozisyonlarının, son başvuru tarihleriyle birlikte tutulduğu dinamik ilan tablosudur.
+id (UUID - Primary Key): Benzersiz kimlik.
+company_name (Text): Şirket adı.
+company_logo_url (Text): Şirket logosunun bağlantısı.
+position_name (Text): İlgili pozisyonun adı.
+work_model (Text): Çalışma şekli (Yarı zamanlı, Staj vb.).
+description (Text): İlanın detayları ve aranan nitelikler.
+deadline_date (Timestamp): Son başvuru tarihi.
+application_link (Text): Başvuru adresi veya e-postası.
+is_active (Boolean): İlanın yayında olup olmadığını belirten durum kontrolü.
+created_at (Timestamp): Sisteme eklenme tarihi.
