@@ -2,14 +2,11 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-// 1. DEĞİŞİKLİK: MoreVertical yerine Menu ikonunu içe aktardık
 import { Menu, X } from 'lucide-react'
 
 export default function Header() {
-    // Mobil menü durum yönetimi
     const [isMenuOpen, setIsMenuOpen] = useState(false)
 
-    // Tıklama sonrası menüyü kapatan yardımcı fonksiyon
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen)
     const closeMenu = () => setIsMenuOpen(false)
 
@@ -18,7 +15,6 @@ export default function Header() {
             <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8" aria-label="Top">
                 <div className="flex w-full items-center justify-between py-4">
                     
-                    {/* LOGO VE MASAÜSTÜ MENÜ */}
                     <div className="flex items-center">
                         <Link href="/" onClick={closeMenu} className="flex items-center gap-3 group">
                             <span className="sr-only">SAU YBS</span>
@@ -30,7 +26,6 @@ export default function Header() {
                             <span className="font-heading font-extrabold text-2xl tracking-tight text-brand-900">SAU YBS</span>
                         </Link>
                         
-                        {/* Masaüstü Navigasyon */}
                         <div className="ml-12 hidden space-x-8 lg:flex">
                             <Link href="/" className="text-[15px] font-medium text-slate-600 hover:text-brand-600 transition-colors">Ana Sayfa</Link>
                             <Link href="/events" className="text-[15px] font-medium text-slate-600 hover:text-brand-600 transition-colors">Etkinlikler</Link>
@@ -40,7 +35,6 @@ export default function Header() {
                         </div>
                     </div>
 
-                    {/* MOBİL MENÜ TETİKLEYİCİ (Hamburger İkonu) */}
                     <div className="flex items-center lg:hidden">
                         <button
                             type="button"
@@ -49,7 +43,6 @@ export default function Header() {
                             aria-expanded={isMenuOpen}
                         >
                             <span className="sr-only">Menüyü Aç</span>
-                            {/* 2. DEĞİŞİKLİK: Burada MoreVertical yerine Menu kullandık */}
                             {isMenuOpen ? (
                                 <X className="block h-6 w-6" aria-hidden="true" />
                             ) : (
@@ -59,7 +52,6 @@ export default function Header() {
                     </div>
                 </div>
 
-                {/* MOBİL AKORDİYON MENÜ */}
                 <div 
                     className={`lg:hidden transition-all duration-300 ease-in-out overflow-hidden ${
                         isMenuOpen ? 'max-h-64 opacity-100 pb-4' : 'max-h-0 opacity-0'

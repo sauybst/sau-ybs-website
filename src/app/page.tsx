@@ -36,15 +36,21 @@ export default async function Home() {
       <section className="relative min-h-[calc(100vh-50px)] flex items-center justify-center overflow-hidden bg-brand-900">
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 mix-blend-overlay"
-          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2070&auto=format&fit=crop')" }}
+          style={{ backgroundImage: "url('/hero-arkaplan.jpg')" }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-brand-900 via-brand-900/60 to-transparent" />
 
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 mb-8 text-white text-sm font-medium">
+          {/* div yerine a etiketi kullandık ve href özelliğini ekledik */}
+          <a 
+            href="https://topluluk.sabis.sakarya.edu.tr/sau-yonetim-bilisim-sistemleri-ogrenci-toplulugu" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 mb-8 text-white text-sm font-medium hover:bg-white/20 transition-colors cursor-pointer"
+          >
             <span className="flex h-2 w-2 rounded-full bg-green-400 animate-pulse"></span>
             Topluluğumuza Katılın
-          </div>
+          </a>
           <h1 className="text-5xl md:text-7xl font-heading font-extrabold text-white tracking-tight mb-6 leading-tight">
             Geleceği Analiz Et,<br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300">
@@ -230,7 +236,7 @@ export default async function Home() {
             </div>
             <div className="p-6">
               <FileText className="w-12 h-12 mx-auto text-brand-300 mb-5 drop-shadow-md" />
-              <div className="text-5xl font-heading font-extrabold text-white mb-3 drop-shadow-md">{projectsCount || '55+'}</div>
+              <div className="text-5xl font-heading font-extrabold text-white mb-3 drop-shadow-md">{projectsCount || '1+'}</div>
               <div className="text-brand-200 text-sm font-semibold tracking-wide uppercase">Açık Kaynak Proje</div>
             </div>
           </div>

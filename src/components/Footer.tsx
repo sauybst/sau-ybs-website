@@ -1,4 +1,4 @@
-import { Facebook, Twitter, Instagram, Linkedin, Mail } from 'lucide-react'
+import { Facebook, Twitter, Instagram, Linkedin, Mail, Github } from 'lucide-react'
 
 export default function Footer() {
     return (
@@ -56,6 +56,15 @@ export default function Footer() {
                             >
                                 <span className="sr-only">LinkedIn</span>
                                 <Linkedin className="h-5 w-5" aria-hidden="true" />
+                            </a>
+                            <a 
+                                href="https://github.com/sauybst" 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="text-brand-100 hover:text-white transition-colors"
+                            >
+                                <span className="sr-only">Github</span>
+                                <Github className="h-5 w-5" aria-hidden="true" />
                             </a>
                         </div>
                     </div>
