@@ -32,7 +32,6 @@ export default async function Home() {
 
   return (
     <main className="min-h-screen flex flex-col pt-16">
-      {/* 1. Hero Section (Parallax Video/Image Placeholder) */}
       <section className="relative min-h-[calc(100vh-50px)] flex items-center justify-center overflow-hidden bg-brand-900">
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 mix-blend-overlay"
@@ -41,7 +40,6 @@ export default async function Home() {
         <div className="absolute inset-0 bg-gradient-to-t from-brand-900 via-brand-900/60 to-transparent" />
 
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
-          {/* div yerine a etiketi kullandık ve href özelliğini ekledik */}
           <a 
             href="https://topluluk.sabis.sakarya.edu.tr/sau-yonetim-bilisim-sistemleri-ogrenci-toplulugu" 
             target="_blank" 
@@ -76,13 +74,12 @@ export default async function Home() {
         </div>
       </section>
 
-        {/* 2. Features / About Us Summary */}
               <section className="py-24 bg-white relative overflow-hidden">
                 {/* BPMN ve Kod Dizeleri Arka Plan Efekti - Sağa Sola Savrulan Animasyonlar */}
                 <div className="absolute inset-0 pointer-events-none opacity-[0.15] z-0 overflow-hidden text-slate-900">
                   <svg className="w-full h-full" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
                     
-                    {/* 1. Katman: Süzülen Kod Dizeleri */}
+                    {/*Süzülen Kod Dizeleri */}
                     <g>
                       <animateTransform attributeName="transform" type="translate" values="0,0; -20,-30; 0,0" dur="20s" repeatCount="indefinite" />
                       <text x="100" y="150" fontFamily="monospace" fontSize="18" fill="currentColor">&lt;Process id="erp_flow_01"&gt;</text>
