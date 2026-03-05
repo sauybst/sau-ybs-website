@@ -27,7 +27,8 @@ export default async function Home() {
   const { count: projectsCount } = await supabase.from('projects').select('*', { count: 'exact', head: true })
 
   const sabisData = await syncSabisData()
-  const actualMemberCount = sabisData.memberCount || 10 // Eğer çekemezse 10 varsayılanı
+  const actualMemberCount = sabisData.memberCount || 10 
+  const actualTotalEvents = sabisData.totalEventCount || '50+'
 
   return (
     <main className="min-h-screen flex flex-col pt-16">
@@ -140,9 +141,16 @@ export default async function Home() {
                           <Target className="w-8 h-8" />
                         </div>
                         <h4 className="text-xl font-heading font-bold text-slate-900 mb-4">Amacımız</h4>
-                        <p className={`text-base md:text-m text-slate-700 font-normal leading-relaxed ${montserrat.className}`}>
-                          Öğrencilerde takım çalışması, liderlik ve analitik düşünme becerilerini geliştirmek. Bilişim ve yönetim bilimlerini harmanlayarak sektöre nitelikli yetenekler kazandırmak.
-                        </p>
+                        <ul className={`mt-2 text-left space-y-4 text-sm md:text-base text-slate-700 font-normal leading-relaxed w-full ${montserrat.className}`}>
+                          <li className="flex items-start">
+                            <CheckCircle className="w-5 h-5 text-brand-600 mr-2 flex-shrink-0 mt-0.5" />
+                            <span>Öğrencilerde takım çalışması, liderlik ve analitik düşünme becerilerini geliştirmek.</span>
+                          </li>
+                          <li className="flex items-start">
+                            <CheckCircle className="w-5 h-5 text-brand-600 mr-2 flex-shrink-0 mt-0.5" />
+                            <span>Bilişim ve yönetim bilimlerini harmanlayarak sektöre nitelikli yetenekler kazandırmak.</span>
+                          </li>
+                        </ul>
                       </div>
                     </div>
 
@@ -154,9 +162,16 @@ export default async function Home() {
                           <Lightbulb className="w-8 h-8" />
                         </div>
                         <h4 className="text-xl font-heading font-bold text-slate-900 mb-4">Vizyonumuz</h4>
-                        <p className={`text-base md:text-m text-slate-700 font-normal leading-relaxed ${montserrat.className}`}>
-                          Sadece üniversite içinde değil, ulusal çapta teknoloji ve bilişim ekosistemine yön veren, yenilikçi projeler üreten öncü bir öğrenci topluluğu olmak.
-                        </p>
+                        <ul className={`mt-2 text-left space-y-4 text-sm md:text-base text-slate-700 font-normal leading-relaxed w-full ${montserrat.className}`}>
+                          <li className="flex items-start">
+                            <CheckCircle className="w-5 h-5 text-brand-600 mr-2 flex-shrink-0 mt-0.5" />
+                            <span>Sadece üniversite içinde değil, ulusal çapta teknoloji ve bilişim ekosistemine yön vermek.</span>
+                          </li>
+                          <li className="flex items-start">
+                            <CheckCircle className="w-5 h-5 text-brand-600 mr-2 flex-shrink-0 mt-0.5" />
+                            <span>Sektörel sorunlara çözüm sunan, yenilikçi projeler üreten öncü bir öğrenci topluluğu olmak.</span>
+                          </li>
+                        </ul>
                       </div>
                     </div>
 
@@ -175,7 +190,7 @@ export default async function Home() {
                           </li>
                           <li className="flex items-start">
                             <CheckCircle className="w-5 h-5 text-brand-600 mr-2 flex-shrink-0 mt-0.5" />
-                            <span>Yapay zeka (YAK) ve topluluk otomasyonu gibi pratik projeler geliştirme imkanı.</span>
+                            <span>Yapay zeka ve topluluk otomasyonu gibi pratik projeler geliştirme imkanı.</span>
                           </li>
                           <li className="flex items-start">
                             <CheckCircle className="w-5 h-5 text-brand-600 mr-2 flex-shrink-0 mt-0.5" />
@@ -205,7 +220,7 @@ export default async function Home() {
             </div>
             <div className="p-6">
               <CalendarIcon className="w-12 h-12 mx-auto text-brand-300 mb-5 drop-shadow-md" />
-              <div className="text-5xl font-heading font-extrabold text-white mb-3 drop-shadow-md">{eventsCount || '50+'}</div>
+              <div className="text-5xl font-heading font-extrabold text-white mb-3 drop-shadow-md">{actualTotalEvents}</div>
               <div className="text-brand-200 text-sm font-semibold tracking-wide uppercase">Etkinlik</div>
             </div>
             <div className="p-6">

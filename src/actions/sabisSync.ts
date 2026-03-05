@@ -33,27 +33,29 @@ function parseSabisDate(dateStr: string) {
 
 export async function syncSabisData() {
   const supabase = await createClient()
-  const url = 'https://topluluk.sabis.sakarya.edu.tr/sau-yonetim-bilisim-sistemleri-ogrenci-toplulugu'
+  
+  // İki farklı hedef URL'miz
+  const urlAnaSayfa = 'https://topluluk.sabis.sakarya.edu.tr/sau-yonetim-bilisim-sistemleri-ogrenci-toplulugu'
+  const urlToplulukListesi = 'https://topluluk.sabis.sakarya.edu.tr/Topluluk/ToplulukListesi?ToplulukKategori=Teknoloji'
 
   try {
-    const response = await fetch(url, { cache: 'no-store' })
-    const html = await response.text()
-    
-    const $ = cheerio.load(html)
+    const response1 = await fetch(urlAnaSayfa, { cache: 'no-store' })
+    const html1 = await response1.text()
+    const $1 = cheerio.load(html1)
 
-    const memberText = $('h6:contains("ÜYE SAYISI")').next('p').text().trim() 
+    const memberText = $1('h6:contains("ÜYE SAYISI")').next('p').text().trim() 
     const memberCount = parseInt(memberText.replace(/[^0-9]/g, '')) || 0
 
     const activities: any[] = []
     
-    $('#faaliyetContainer .col').each((index, element) => {
+    $1('#faaliyetContainer .col').each((index, element) => {
       if (activities.length >= 5) return false;
 
-      const title = $(element).find('.card-title').text().trim()
-      const description = $(element).find('.card-text').first().text().trim()
-      const startDateText = $(element).find('.badge:contains("Başlangıç")').text().trim()
-      const locationText = $(element).find('strong:contains("Yer:")').parent().text().replace('Yer:', '').trim()
-      const imageUrl = $(element).find('img').attr('src')
+      const title = $1(element).find('.card-title').text().trim()
+      const description = $1(element).find('.card-text').first().text().trim()
+      const startDateText = $1(element).find('.badge:contains("Başlangıç")').text().trim()
+      const locationText = $1(element).find('strong:contains("Yer:")').parent().text().replace('Yer:', '').trim()
+      const imageUrl = $1(element).find('img').attr('src')
       
       if (title && imageUrl) {
         activities.push({
@@ -66,10 +68,7 @@ export async function syncSabisData() {
       }
     })
 
-    // 3. Veritabanına Kaydetme İşlemleri (Supabase)
-    // Etkinlikleri Supabase'e kaydet (Varsa güncelle, yoksa ekle mantığı - title'a göre)
     for (const activity of activities) {
-      // Slug oluştur (URL dostu başlık - Örn: "Mezunlar söyleşisi" -> "mezunlar-soylesisi-sabis")
       const slug = activity.title.toLowerCase()
         .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
         .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
@@ -85,7 +84,34 @@ export async function syncSabisData() {
       }, { onConflict: 'slug' })
     }
 
-    return { success: true, memberCount, activitiesFetched: activities.length }
+    let totalEventCount = '50+' 
+
+    try {
+      const response2 = await fetch(urlToplulukListesi, { cache: 'no-store' })
+      const html2 = await response2.text()
+      const $2 = cheerio.load(html2)
+
+      // Önce YBS başlığını buluyoruz
+      const communityTitle = $2('h2:contains("YÖNETİM BİLİŞİM SİSTEMLERİ ÖĞRENCİ TOPLULUĞU")')
+      
+      if (communityTitle.length > 0) {
+        const countText = communityTitle.closest('div.card-body, div.card, div').find('span:contains("Etkinlik Sayısı:")').next('span').text().trim()
+
+        if (countText && !isNaN(parseInt(countText))) {
+          totalEventCount = countText + '+' // Bulunan sayının yanına + ekliyoruz (Örn: 52+)
+        }
+      }
+    } catch (err) {
+      console.error('Toplam etkinlik sayısı çekilemedi, mock değer (50+) kullanılıyor.', err)
+    }
+
+    // Tüm verileri dışarı aktarıyoruz
+    return { 
+      success: true, 
+      memberCount, 
+      activitiesFetched: activities.length,
+      totalEventCount // Yeni eklenen verimiz!
+    }
   } catch (error) {
     console.error('SABIS Senkronizasyon Hatası:', error)
     return { success: false, error: 'Veri çekilemedi' }
