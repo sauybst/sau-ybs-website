@@ -33,11 +33,13 @@ export default async function Home() {
   return (
     <main className="min-h-screen flex flex-col pt-16">
       <section className="relative min-h-[calc(100vh-50px)] flex items-center justify-center overflow-hidden bg-brand-900">
+        {/* Fotoğraf tam görünürlükte (opacity-100) eklendi ve karıştırma efekti kaldırıldı */}
         <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 mix-blend-overlay"
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-100"
           style={{ backgroundImage: "url('/hero-arkaplan.jpg')" }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-brand-900 via-brand-900/60 to-transparent" />
+        <div className="absolute inset-0 bg-brand-900/40" />
+        <div className="absolute inset-0 bg-gradient-to-t from-brand-900 via-brand-900/20 to-transparent" />
 
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
           <a 
