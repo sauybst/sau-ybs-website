@@ -27,7 +27,7 @@ export default async function Home() {
   const { count: projectsCount } = await supabase.from('projects').select('*', { count: 'exact', head: true })
 
   const sabisData = await syncSabisData()
-  const actualMemberCount = sabisData.memberCount || 10 
+  const actualMemberCount = sabisData.memberCount || 650 
   const actualTotalEvents = sabisData.totalEventCount || '50+'
 
   return (
@@ -42,33 +42,48 @@ export default async function Home() {
         <div className="absolute inset-0 bg-gradient-to-t from-brand-900 via-brand-900/20 to-transparent" />
 
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
-          <a 
-            href="https://topluluk.sabis.sakarya.edu.tr/sau-yonetim-bilisim-sistemleri-ogrenci-toplulugu" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 mb-8 text-white text-sm font-medium hover:bg-white/20 transition-colors cursor-pointer"
-          >
-            <span className="flex h-2 w-2 rounded-full bg-green-400 animate-pulse"></span>
-            Topluluğumuza Katılın
-          </a>
-          <h1 className="text-5xl md:text-7xl font-heading font-extrabold text-white tracking-tight mb-6 leading-tight">
-            Geleceği Analiz Et,<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300">
-              Sistemi Yönet
-            </span>
-          </h1>
-          <p className={`mt-4 max-w-2xl text-lg md:text-xl text-brand-100 font-light leading-relaxed ${montserrat.className}`}>
-            Sakarya Üniversitesi Yönetim Bilişim Sistemleri Topluluğu; veriyi bilgiye, teknolojiyi stratejik bir güce dönüştüren yenilikçi analistlerin buluşma noktasıdır. İş dünyası ile dijital dünya arasındaki köprüyü birlikte inşa ediyoruz.
-          </p>
-          <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4 w-full sm:w-auto">
-            <Link href="/events" className="rounded-full bg-brand-600 px-8 py-3.5 text-base font-semibold text-white shadow-lg hover:bg-brand-500 hover:-translate-y-1 transition-all duration-300 text-center">
-              Etkinlikleri Keşfet
-            </Link>
-            <Link href="/board" className="rounded-full bg-white/10 backdrop-blur-md border border-white/20 px-8 py-3.5 text-base font-semibold text-white hover:bg-white/20 hover:-translate-y-1 transition-all duration-300 text-center flex items-center justify-center gap-2">
-              Biz Kimiz? <ArrowRight className="w-4 h-4" />
-            </Link>
+  
+        {/* Badge */}
+        <a 
+          href="https://topluluk.sabis.sakarya.edu.tr/sau-yonetim-bilisim-sistemleri-ogrenci-toplulugu" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 mb-8 text-white text-sm font-medium hover:bg-white/20 transition-colors"
+        >
+          <span className="flex h-2 w-2 rounded-full bg-green-400 animate-pulse"></span>
+          Topluluğumuza Katılın
+        </a>
+
+          {/* Başlık */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-6 py-4 mb-6">
+            <h1 className="text-5xl md:text-7xl font-heading font-extrabold text-white tracking-tight leading-tight">
+              Geleceği Analiz Et,<br />
+              <span 
+                className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300"
+                style={{ WebkitTextStroke: '1.5px rgba(30, 58, 138, 0.8)' }}
+                >
+                Sistemi Yönet
+              </span>
+            </h1>
           </div>
-        </div>
+
+          {/* Paragraf */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-6 py-4 mb-6">
+            <p className={`max-w-2xl text-lg md:text-xl text-white font-light leading-relaxed ${montserrat.className}`}>
+              Sakarya Üniversitesi Yönetim Bilişim Sistemleri Topluluğu; veriyi bilgiye, teknolojiyi stratejik bir güce dönüştüren yenilikçi analistlerin buluşma noktasıdır. İş dünyası ile dijital dünya arasındaki köprüyü birlikte inşa ediyoruz.
+            </p>
+          </div>
+
+          {/* Butonlar */}
+            <div className="flex flex-col sm:flex-row justify-center gap-4 w-full sm:w-auto">
+              <Link href="/events" className="rounded-full bg-brand-600 px-8 py-3.5 text-base font-semibold text-white shadow-lg hover:bg-brand-500 hover:-translate-y-1 transition-all duration-300 text-center">
+                Etkinlikleri Keşfet
+              </Link>
+              <Link href="/board" className="rounded-full bg-white/10 backdrop-blur-md border border-white/20 px-8 py-3.5 text-base font-semibold text-white hover:bg-white/20 hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-2">
+                Biz Kimiz? <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+      </div>
 
         {/* Scroll Indicator */}
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce text-white/50">

@@ -14,16 +14,14 @@ export default function Header() {
         <header className="fixed w-full top-0 z-50 bg-white/80 backdrop-blur-md border-b border-brand-100/50 shadow-sm transition-all duration-300">
             <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8" aria-label="Top">
                 <div className="flex w-full items-center justify-between py-4">
-                    {/* Vektör Resim İle Logo + SAU YBS Yazısı Ekle */}
                     <div className="flex items-center">
                         <Link href="/" onClick={closeMenu} className="flex items-center gap-3 group">
                             <span className="sr-only">SAU YBS</span>
                             <img 
-                                src="/favicon.ico" 
+                                src="/logotip.png" 
                                 alt="SAU YBS Logo" 
-                                className="h-10 w-10 object-contain drop-shadow-lg rounded-md group-hover:scale-105 transition-transform duration-300" 
+                                className="h-15 w-15 object-contain drop-shadow-lg rounded-md group-hover:scale-105 transition-transform duration-300" 
                             />
-                            <span className="font-heading font-extrabold text-2xl tracking-tight text-brand-900">SAU YBS</span>
                         </Link>
                         
                         <div className="ml-12 hidden space-x-8 lg:flex">
