@@ -218,10 +218,9 @@ export default async function Home() {
           className="absolute inset-0 bg-cover bg-center bg-fixed opacity-80 grayscale"
           style={{ backgroundImage: "url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop')" }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 to-slate-900/50" />
+        <div className="absolute inset-0 bg-gradient-to-t from-brand-950/95 via-brand-900/80 to-brand-900/50" />
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* divide-x kaldırıldı, mobil için tek kolon, tablet için 2, PC için 4 kolon yapıldı */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 text-center">
             
             {/* Kutu 1 */}
