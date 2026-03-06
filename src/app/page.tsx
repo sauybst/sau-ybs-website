@@ -58,7 +58,7 @@ export default async function Home() {
 
           {/* Paragraf */}
           <div className="w-full sm:w-auto bg-white/10 backdrop-blur-sm rounded-2xl px-4 sm:px-6 py-4 mb-8">
-            <p className={`max-w-2xl mx-auto text-base sm:text-lg md:text-xl text-white font-medium leading-relaxed ${montserrat.className}`}>
+            <p className={`max-w-2xl mx-auto text-base sm:text-lg md:text-xl text-white font-light leading-relaxed ${montserrat.className}`}>
               Sakarya Üniversitesi Yönetim Bilişim Sistemleri Topluluğu; veriyi bilgiye, teknolojiyi stratejik bir güce dönüştüren yenilikçi analistlerin buluşma noktasıdır. İş dünyası ile dijital dünya arasındaki köprüyü birlikte inşa ediyoruz.
             </p>
           </div>

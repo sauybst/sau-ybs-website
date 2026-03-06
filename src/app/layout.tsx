@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Poppins, Lato } from 'next/font/google'
 import './globals.css'
 import ConditionalLayout from '@/components/ConditionalLayout'
+import CookieBanner from '@/components/CookieBanner'; 
 
 const poppins = Poppins({
   weight: ['300', '400', '500', '600', '700', '800'],
@@ -33,6 +34,9 @@ export default function RootLayout({
         <ConditionalLayout>
           {children}
         </ConditionalLayout>
+
+        {/* CookieBanner sayfanın en altında çalışacak şekilde eklendi */}
+        <CookieBanner />
       </body>
     </html>
   )

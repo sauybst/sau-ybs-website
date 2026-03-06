@@ -19,17 +19,17 @@ export default function CookiePolicy() {
           <p>Çerezler, ziyaret ettiğiniz web siteleri tarafından tarayıcınız aracılığıyla cihazınıza veya ağ sunucusuna depolanan küçük metin dosyalarıdır.</p>
           
           <h2 className="text-xl font-semibold text-slate-800 mt-8">2. Hangi Çerezleri Kullanıyoruz?</h2>
-          <p>Sakarya Üniversitesi Yönetim Bilişim Sistemleri Öğrenci Topluluğu web sitesinde, sitenin düzgün çalışması için <strong>zorunlu çerezler</strong> ve ziyaretçi trafiğini anonim olarak analiz etmek için <strong>performans ve analitik çerezleri</strong> kullanılmaktadır.</p>
+          <p>Sakarya Üniversitesi Yönetim Bilişim Sistemleri Öğrenci Topluluğu web sitesinde, yalnızca sitenin düzgün ve güvenli bir şekilde çalışması için gerekli olan <strong>zorunlu (teknik) çerezler</strong> kullanılmaktadır. Sitemizde ziyaretçileri takip eden, analiz eden veya reklam profili oluşturan (Google Analytics vb.) herhangi bir üçüncü taraf takip çerezi <strong>bulunmamaktadır.</strong></p>
 
           <h2 className="text-xl font-semibold text-slate-800 mt-8">3. Çerezleri Neden Kullanıyoruz?</h2>
           <ul className="list-disc pl-5 space-y-2">
-            <li>Web sitesinin temel işlevlerini (menüler, sayfa geçişleri) yerine getirebilmesi.</li>
-            <li>Ziyaretçilerin siteyi nasıl kullandığını analiz ederek performansı artırmak.</li>
-            <li>Gelecekteki güncellemeler için kullanıcı deneyimini iyileştirmek.</li>
+            <li>Web sitesinin temel işlevlerini sorunsuz bir şekilde yerine getirebilmesi.</li>
+            <li>Sistemin güvenliğinin sağlanması ve olası hataların önlenmesi.</li>
+            <li>Çerez bilgilendirme uyarısını okuyup kapattığınızda, bu tercihinizin hatırlanması (böylece her girişinizde aynı uyarıyı tekrar görmezsiniz).</li>
           </ul>
 
           <h2 className="text-xl font-semibold text-slate-800 mt-8">4. Çerez Yönetimi</h2>
-          <p>Çerez kullanımını tercih etmiyorsanız tarayıcınızın ayarlarından çerezleri silebilir veya engelleyebilirsiniz. Ancak bu durumda sitemizin bazı özelliklerinin tam kapasiteyle çalışmayabileceğini hatırlatmak isteriz.</p>
+          <p>Tarayıcınızın ayarlarını değiştirerek sitemizin kullandığı bu zorunlu çerezleri silebilir veya engelleyebilirsiniz. Ancak bu durumda çerez bilgilendirme çubuğu her girişinizde tekrar karşınıza çıkabilir veya sitemizin bazı temel özellikleri beklediğiniz gibi çalışmayabilir.</p>
         </div>
       </div>
     </main>
