@@ -31,8 +31,8 @@ export default async function Home() {
   const actualTotalEvents = sabisData.totalEventCount || '50+'
 
   return (
-    <main className="min-h-screen flex flex-col pt-16">
-      <section className="relative min-h-[calc(100vh-50px)] flex items-center justify-center overflow-hidden bg-brand-900">
+    <main className="min-h-[100dvh] flex flex-col pt-16">
+      <section className="relative flex-1 flex items-center justify-center overflow-hidden bg-brand-900 py-12 sm:py-24">
         {/* Fotoğraf tam görünürlükte (opacity-100) eklendi ve karıştırma efekti kaldırıldı */}
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-100"
@@ -41,11 +41,11 @@ export default async function Home() {
         <div className="absolute inset-0 bg-brand-900/40" />
         <div className="absolute inset-0 bg-gradient-to-t from-brand-900 via-brand-900/20 to-transparent" />
 
-        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
+        <div className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
   
           {/* Başlık */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-6 py-4 mb-6">
-            <h1 className="text-5xl md:text-7xl font-heading font-extrabold text-white tracking-tight leading-tight">
+          <div className="bw-full sm:w-auto bg-white/10 backdrop-blur-sm rounded-2xl px-4 sm:px-6 py-5 mb-6">
+            <h1 className="text-4xl sm:text-5xl md:text-7xl font-heading font-extrabold text-white tracking-tight leading-tight break-words">
               Geleceği Analiz Et,<br />
               <span 
                 className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300"
@@ -57,14 +57,14 @@ export default async function Home() {
           </div>
 
           {/* Paragraf */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-6 py-4 mb-6">
-            <p className={`max-w-2xl text-lg md:text-xl text-white font-light leading-relaxed ${montserrat.className}`}>
+          <div className="w-full sm:w-auto bg-white/10 backdrop-blur-sm rounded-2xl px-4 sm:px-6 py-4 mb-8">
+            <p className={`max-w-2xl mx-auto text-base sm:text-lg md:text-xl text-white font-medium leading-relaxed ${montserrat.className}`}>
               Sakarya Üniversitesi Yönetim Bilişim Sistemleri Topluluğu; veriyi bilgiye, teknolojiyi stratejik bir güce dönüştüren yenilikçi analistlerin buluşma noktasıdır. İş dünyası ile dijital dünya arasındaki köprüyü birlikte inşa ediyoruz.
             </p>
           </div>
 
           {/* Butonlar */}
-            <div className="flex flex-col sm:flex-row justify-center gap-4 w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row justify-center gap-4 w-full sm:w-auto px-2 sm:px-0">
               <Link href="/events" className="rounded-full bg-brand-600 px-8 py-3.5 text-base font-semibold text-white shadow-lg hover:bg-brand-500 hover:-translate-y-1 transition-all duration-300 text-center">
                 Etkinlikleri Keşfet
               </Link>
@@ -75,7 +75,7 @@ export default async function Home() {
       </div>
 
         {/* Scroll Indicator */}
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce text-white/50">
+        <div className="absolute bottom-6 sm:bottom-10 left-1/2 -translate-x-1/2 animate-bounce text-white/50 hidden sm:block">
           <ArrowRight className="w-6 h-6 rotate-90" />
         </div>
       </section>

@@ -107,6 +107,7 @@ export default function Footer() {
                                         <span className="text-sm leading-6 text-slate-300">
                                             Sakarya Üniversitesi<br />
                                             Esentepe Kampüsü
+                                            İşletme Fakültesi
                                         </span>
                                     </li>
                                     <li className="flex items-start">
