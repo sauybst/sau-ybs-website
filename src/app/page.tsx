@@ -81,65 +81,127 @@ export default async function Home() {
 </section>
   
 <section className="py-24 bg-white relative overflow-hidden">
-                {/* BPMN ve Kod Dizeleri Arka Plan Efekti - Sağa Sola Savrulan Animasyonlar */}
-                {/* Mobilde yazıları engellememesi için opacity-[0.06] yapıldı, masaüstünde [0.15]'e dönüyor */}
-                <div className="absolute inset-0 pointer-events-none opacity-[0.06] md:opacity-[0.15] z-0 overflow-hidden text-slate-900 transition-opacity duration-500">
+                {/* BPMN ve Kod Dizeleri Arka Plan Efekti - BELİRGİN VE CANLI RENKLER (Light Theme) */}
+                {/* opacity artırıldı ve genel çizgi rengi belirginleşmesi için text-slate-300 yapıldı */}
+                <div className="absolute inset-0 pointer-events-none opacity-[0.15] md:opacity-[0.40] z-0 overflow-hidden text-slate-300 transition-opacity duration-500">
                   <svg className="w-full h-full" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
                     
-                    {/* Süzülen Kod Dizeleri */}
+                    {/* --- GRUP 1: Üst Katman (DVD Sekme Efekti: X=29s, Y=19s) --- */}
                     <g>
-                      <animateTransform attributeName="transform" type="translate" values="0,0; -20,-30; 0,0" dur="20s" repeatCount="indefinite" />
-                      
-                      {/* Sol taraftaki yazılar mobilde sağa (merkeze) çekilir */}
-                      <text x="100" y="150" className="translate-x-[200px] md:translate-x-0 transition-transform duration-700" fontFamily="monospace" fontSize="18" fill="currentColor">&lt;Process id="erp_flow_01"&gt;</text>
-                      <text x="150" y="650" className="translate-x-[200px] md:translate-x-0 transition-transform duration-700" fontFamily="monospace" fontSize="18" fill="currentColor">const optimize = (data) =&gt; data.map(analyze);</text>
-                      
-                      {/* Sağ taraftaki yazılar mobilde sola (merkeze) çekilir */}
-                      <text x="850" y="250" className="-translate-x-[250px] md:translate-x-0 transition-transform duration-700" fontFamily="monospace" fontSize="16" fill="currentColor">SELECT strategy FROM future;</text>
-                      <text x="750" y="650" className="-translate-x-[200px] md:translate-x-0 transition-transform duration-700" fontFamily="monospace" fontSize="16" fill="currentColor">await system.automate();</text>
+                      <animateTransform attributeName="transform" type="translate" values="0,0; 250,0; -150,0; 0,0" dur="29s" repeatCount="indefinite" />
+                      <g>
+                        <animateTransform attributeName="transform" type="translate" values="0,0; 0,120; 0,-80; 0,0" dur="19s" repeatCount="indefinite" />
+                        
+                        {/* XML/BPMN Process Tag */}
+                        <text x="80" y="120" className="translate-x-[200px] md:translate-x-0 transition-transform duration-700" fontFamily="monospace" fontSize="18">
+                          <tspan fill="#2563eb">&lt;Process </tspan> {/* Koyu Mavi */}
+                          <tspan fill="#64748b">id=</tspan> {/* Koyu Gri */}
+                          <tspan fill="#059669">"erp_flow_01"</tspan> {/* Koyu Yeşil */}
+                          <tspan fill="#2563eb">&gt;</tspan>
+                        </text>
+
+                        {/* Python Veri Analizi */}
+                        <text x="800" y="150" className="-translate-x-[250px] md:translate-x-0 transition-transform duration-700" fontFamily="monospace" fontSize="16">
+                          <tspan fill="#9333ea">def </tspan> {/* Koyu Mor */}
+                          <tspan fill="#2563eb">train_model</tspan>
+                          <tspan fill="#64748b">(dataset):</tspan>
+                        </text>
+
+                        {/* Timer Event (Zamanlayıcı Olayı) */}
+                        <g className="translate-x-[150px] md:translate-x-0 transition-transform duration-700">
+                          <circle cx="500" cy="100" r="25" fill="none" stroke="currentColor" strokeWidth="3" />
+                          <circle cx="500" cy="100" r="20" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="2,4" />
+                          <polyline points="500,85 500,100 510,100" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </g>
+                      </g>
                     </g>
 
+                    {/* --- GRUP 2: Orta Katman (DVD Sekme Efekti: X=23s, Y=17s) --- */}
                     <g>
-                      <animateTransform attributeName="transform" type="translate" values="0,0; 30,20; 0,0" dur="25s" repeatCount="indefinite" />
-                      
-                      {/* BPMN Sol Taraf (İşlem / Süreç / Olay Halkası) - Mobilde sağa kaydırılır */}
-                      <g className="translate-x-[250px] md:translate-x-0 transition-transform duration-700">
-                        <rect x="300" y="200" width="120" height="60" rx="8" fill="none" stroke="currentColor" strokeWidth="3" />
-                        <line x1="320" y1="220" x2="380" y2="220" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                        <line x1="320" y1="235" x2="400" y2="235" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                        <circle cx="200" cy="450" r="25" fill="none" stroke="currentColor" strokeWidth="3" />
-                        <circle cx="200" cy="450" r="18" fill="none" stroke="currentColor" strokeWidth="2" />
-                      </g>
+                      <animateTransform attributeName="transform" type="translate" values="0,0; -180,0; 150,0; 0,0" dur="23s" repeatCount="indefinite" />
+                      <g>
+                        <animateTransform attributeName="transform" type="translate" values="0,0; 0,-100; 0,130; 0,0" dur="17s" repeatCount="indefinite" />
+                        
+                        {/* BPMN Task (İşlem / Süreç) */}
+                        <g className="translate-x-[200px] md:translate-x-0 transition-transform duration-700">
+                          <rect x="250" y="250" width="120" height="60" rx="8" fill="none" stroke="currentColor" strokeWidth="3" />
+                          <line x1="270" y1="270" x2="330" y2="270" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                          <line x1="270" y1="285" x2="350" y2="285" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                          <circle cx="150" cy="280" r="25" fill="none" stroke="currentColor" strokeWidth="3" />
+                        </g>
 
-                      {/* BPMN Sağ Taraf (Karar Elması / Veritabanı) - Mobilde sola kaydırılır */}
-                      <g className="-translate-x-[250px] md:translate-x-0 transition-transform duration-700">
-                        <polygon points="650,120 700,170 650,220 600,170" fill="none" stroke="currentColor" strokeWidth="3" />
-                        <path d="M635,155 L665,185 M665,155 L635,185" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-                        <path d="M850,450 C850,440 900,440 950,450 C950,460 850,460 850,450 Z" fill="none" stroke="currentColor" strokeWidth="3" />
-                        <path d="M850,450 L850,510 C850,520 950,520 950,510 L950,450" fill="none" stroke="currentColor" strokeWidth="3" />
-                        <path d="M850,470 C850,480 950,480 950,470" fill="none" stroke="currentColor" strokeWidth="3" />
-                      </g>
+                        {/* Parallel Gateway (Paralel İşlem Elması) */}
+                        <g className="-translate-x-[200px] md:translate-x-0 transition-transform duration-700">
+                          <polygon points="650,220 700,270 650,320 600,270" fill="none" stroke="currentColor" strokeWidth="3" />
+                          <line x1="650" y1="245" x2="650" y2="295" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                          <line x1="625" y1="270" x2="675" y2="270" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                        </g>
 
-                      {/* Kesik Çizgili Bağlantı Okları (Mobilde konumlar değiştiği için okları gizliyoruz, karışıklık olmasın) */}
-                      <g className="hidden md:block">
-                        <path d="M420,230 L550,230 L550,170 L600,170" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="6,6" />
-                        <polygon points="600,170 590,165 590,175" fill="currentColor" />
-                        <path d="M225,450 L360,450 L360,260" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="6,6" />
-                        <polygon points="360,260 355,270 365,270" fill="currentColor" />
+                        {/* SQL Sorgusu */}
+                        <text x="750" y="380" className="-translate-x-[200px] md:translate-x-0 transition-transform duration-700" fontFamily="monospace" fontSize="16">
+                          <tspan fill="#9333ea">SELECT </tspan>
+                          <tspan fill="#64748b">strategy </tspan>
+                          <tspan fill="#9333ea">FROM </tspan>
+                          <tspan fill="#64748b">future;</tspan>
+                        </text>
                       </g>
                     </g>
                     
+                    {/* --- GRUP 3: Alt Katman (DVD Sekme Efekti: X=31s, Y=23s) --- */}
                     <g>
-                      <animateTransform attributeName="transform" type="translate" values="0,0; -15,25; 0,0" dur="15s" repeatCount="indefinite" />
-                      
-                      <g className="-translate-x-[150px] md:translate-x-0 transition-transform duration-700">
-                        <text x="400" y="550" className="translate-x-[150px] md:translate-x-0" fontFamily="monospace" fontSize="14" fill="currentColor">try {'{'} process.start(); {'}'} catch (e) {'{'} log(e); {'}'}</text>
-                        {/* BPMN End Event (Kalın Halkalı Bitiş) */}
-                        <circle cx="700" cy="400" r="25" fill="none" stroke="currentColor" strokeWidth="6" />
-                        <path d="M700,320 L700,375" fill="none" stroke="currentColor" strokeWidth="2" />
-                        <polygon points="700,375 695,365 705,365" fill="currentColor" />
+                      <animateTransform attributeName="transform" type="translate" values="0,0; 160,0; -220,0; 0,0" dur="31s" repeatCount="indefinite" />
+                      <g>
+                        <animateTransform attributeName="transform" type="translate" values="0,0; 0,-80; 0,90; 0,0" dur="23s" repeatCount="indefinite" />
+                        
+                        {/* JS React/Node Import */}
+                        <text x="60" y="450" className="translate-x-[150px] md:translate-x-0 transition-transform duration-700" fontFamily="monospace" fontSize="15">
+                          <tspan fill="#9333ea">import </tspan>
+                          <tspan fill="#64748b">{'{'} Model {'}'} </tspan>
+                          <tspan fill="#9333ea">from </tspan>
+                          <tspan fill="#059669">'ai-engine'</tspan>
+                          <tspan fill="#64748b">;</tspan>
+                        </text>
+
+                        {/* JS Const & Arrow Function */}
+                        <text x="120" y="650" className="translate-x-[200px] md:translate-x-0 transition-transform duration-700" fontFamily="monospace" fontSize="18">
+                          <tspan fill="#9333ea">const </tspan>
+                          <tspan fill="#64748b">optimize = (data) </tspan>
+                          <tspan fill="#2563eb">=&gt; </tspan>
+                          <tspan fill="#64748b">data.</tspan>
+                          <tspan fill="#2563eb">map</tspan>
+                          <tspan fill="#64748b">(analyze);</tspan>
+                        </text>
+
+                        {/* JS Await */}
+                        <text x="750" y="600" className="-translate-x-[250px] md:translate-x-0 transition-transform duration-700" fontFamily="monospace" fontSize="16">
+                          <tspan fill="#9333ea">await </tspan>
+                          <tspan fill="#64748b">system.</tspan>
+                          <tspan fill="#2563eb">automate</tspan>
+                          <tspan fill="#64748b">();</tspan>
+                        </text>
+
+                        {/* JSON / API Response */}
+                        <text x="700" y="750" className="-translate-x-[150px] md:translate-x-0 transition-transform duration-700" fontFamily="monospace" fontSize="15">
+                          <tspan fill="#64748b">{'{'} </tspan>
+                          <tspan fill="#059669">"status"</tspan>
+                          <tspan fill="#64748b">: </tspan>
+                          <tspan fill="#d97706">200</tspan> {/* Koyu Turuncu */}
+                          <tspan fill="#64748b">, </tspan>
+                          <tspan fill="#059669">"role"</tspan>
+                          <tspan fill="#64748b">: </tspan>
+                          <tspan fill="#059669">"admin"</tspan>
+                          <tspan fill="#64748b"> {'}'}</tspan>
+                        </text>
+
+                        {/* BPMN: Belge / Rapor İkonu */}
+                        <g className="translate-x-[100px] md:translate-x-0 transition-transform duration-700">
+                          <path d="M 850 450 L 910 450 L 910 520 C 895 535 865 505 850 520 Z" fill="none" stroke="currentColor" strokeWidth="3" strokeLinejoin="round" />
+                          <line x1="865" y1="470" x2="895" y2="470" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                          <line x1="865" y1="490" x2="885" y2="490" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                        </g>
                       </g>
                     </g>
+
                   </svg>
                 </div>
 
