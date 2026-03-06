@@ -137,8 +137,8 @@ export default async function Home() {
 
                 <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                   <div className="text-center max-w-3xl mx-auto mb-16">
-                    <h2 className="text-brand-600 font-semibold tracking-wide uppercase text-sm mb-2">Peki, Biz Kimiz?</h2>
-                    <h3 className="text-3xl md:text-4xl font-heading font-bold text-slate-900">Önce biraz kendimizden bahsedelim</h3>
+                    <h2 className="text-brand-600 font-semibold tracking-wide uppercase text-sm mb-2">Kurumsal Kimliğimiz</h2>
+                    <h3 className="text-3xl md:text-4xl font-heading font-bold text-slate-900">Önce Kendimizi Tanıtarak Başlayalım</h3>
                   </div>
 
                   <div className="grid md:grid-cols-3 gap-8">
@@ -213,35 +213,46 @@ export default async function Home() {
               </section>
 
       {/* 3. Counters / Parallax Stats */}
-      <section className="relative py-24 bg-brand-950 overflow-hidden">
+      <section className="relative py-24 bg-slate-950 overflow-hidden">
         <div
-          className="absolute inset-0 bg-cover bg-center bg-fixed opacity-30 mix-blend-luminosity"
-          style={{ backgroundImage: "url('https://sakaryasehirhafizasi.gov.tr/wp-content/uploads/2021/01/MG_7029-1024x683-1.jpg')" }}
+          className="absolute inset-0 bg-cover bg-center bg-fixed opacity-80 grayscale"
+          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop')" }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-brand-900/90 to-brand-900/40" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 to-slate-900/50" />
+        
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-x divide-white/10">
-            <div className="p-6">
+          {/* divide-x kaldırıldı, mobil için tek kolon, tablet için 2, PC için 4 kolon yapıldı */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            
+            {/* Kutu 1 */}
+            <div className="p-8 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 shadow-xl hover:-translate-y-1 hover:bg-white/20 transition-all duration-300">
               <Users className="w-12 h-12 mx-auto text-brand-300 mb-5 drop-shadow-md" />
               {/* SABIS'ten gelen sayının yanına + koyuyoruz */}
               <div className="text-5xl font-heading font-extrabold text-white mb-3 drop-shadow-md">{actualMemberCount}+</div>
               <div className="text-brand-200 text-sm font-semibold tracking-wide uppercase">Aktif Üye</div>
             </div>
-            <div className="p-6">
+
+            {/* Kutu 2 */}
+            <div className="p-8 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 shadow-xl hover:-translate-y-1 hover:bg-white/20 transition-all duration-300">
               <CalendarIcon className="w-12 h-12 mx-auto text-brand-300 mb-5 drop-shadow-md" />
               <div className="text-5xl font-heading font-extrabold text-white mb-3 drop-shadow-md">{actualTotalEvents}</div>
               <div className="text-brand-200 text-sm font-semibold tracking-wide uppercase">Etkinlik</div>
             </div>
-            <div className="p-6">
+
+            {/* Kutu 3 */}
+            <div className="p-8 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 shadow-xl hover:-translate-y-1 hover:bg-white/20 transition-all duration-300">
               <Clock className="w-12 h-12 mx-auto text-brand-300 mb-5 drop-shadow-md" />
               <div className="text-5xl font-heading font-extrabold text-white mb-3 drop-shadow-md">Sınırsız</div>
               <div className="text-brand-200 text-sm font-semibold tracking-wide uppercase">Tecrübe</div>
             </div>
-            <div className="p-6">
+
+            {/* Kutu 4 */}
+            <div className="p-8 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 shadow-xl hover:-translate-y-1 hover:bg-white/20 transition-all duration-300">
               <FileText className="w-12 h-12 mx-auto text-brand-300 mb-5 drop-shadow-md" />
               <div className="text-5xl font-heading font-extrabold text-white mb-3 drop-shadow-md">{projectsCount || '1+'}</div>
               <div className="text-brand-200 text-sm font-semibold tracking-wide uppercase">Açık Kaynak Proje</div>
             </div>
+
           </div>
         </div>
       </section>
