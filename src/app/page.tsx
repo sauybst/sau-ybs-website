@@ -74,67 +74,76 @@ export default async function Home() {
             </div>
       </div>
 
-        {/* Scroll Indicator */}
-        <div className="absolute bottom-6 sm:bottom-10 left-1/2 -translate-x-1/2 animate-bounce text-white/50 hidden sm:block">
-          <ArrowRight className="w-6 h-6 rotate-90" />
-        </div>
-      </section>
-
-              <section className="py-24 bg-white relative overflow-hidden">
+  {/* Scroll Indicator */}
+  <div className="absolute bottom-6 sm:bottom-10 left-1/2 -translate-x-1/2 animate-bounce text-white/50 hidden sm:block">
+    <ArrowRight className="w-6 h-6 rotate-90" />
+  </div>
+</section>
+  
+<section className="py-24 bg-white relative overflow-hidden">
                 {/* BPMN ve Kod Dizeleri Arka Plan Efekti - Sağa Sola Savrulan Animasyonlar */}
-                <div className="absolute inset-0 pointer-events-none opacity-[0.15] z-0 overflow-hidden text-slate-900">
+                {/* Mobilde yazıları engellememesi için opacity-[0.06] yapıldı, masaüstünde [0.15]'e dönüyor */}
+                <div className="absolute inset-0 pointer-events-none opacity-[0.06] md:opacity-[0.15] z-0 overflow-hidden text-slate-900 transition-opacity duration-500">
                   <svg className="w-full h-full" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
                     
-                    {/*Süzülen Kod Dizeleri */}
+                    {/* Süzülen Kod Dizeleri */}
                     <g>
                       <animateTransform attributeName="transform" type="translate" values="0,0; -20,-30; 0,0" dur="20s" repeatCount="indefinite" />
-                      <text x="100" y="150" fontFamily="monospace" fontSize="18" fill="currentColor">&lt;Process id="erp_flow_01"&gt;</text>
-                      <text x="850" y="250" fontFamily="monospace" fontSize="16" fill="currentColor">SELECT strategy FROM future;</text>
-                      <text x="150" y="650" fontFamily="monospace" fontSize="18" fill="currentColor">const optimize = (data) =&gt; data.map(analyze);</text>
-                      <text x="750" y="650" fontFamily="monospace" fontSize="16" fill="currentColor">await system.automate();</text>
+                      
+                      {/* Sol taraftaki yazılar mobilde sağa (merkeze) çekilir */}
+                      <text x="100" y="150" className="translate-x-[200px] md:translate-x-0 transition-transform duration-700" fontFamily="monospace" fontSize="18" fill="currentColor">&lt;Process id="erp_flow_01"&gt;</text>
+                      <text x="150" y="650" className="translate-x-[200px] md:translate-x-0 transition-transform duration-700" fontFamily="monospace" fontSize="18" fill="currentColor">const optimize = (data) =&gt; data.map(analyze);</text>
+                      
+                      {/* Sağ taraftaki yazılar mobilde sola (merkeze) çekilir */}
+                      <text x="850" y="250" className="-translate-x-[250px] md:translate-x-0 transition-transform duration-700" fontFamily="monospace" fontSize="16" fill="currentColor">SELECT strategy FROM future;</text>
+                      <text x="750" y="650" className="-translate-x-[200px] md:translate-x-0 transition-transform duration-700" fontFamily="monospace" fontSize="16" fill="currentColor">await system.automate();</text>
                     </g>
 
                     <g>
                       <animateTransform attributeName="transform" type="translate" values="0,0; 30,20; 0,0" dur="25s" repeatCount="indefinite" />
                       
-                      {/* BPMN Task (İşlem / Süreç) */}
-                      <rect x="300" y="200" width="120" height="60" rx="8" fill="none" stroke="currentColor" strokeWidth="3" />
-                      <line x1="320" y1="220" x2="380" y2="220" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                      <line x1="320" y1="235" x2="400" y2="235" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                      
-                      {/* BPMN Exclusive Gateway (Karar Elması) */}
-                      <polygon points="650,120 700,170 650,220 600,170" fill="none" stroke="currentColor" strokeWidth="3" />
-                      <path d="M635,155 L665,185 M665,155 L635,185" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                      {/* BPMN Sol Taraf (İşlem / Süreç / Olay Halkası) - Mobilde sağa kaydırılır */}
+                      <g className="translate-x-[250px] md:translate-x-0 transition-transform duration-700">
+                        <rect x="300" y="200" width="120" height="60" rx="8" fill="none" stroke="currentColor" strokeWidth="3" />
+                        <line x1="320" y1="220" x2="380" y2="220" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                        <line x1="320" y1="235" x2="400" y2="235" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                        <circle cx="200" cy="450" r="25" fill="none" stroke="currentColor" strokeWidth="3" />
+                        <circle cx="200" cy="450" r="18" fill="none" stroke="currentColor" strokeWidth="2" />
+                      </g>
 
-                      {/* BPMN Data Store (Veritabanı) */}
-                      <path d="M850,450 C850,440 900,440 950,450 C950,460 850,460 850,450 Z" fill="none" stroke="currentColor" strokeWidth="3" />
-                      <path d="M850,450 L850,510 C850,520 950,520 950,510 L950,450" fill="none" stroke="currentColor" strokeWidth="3" />
-                      <path d="M850,470 C850,480 950,480 950,470" fill="none" stroke="currentColor" strokeWidth="3" />
+                      {/* BPMN Sağ Taraf (Karar Elması / Veritabanı) - Mobilde sola kaydırılır */}
+                      <g className="-translate-x-[250px] md:translate-x-0 transition-transform duration-700">
+                        <polygon points="650,120 700,170 650,220 600,170" fill="none" stroke="currentColor" strokeWidth="3" />
+                        <path d="M635,155 L665,185 M665,155 L635,185" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                        <path d="M850,450 C850,440 900,440 950,450 C950,460 850,460 850,450 Z" fill="none" stroke="currentColor" strokeWidth="3" />
+                        <path d="M850,450 L850,510 C850,520 950,520 950,510 L950,450" fill="none" stroke="currentColor" strokeWidth="3" />
+                        <path d="M850,470 C850,480 950,480 950,470" fill="none" stroke="currentColor" strokeWidth="3" />
+                      </g>
 
-                      {/* BPMN Intermediate Event (Olay Halkası) */}
-                      <circle cx="200" cy="450" r="25" fill="none" stroke="currentColor" strokeWidth="3" />
-                      <circle cx="200" cy="450" r="18" fill="none" stroke="currentColor" strokeWidth="2" />
-
-                      {/* Bağlantı Okları (Sequence Flows) */}
-                      <path d="M420,230 L550,230 L550,170 L600,170" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="6,6" />
-                      <polygon points="600,170 590,165 590,175" fill="currentColor" />
-
-                      <path d="M225,450 L360,450 L360,260" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="6,6" />
-                      <polygon points="360,260 355,270 365,270" fill="currentColor" />
+                      {/* Kesik Çizgili Bağlantı Okları (Mobilde konumlar değiştiği için okları gizliyoruz, karışıklık olmasın) */}
+                      <g className="hidden md:block">
+                        <path d="M420,230 L550,230 L550,170 L600,170" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="6,6" />
+                        <polygon points="600,170 590,165 590,175" fill="currentColor" />
+                        <path d="M225,450 L360,450 L360,260" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="6,6" />
+                        <polygon points="360,260 355,270 365,270" fill="currentColor" />
+                      </g>
                     </g>
                     
                     <g>
                       <animateTransform attributeName="transform" type="translate" values="0,0; -15,25; 0,0" dur="15s" repeatCount="indefinite" />
-                      <text x="400" y="550" fontFamily="monospace" fontSize="14" fill="currentColor">try {'{'} process.start(); {'}'} catch (e) {'{'} log(e); {'}'}</text>
                       
-                      {/* BPMN End Event (Kalın Halkalı Bitiş) */}
-                      <circle cx="700" cy="400" r="25" fill="none" stroke="currentColor" strokeWidth="6" />
-                      <path d="M700,320 L700,375" fill="none" stroke="currentColor" strokeWidth="2" />
-                      <polygon points="700,375 695,365 705,365" fill="currentColor" />
+                      <g className="-translate-x-[150px] md:translate-x-0 transition-transform duration-700">
+                        <text x="400" y="550" className="translate-x-[150px] md:translate-x-0" fontFamily="monospace" fontSize="14" fill="currentColor">try {'{'} process.start(); {'}'} catch (e) {'{'} log(e); {'}'}</text>
+                        {/* BPMN End Event (Kalın Halkalı Bitiş) */}
+                        <circle cx="700" cy="400" r="25" fill="none" stroke="currentColor" strokeWidth="6" />
+                        <path d="M700,320 L700,375" fill="none" stroke="currentColor" strokeWidth="2" />
+                        <polygon points="700,375 695,365 705,365" fill="currentColor" />
+                      </g>
                     </g>
                   </svg>
                 </div>
 
+                {/* --- KARTLARIN BULUNDUĞU KISIM (DEĞİŞİKLİK YOK) --- */}
                 <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                   <div className="text-center max-w-3xl mx-auto mb-16">
                     <h2 className="text-brand-600 font-semibold tracking-wide uppercase text-sm mb-2">Kurumsal Kimliğimiz</h2>
@@ -184,7 +193,7 @@ export default async function Home() {
                       </div>
                     </div>
 
-                    {/* Neden Biz Kartı (Madde İşaretli) */}
+                    {/* Neden Biz Kartı */}
                     <div className="bg-white/80 backdrop-blur-md border border-slate-100 p-8 rounded-3xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 relative group overflow-hidden">
                       <div className="absolute inset-0 bg-gradient-to-b from-transparent to-brand-50/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                       <div className="relative z-10 flex flex-col items-center text-center">
