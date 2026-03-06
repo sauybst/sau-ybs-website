@@ -34,6 +34,7 @@ export default function Header() {
                         <Link href="/blogs" className="text-[15px] font-medium text-slate-600 hover:text-brand-600 transition-colors">Duyurular & Blog</Link>
                         <Link href="/projects" className="text-[15px] font-medium text-slate-600 hover:text-brand-600 transition-colors">Projeler</Link>
                         <Link href="/board" className="text-[15px] font-medium text-slate-600 hover:text-brand-600 transition-colors">Hakkımızda</Link>
+                        <Link href="/jobs" className="text-[15px] font-medium text-slate-600 hover:text-brand-600 transition-colors">Staj & İş İlanları</Link>
                     </div>
 
                     {/* SAĞ KISIM: Buton ve Mobil Menü Tetikleyici (flex-1 ile sağa yaslanır) */}
@@ -78,7 +79,8 @@ export default function Header() {
                         <Link href="/blogs" onClick={closeMenu} className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-brand-600 hover:bg-brand-50 transition-colors">Duyurular & Blog</Link>
                         <Link href="/projects" onClick={closeMenu} className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-brand-600 hover:bg-brand-50 transition-colors">Projeler</Link>
                         <Link href="/board" onClick={closeMenu} className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-brand-600 hover:bg-brand-50 transition-colors">Hakkımızda</Link>
-                        
+                        <Link href="/jobs" className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-brand-600 hover:bg-brand-50 transition-colors">Staj & İş İlanları</Link>
+
                         {/* Mobil Menüdeki Buton */}
                         <div className="px-3 pt-4 pb-2 mt-2 border-t border-slate-100">
                             <a 
