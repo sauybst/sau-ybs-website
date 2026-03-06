@@ -43,17 +43,6 @@ export default async function Home() {
 
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
   
-        {/* Badge */}
-        <a 
-          href="https://topluluk.sabis.sakarya.edu.tr/sau-yonetim-bilisim-sistemleri-ogrenci-toplulugu" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 mb-8 text-white text-sm font-medium hover:bg-white/20 transition-colors"
-        >
-          <span className="flex h-2 w-2 rounded-full bg-green-400 animate-pulse"></span>
-          Topluluğumuza Katılın
-        </a>
-
           {/* Başlık */}
           <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-6 py-4 mb-6">
             <h1 className="text-5xl md:text-7xl font-heading font-extrabold text-white tracking-tight leading-tight">
