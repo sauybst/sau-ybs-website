@@ -15,19 +15,21 @@ export default function Header() {
             <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8" aria-label="Top">
                 <div className="flex w-full items-center justify-between py-4">
                     
-                    {/* SOL KISIM: Logo (flex-1 ile alanı doldurur, linkleri ortaya iter) */}
+                    {/* SOL KISIM: Logo */}
                     <div className="flex lg:flex-1">
-                        <Link href="/" onClick={closeMenu} className="flex items-center group">
+                        {/* Logonun header'ı esnetmemesi için mobilde -my-2, masaüstünde -my-3 negatif boşluğu verildi */}
+                        <Link href="/" onClick={closeMenu} className="flex items-center group -my-2 sm:-my-3 -ml-2 lg:-ml-6">
                             <span className="sr-only">SAU YBS</span>
+                            {/* Yükseklik h-12 ve h-16 yapılarak belirgin şekilde büyütüldü, origin-left ile sola sabitlendi */}
                             <img 
                                 src="/logotip.png" 
                                 alt="SAU YBS Logo" 
-                                className="h-8 sm:h-10 w-auto object-contain drop-shadow-sm group-hover:scale-105 transition-transform duration-300" 
+                                className="h-12 sm:h-16 w-auto object-contain drop-shadow-sm origin-left group-hover:scale-105 transition-transform duration-300" 
                             />
                         </Link>
                     </div>
                     
-                    {/* ORTA KISIM: Sayfa Bağlantıları (Tam merkeze hizalanır) */}
+                    {/* ORTA KISIM: Sayfa Bağlantıları */}
                     <div className="hidden lg:flex items-center justify-center gap-x-8">
                         <Link href="/" className="text-[15px] font-medium text-slate-600 hover:text-brand-600 transition-colors">Ana Sayfa</Link>
                         <Link href="/events" className="text-[15px] font-medium text-slate-600 hover:text-brand-600 transition-colors">Etkinlikler</Link>
@@ -37,7 +39,7 @@ export default function Header() {
                         <Link href="/jobs" className="text-[15px] font-medium text-slate-600 hover:text-brand-600 transition-colors">Staj & İş İlanları</Link>
                     </div>
 
-                    {/* SAĞ KISIM: Buton ve Mobil Menü Tetikleyici (flex-1 ile sağa yaslanır) */}
+                    {/* SAĞ KISIM: Buton ve Mobil Menü Tetikleyici */}
                     <div className="flex flex-1 items-center justify-end gap-4">
                         {/* Masaüstü Butonu */}
                         <a 
@@ -50,10 +52,10 @@ export default function Header() {
                             Topluluğumuza Katılın
                         </a>
 
-                        {/* Mobil Menü Butonu (Sadece telefonda gözükür, o da sağa yaslı kalır) */}
+                        {/* Mobil Menü Butonu */}
                         <button
                             type="button"
-                            className="inline-flex items-center justify-center p-2 rounded-md text-slate-600 hover:text-brand-600 hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-500 lg:hidden"
+                            className="inline-flex items-center justify-center p-2 mr-2 sm:mr-4 rounded-md text-slate-600 hover:text-brand-600 hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-500 lg:hidden"
                             onClick={toggleMenu}
                             aria-expanded={isMenuOpen}
                         >

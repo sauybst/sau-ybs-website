@@ -312,8 +312,8 @@ export default async function Home() {
             {/* Kutu 3 */}
             <div className="p-8 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 shadow-xl hover:-translate-y-1 hover:bg-white/20 transition-all duration-300">
               <Clock className="w-12 h-12 mx-auto text-brand-300 mb-5 drop-shadow-md" />
-              <div className="text-5xl font-heading font-extrabold text-white mb-3 drop-shadow-md">Sınırsız</div>
-              <div className="text-brand-200 text-sm font-semibold tracking-wide uppercase">Tecrübe</div>
+              <div className="text-2xl font-heading font-extrabold text-white mb-3 drop-shadow-md">Gerçek Dünya Deneyimi</div>
+              <div className="text-brand-200 text-sm font-semibold tracking-wide uppercase">Sürekli Gelişim</div>
             </div>
 
             {/* Kutu 4 */}
