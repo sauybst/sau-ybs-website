@@ -1,15 +1,13 @@
 import { createClient } from '@/utils/supabase/server'
 import Link from 'next/link'
-import { CalendarIcon, MapPin, ArrowRight, ExternalLink, Clock } from 'lucide-react'
+import { CalendarIcon, MapPin, ExternalLink, Clock } from 'lucide-react'
 
 export const metadata = {
     title: 'Etkinlikler - YBS Topluluğu',
     description: 'Sakarya Üniversitesi YBS Topluluğu etkinlikleri',
 }
 
-// Next.js URL parametrelerini yakalamak için props ekledik
 export default async function PublicEventsPage(props: any) {
-    // URL'den filter değerini alıyoruz (Örn: ?filter=past). Yoksa varsayılan 'upcoming'
     const searchParams = await props.searchParams;
     const currentFilter = searchParams?.filter || 'upcoming';
 
@@ -20,7 +18,6 @@ export default async function PublicEventsPage(props: any) {
         .select('*')
         .order('event_date', { ascending: false })
 
-    // Gelen veriyi seçili butona göre (Yaklaşan veya Geçmiş) filtreliyoruz
     const filteredEvents = events?.filter((event) => {
         const isUpcoming = new Date(event.event_date) > new Date();
         return currentFilter === 'upcoming' ? isUpcoming : !isUpcoming;
@@ -36,7 +33,6 @@ export default async function PublicEventsPage(props: any) {
                         İdeathonlar, eğitimler, seminerler ve anma programları. Geçmişten geleceğe tüm YBS buluşmaları.
                     </p>
 
-                    {/* FİLTRE BUTONLARI */}
                     <div className="flex justify-center items-center gap-4 mt-8">
                         <Link 
                             href="?filter=upcoming" 
@@ -57,7 +53,6 @@ export default async function PublicEventsPage(props: any) {
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                    {/* events yerine filteredEvents kontrol ediliyor */}
                     {(!filteredEvents || filteredEvents.length === 0) ? (
                         <p className="text-slate-500 col-span-1 md:col-span-2 lg:col-span-3 text-center py-16 bg-white rounded-2xl shadow-sm border border-dashed border-slate-300">
                             Şu an için listelenmiş bir etkinlik bulunmamaktadır.
@@ -68,8 +63,8 @@ export default async function PublicEventsPage(props: any) {
 
                             return (
                                 <div key={event.id} className="relative bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-xl hover:-translate-y-2 transition-all duration-300 flex flex-col group">
-                                    {/* Status Badge */}
-                                    <div className="absolute top-4 right-4 z-10">
+                                    
+                                    <div className="absolute top-4 right-4 z-20">
                                         <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-md backdrop-blur-md ${isUpcoming ? 'bg-gradient-to-r from-green-400 to-emerald-500 text-white' : 'bg-slate-800/90 text-white'}`}>
                                             {isUpcoming ? 'Yaklaşan' : 'Geçmiş'}
                                         </span>
@@ -83,8 +78,7 @@ export default async function PublicEventsPage(props: any) {
                                                 <CalendarIcon className="h-20 w-20 opacity-40" />
                                             </div>
                                         )}
-                                        {/* Date Overlay */}
-                                        <div className="absolute top-4 left-4">
+                                        <div className="absolute top-4 left-4 z-20">
                                             <div className="flex flex-col items-center justify-center bg-white/95 backdrop-blur-sm rounded-xl overflow-hidden shadow-lg border border-white/50 w-16 h-16">
                                                 <span className="text-xs font-bold uppercase tracking-wider text-brand-600 bg-brand-50 w-full text-center py-1">
                                                     {new Date(event.event_date).toLocaleDateString('tr-TR', { month: 'short' })}
@@ -104,8 +98,12 @@ export default async function PublicEventsPage(props: any) {
                                             </time>
                                         </div>
 
+                                        {/* DEĞİŞİKLİK BURADA: Başlığa Link eklendi ve tüm karta yayıldı */}
                                         <h3 className="text-2xl font-heading font-bold text-slate-900 mb-4 tracking-tight leading-tight group-hover:text-brand-600 transition-colors">
-                                            {event.title}
+                                            <Link href={`/events/${event.slug}`}>
+                                                <span className="absolute inset-0 z-10" aria-hidden="true"></span>
+                                                {event.title}
+                                            </Link>
                                         </h3>
 
                                         <div className="flex items-start text-slate-500 text-sm mb-6">
@@ -115,7 +113,7 @@ export default async function PublicEventsPage(props: any) {
 
                                         <div className="mt-auto pt-6 border-t border-slate-100 flex items-center justify-between">
                                             {event.registration_url && isUpcoming ? (
-                                                <a href={event.registration_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center px-4 py-2.5 border border-transparent text-sm font-semibold rounded-xl text-white bg-brand-600 hover:bg-brand-500 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-all w-full group-hover:-translate-y-0.5">
+                                                <a href={event.registration_url} target="_blank" rel="noopener noreferrer" className="relative z-20 inline-flex items-center justify-center px-4 py-2.5 border border-transparent text-sm font-semibold rounded-xl text-white bg-brand-600 hover:bg-brand-500 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-all w-full group-hover:-translate-y-0.5">
                                                     Hemen Kayıt Ol <ExternalLink className="ml-2 -mr-1 h-4 w-4" />
                                                 </a>
                                             ) : (
