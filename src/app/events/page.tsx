@@ -7,7 +7,12 @@ export const metadata = {
     description: 'Sakarya Üniversitesi YBS Topluluğu etkinlikleri',
 }
 
-export default async function PublicEventsPage() {
+// Next.js URL parametrelerini yakalamak için props ekledik
+export default async function PublicEventsPage(props: any) {
+    // URL'den filter değerini alıyoruz (Örn: ?filter=past). Yoksa varsayılan 'upcoming'
+    const searchParams = await props.searchParams;
+    const currentFilter = searchParams?.filter || 'upcoming';
+
     const supabase = await createClient()
 
     const { data: events, error } = await supabase
@@ -15,25 +20,50 @@ export default async function PublicEventsPage() {
         .select('*')
         .order('event_date', { ascending: false })
 
+    // Gelen veriyi seçili butona göre (Yaklaşan veya Geçmiş) filtreliyoruz
+    const filteredEvents = events?.filter((event) => {
+        const isUpcoming = new Date(event.event_date) > new Date();
+        return currentFilter === 'upcoming' ? isUpcoming : !isUpcoming;
+    });
+
     return (
         <div className="bg-slate-50 min-h-screen pt-24 pb-16">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="text-center mb-16">
+                <div className="text-center mb-12">
                     <h2 className="text-brand-600 font-semibold tracking-wide uppercase text-sm mb-2">Takvim</h2>
                     <h1 className="text-4xl md:text-5xl font-heading font-extrabold text-slate-900 tracking-tight">Etkinliklerimiz</h1>
-                    <p className="mt-4 max-w-2xl text-lg text-slate-600 mx-auto font-light">
+                    <p className="mt-4 max-w-2xl text-medium text-slate-600 mx-auto font-montserrat">
                         İdeathonlar, eğitimler, seminerler ve anma programları. Geçmişten geleceğe tüm YBS buluşmaları.
                     </p>
+
+                    {/* FİLTRE BUTONLARI */}
+                    <div className="flex justify-center items-center gap-4 mt-8">
+                        <Link 
+                            href="?filter=upcoming" 
+                            scroll={false}
+                            className={`px-6 py-2.5 rounded-full text-sm font-bold tracking-wide transition-all duration-300 ${currentFilter === 'upcoming' ? 'bg-brand-600 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}`}
+                        >
+                            Yaklaşan Etkinlikler
+                        </Link>
+                        <Link 
+                            href="?filter=past" 
+                            scroll={false}
+                            className={`px-6 py-2.5 rounded-full text-sm font-bold tracking-wide transition-all duration-300 ${currentFilter === 'past' ? 'bg-brand-600 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}`}
+                        >
+                            Geçmiş Etkinlikler
+                        </Link>
+                    </div>
                 </div>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                    {(!events || events.length === 0) ? (
+                    {/* events yerine filteredEvents kontrol ediliyor */}
+                    {(!filteredEvents || filteredEvents.length === 0) ? (
                         <p className="text-slate-500 col-span-1 md:col-span-2 lg:col-span-3 text-center py-16 bg-white rounded-2xl shadow-sm border border-dashed border-slate-300">
                             Şu an için listelenmiş bir etkinlik bulunmamaktadır.
                         </p>
                     ) : (
-                        events.map((event) => {
+                        filteredEvents.map((event) => {
                             const isUpcoming = new Date(event.event_date) > new Date()
 
                             return (

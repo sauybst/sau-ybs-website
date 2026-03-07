@@ -1,14 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import Link from 'next/link'
 import { Calendar as CalendarIcon, MapPin, ArrowRight, Target, Lightbulb, Trophy, Users, Briefcase, Clock, FileText, CheckCircle } from 'lucide-react'
-import { Montserrat } from 'next/font/google';
 import { syncSabisData } from '@/actions/sabisSync'
-
-// Font ayarlarını yapıyoruz 
-const montserrat = Montserrat({
-  subsets: ['latin', 'latin-ext'],
-  weight: ['300', '400', '500', '600', '700'],
-});
 
 export default async function Home() {
   const supabase = await createClient()
@@ -58,7 +51,7 @@ export default async function Home() {
 
           {/* Paragraf */}
           <div className="w-full sm:w-auto bg-white/10 backdrop-blur-sm rounded-2xl px-4 sm:px-6 py-4 mb-8">
-            <p className={`max-w-2xl mx-auto text-base sm:text-lg md:text-xl text-white font-light leading-relaxed ${montserrat.className}`}>
+            <p className={`max-w-2xl mx-auto text-base sm:text-lg md:text-xl text-white font-light leading-relaxed font-montserrat`}>
               Sakarya Üniversitesi Yönetim Bilişim Sistemleri Topluluğu; veriyi bilgiye, teknolojiyi stratejik bir güce dönüştüren yenilikçi analistlerin buluşma noktasıdır. İş dünyası ile dijital dünya arasındaki köprüyü birlikte inşa ediyoruz.
             </p>
           </div>
@@ -221,7 +214,7 @@ export default async function Home() {
                           <Target className="w-8 h-8" />
                         </div>
                         <h4 className="text-xl font-heading font-bold text-slate-900 mb-4">Amacımız</h4>
-                        <ul className={`mt-2 text-left space-y-4 text-sm md:text-base text-slate-700 font-normal leading-relaxed w-full ${montserrat.className}`}>
+                        <ul className={`mt-2 text-left space-y-4 text-sm md:text-base text-slate-700 font-normal leading-relaxed w-full font-montserrat`}>
                           <li className="flex items-start">
                             <CheckCircle className="w-5 h-5 text-brand-600 mr-2 flex-shrink-0 mt-0.5" />
                             <span>Öğrencilerde takım çalışması, liderlik ve analitik düşünme becerilerini geliştirmek.</span>
@@ -242,7 +235,7 @@ export default async function Home() {
                           <Lightbulb className="w-8 h-8" />
                         </div>
                         <h4 className="text-xl font-heading font-bold text-slate-900 mb-4">Vizyonumuz</h4>
-                        <ul className={`mt-2 text-left space-y-4 text-sm md:text-base text-slate-700 font-normal leading-relaxed w-full ${montserrat.className}`}>
+                        <ul className={`mt-2 text-left space-y-4 text-sm md:text-base text-slate-700 font-normal leading-relaxed w-full font-montserrat`}>
                           <li className="flex items-start">
                             <CheckCircle className="w-5 h-5 text-brand-600 mr-2 flex-shrink-0 mt-0.5" />
                             <span>Sadece üniversite içinde değil, ulusal çapta teknoloji ve bilişim ekosistemine yön vermek.</span>
@@ -263,7 +256,7 @@ export default async function Home() {
                           <Trophy className="w-8 h-8" />
                         </div>
                         <h4 className="text-xl font-heading font-bold text-slate-900 mb-4">Neden Biz?</h4>
-                        <ul className={`mt-2 text-left space-y-4 text-sm md:text-base text-slate-700 font-normal leading-relaxed w-full ${montserrat.className}`}>
+                        <ul className={`mt-2 text-left space-y-4 text-sm md:text-base text-slate-700 font-normal leading-relaxed w-full font-montserrat`}>
                           <li className="flex items-start">
                             <CheckCircle className="w-5 h-5 text-brand-600 mr-2 flex-shrink-0 mt-0.5" />
                             <span>İdeathon ve kariyer zirveleriyle dolu dinamik bir ekosistem.</span>
