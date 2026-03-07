@@ -73,6 +73,34 @@ export async function createEvent(formData: FormData) {
 export async function deleteEvent(id: string) {
     const supabase = await createClient()
 
+    // 1. Önce kaydı çek, image_url'yi al
+    const { data: event, error: fetchError } = await supabase
+        .from('events')
+        .select('image_url')
+        .eq('id', id)
+        .single()
+
+    console.log('event:', event)
+    console.log('fetchError:', fetchError)
+
+    // 2. Storage'dan resmi sil
+    if (event?.image_url) {
+        console.log('image_url:', event.image_url)
+        const filePath = event.image_url.split('/storage/v1/object/public/events/')[1]
+        console.log('filePath:', filePath)
+
+        if (filePath) {
+            const { error: storageError } = await supabase.storage
+                .from('events')
+                .remove([filePath])
+
+            if (storageError) {
+                console.error('Storage silme hatası:', storageError)
+            }
+        }
+    }
+
+    // 3. DB'den sil
     const { error } = await supabase.from('events').delete().eq('id', id)
 
     if (error) {
