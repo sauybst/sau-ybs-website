@@ -1,36 +1,27 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SAU YBS Topluluğu Dijital Vitrini ve Operasyon Merkezi
 
-## Getting Started
+Sakarya Üniversitesi Yönetim Bilişim Sistemleri (SAU YBS) topluluğunun vizyonunu, etkinliklerini, öğrenci projelerini ve geçmiş yönetim kurulları gibi kurumsal hafızasını profesyonelce sergileyen dinamik web platformu. Aynı zamanda teknik olmayan üyelerin içerik yönetebileceği bir operasyon merkezidir.
 
-First, run the development server:
+Bu proje, yüksek performans ve sıfır maliyet odaklı modern web teknolojileri kullanılarak inşa edilmiş olup, gelecekte entegre edilecek otomasyon sistemleri (zaferOPS) için de ilişkisel ve sağlam bir veritabanı temeli sunar.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🚀 Teknolojik Altyapı
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Proje, güncel frontend ekosistemi ve kurumsal standartlarda bir backend mimarisi ile geliştirilmiştir:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Framework:** Next.js 16 (App Router) & React 19
+- **Stil & Tasarım:** Tailwind CSS v4
+- **Veritabanı & Auth:** Supabase (PostgreSQL)
+- **İçerik Editörü:** React Quill New (Zengin metin blog/duyuru yönetimi)
+- **Optimizasyon:** İstemci tarafı (client-side) görsel sıkıştırma 
+- **Hosting:** Vercel
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## ✨ Temel Özellikler ve Modüller
 
-## Learn More
+Sistem 6 temel ilişkisel modülden oluşmaktadır:
 
-To learn more about Next.js, take a look at the following resources:
+- 📅 **Etkinlik Yönetimi:** İdeathon, eğitim ve anma programları gibi etkinliklerin detayları, afişleri ve kayıt linklerinin yönetimi.
+- 📝 **Blog ve Duyurular:** Topluluk üyeleri tarafından yazılan makalelerin zengin metin (rich-text) formatında yayınlanması.
+- 💼 **Staj ve Kariyer İlanları:** Kurumsal partnerlerin sunduğu staj ve iş fırsatlarının son başvuru tarihleriyle birlikte dinamik listelenmesi.
+- 🚀 **Öğrenci Projeleri (Proje Vitrini):** Bölüm öğrencilerinin geliştirdiği sistem analizi, donanım veya TÜBİTAK projelerinin sergilendiği portfolyo.
+- 🏛 **Kurumsal Hafıza (Yönetim Kurulu Arşivi):** Her akademik yıl sonunda "Devir İşlemi" ile eski kurulların silinmeden arşivlenmesi ve topluluğun tarihi kimliğinin korunması.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
