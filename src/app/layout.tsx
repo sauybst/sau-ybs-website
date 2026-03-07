@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Poppins, Lato } from 'next/font/google'
 import './globals.css'
 import ConditionalLayout from '@/components/ConditionalLayout'
+import ScrollToTop from '@/components/ScrollToTop';
 import CookieBanner from '@/components/CookieBanner'; 
 
 const poppins = Poppins({
@@ -35,7 +36,7 @@ export default function RootLayout({
           {children}
         </ConditionalLayout>
 
-        {/* CookieBanner sayfanın en altında çalışacak şekilde eklendi */}
+        <ScrollToTop />
         <CookieBanner />
       </body>
     </html>
