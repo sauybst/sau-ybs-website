@@ -5,6 +5,7 @@ import { createEvent } from '@/actions/events'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { useToast } from '@/components/ToastProvider';
+import ImageUpload from '@/components/ImageUpload'; 
 
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false })
 import 'react-quill-new/dist/quill.snow.css' 
@@ -14,6 +15,7 @@ export default function CreateEventPage() {
     const [title, setTitle] = useState('');
     const [slug, setSlug] = useState('');
     const [description, setDescription] = useState('');
+    const [imageFile, setImageFile] = useState<File | null>(null); // Seçilen resmi tutacağımız state eklendi
 
     useEffect(() => {
         const generatedSlug = title
@@ -34,25 +36,27 @@ export default function CreateEventPage() {
 
         const handleAction = async (formData: FormData) => {
                 try {
+                    // Seçilen fiziksel dosyayı Server Action'a göndermek üzere form verisine ekliyoruz
+                    if (imageFile) {
+                        formData.append('image', imageFile); 
+                    }
+
                     const result = await createEvent(formData) as { error?: string } | undefined;
                     
-                    // Eğer server fonksiyonun redirect atmıyor da düz obje dönüyorsa:
                     if (result?.error) {
                         showToast(result.error, 'error');
                     } else {
                         showToast('Etkinlik başarıyla oluşturuldu!', 'success');
                     }
                 } catch (error: any) {
-                // EĞER YAKALANAN HATA NEXT.JS YÖNLENDİRMESİYSE (İşlem başarılı demektir)
-                if (error?.message === 'NEXT_REDIRECT' || error?.digest?.startsWith('NEXT_REDIRECT')) {
-                    showToast('Etkinlik başarıyla oluşturuldu!', 'success'); // Toast'u global olarak çıkar
-                    throw error; // Yönlendirmenin (sayfa değiştirmenin) gerçekleşmesi için hatayı serbest bırak
+                    // Yönlendirme hatasını (Next.js redirect) başarılı sayıp hata fırlatmayı engelliyoruz
+                    if (error?.message === 'NEXT_REDIRECT' || error?.digest?.startsWith('NEXT_REDIRECT')) {
+                        showToast('Etkinlik başarıyla oluşturuldu!', 'success');
+                        throw error; 
+                    }
+                    console.error("DETAYLI HATA:", error); 
+                    showToast('Sunucu ile iletişim kurulurken bir hata oluştu.', 'error');
                 }
-                
-                // GERÇEK BİR SUNUCU HATASIYSA
-                console.error(error); // Geliştirici konsolunda hatayı görebilmen için
-                showToast('Sunucu ile iletişim kurulurken bir hata oluştu.', 'error');
-            }
         };
 
     return (
@@ -73,7 +77,6 @@ export default function CreateEventPage() {
                 </div>
             </div>
 
-            {/* ACTION KISMI handleAction OLARAK GÜNCELLENDİ */}
             <form action={handleAction} className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2 overflow-hidden">
                 {/* Ekranda görünmeyen ama arka planda veritabanına giden gizli Slug verisi */}
                 <input type="hidden" name="slug" value={slug} />
@@ -145,18 +148,13 @@ export default function CreateEventPage() {
                             </div>
                         </div>
 
+                        {/* Eski URL inputu kaldırılarak yerine yeni görsel yükleme bileşeni eklendi */}
                         <div className="sm:col-span-6">
-                            <label htmlFor="image_url" className="block text-sm font-medium leading-6 text-gray-900">
-                                Afiş URL
+                            <label className="block text-sm font-medium leading-6 text-gray-900 mb-2">
+                                Etkinlik Afişi
                             </label>
                             <div className="mt-2">
-                                <input
-                                    type="url"
-                                    name="image_url"
-                                    id="image_url"
-                                    placeholder="Örn: https://..."
-                                    className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                />
+                                <ImageUpload onImageSelect={(file) => setImageFile(file)} />
                             </div>
                         </div>
 

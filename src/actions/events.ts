@@ -13,13 +13,42 @@ export async function createEvent(formData: FormData) {
     const location = formData.get('location') as string
     const description = formData.get('description') as string
     const registration_url = formData.get('registration_url') as string
-    const image_url = formData.get('image_url') as string
+    const imageFile = formData.get('image') as File | null  // 'image_url' değil 'image'!
 
     if (!title || !slug || !event_date || !location) {
-        throw new Error('Gerekli alanları doldurunuz.')
+        return { error: 'Gerekli alanları doldurunuz.' }
     }
 
     const { data: { user } } = await supabase.auth.getUser()
+
+    // --- STORAGE UPLOAD ---
+    let image_url: string | null = null
+
+    if (imageFile && imageFile.size > 0) {
+        // Benzersiz dosya adı: timestamp + slug + .webp
+        const fileName = `${Date.now()}-${slug}.webp`
+        const filePath = `event-posters/${fileName}`
+
+        const { error: uploadError } = await supabase.storage
+            .from('events')           // ← Supabase'deki bucket adın neyse onu yaz
+            .upload(filePath, imageFile, {
+                contentType: 'image/webp',
+                upsert: false,
+            })
+
+        if (uploadError) {
+            console.error('Storage upload hatası:', uploadError)
+            return { error: 'Afiş yüklenirken hata oluştu: ' + uploadError.message }
+        }
+
+        // Public URL al
+        const { data: urlData } = supabase.storage
+            .from('events')           // ← aynı bucket adı
+            .getPublicUrl(filePath)
+
+        image_url = urlData.publicUrl
+    }
+    // --- STORAGE UPLOAD SON ---
 
     const { error } = await supabase.from('events').insert({
         title,
@@ -27,14 +56,14 @@ export async function createEvent(formData: FormData) {
         event_date: new Date(event_date).toISOString(),
         location,
         description,
-        registration_url,
-        image_url,
+        registration_url: registration_url || null,
+        image_url,                    // Artık gerçek URL geliyor
         created_by: user?.id,
     })
 
     if (error) {
-        console.error('Error creating event:', error)
-        throw new Error('Etkinlik oluşturulurken hata oluştu.')
+        console.error('DB insert hatası:', error)
+        return { error: 'Etkinlik oluşturulurken hata oluştu: ' + error.message }
     }
 
     revalidatePath('/admin/events')

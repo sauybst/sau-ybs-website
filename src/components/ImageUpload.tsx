@@ -2,7 +2,7 @@
 
 import React, { useState, ChangeEvent, useRef } from 'react';
 import { UploadCloud, Image as ImageIcon, Loader2, X } from 'lucide-react';
-import { compressImage } from '@/utils/imageCompression';
+import { compressImage } from '@/utils/supabase/imageCompression';
 
 interface ImageUploadProps {
   onImageSelect: (file: File | null) => void;
