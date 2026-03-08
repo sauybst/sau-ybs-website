@@ -3,6 +3,9 @@
 @theme {
   --font-sans: var(--font-lato), sans-serif;
   --font-heading: var(--font-poppins), sans-serif;
+  
+  /* İŞTE MONTSERRAT BURAYA GELDİ: Artık Tailwind font-montserrat sınıfını tanıyacak! */
+  --font-montserrat: var(--font-montserrat), sans-serif;
 
   /* SAU YBS için Yenilenmiş Canlı Teknoloji Mavisi Paleti */
   --color-brand-50: #eff6ff;  /* Çok açık, ferah arka planlar için */
