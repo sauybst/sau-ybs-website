@@ -28,7 +28,7 @@ export default async function PublicBlogsPage({ searchParams }: { searchParams: 
     // Veritabanı Sorgusu
     let query = supabase
         .from('blogs')
-        .select('*')
+        .select('*, profiles(first_name, last_name)')
         .order('published_at', { ascending: false });
 
     // Eğer URL'de bir type filtresi varsa (Örn: ?type=1) ve "all" değilse sorguyu filtrele
