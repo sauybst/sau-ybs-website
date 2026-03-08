@@ -2,6 +2,7 @@ import { createClient } from '@/utils/supabase/server'
 import Link from 'next/link'
 import { Calendar, Plus, Trash2, MapPin, Eye, Edit } from 'lucide-react'
 import { deleteEvent } from '@/actions/events'
+import DeleteConfirmButton from '@/components/DeleteConfirmButton'
 
 export default async function EventsPage() {
     const supabase = await createClient()
@@ -13,7 +14,7 @@ export default async function EventsPage() {
         .order('event_date', { ascending: false })
 
     if (error) {
-        console.error('Error fetching events:', error)
+        console.error('Error fetching events:')
     }
 
     return (
@@ -105,23 +106,11 @@ export default async function EventsPage() {
                                 </Link>
 
                                 {/* Silme Formu ve Butonu */}
-                                <form action={async () => {
-                                    'use server'
-                                    await deleteEvent(event.id)
-                                }}>
-                                    <button 
-                                        type="submit" 
-                                        className="p-2.5 text-slate-400 bg-slate-50 hover:bg-red-50 hover:text-red-600 rounded-xl transition-colors" 
-                                        title="Etkinliği Sil"
-                                        // Kullanıcı yanlışlıkla basmasın diye ufak bir JS onayı ekleyebiliriz
-                                        formAction={async (formData) => {
-                                            'use server'
-                                            await deleteEvent(event.id)
-                                        }}
-                                    >
-                                        <Trash2 className="w-5 h-5" />
-                                    </button>
-                                </form>
+                                <DeleteConfirmButton
+                                    id = {event.id}
+                                    onDelete= {deleteEvent}
+                                    itemName= {event.title}
+                                />
                             </div>
 
                         </div>

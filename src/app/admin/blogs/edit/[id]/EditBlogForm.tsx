@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from 'react'
-import { createBlog } from '@/actions/blogs'
+import { updateBlog } from '@/actions/blogs'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { useToast } from '@/components/ToastProvider'
@@ -10,14 +10,15 @@ import { ImagePlus, Trash2 } from 'lucide-react'
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false })
 import 'react-quill-new/dist/quill.snow.css'
 
-export default function CreateBlogPage() {
+export default function EditBlogForm({ blog }: { blog: any }) {
     const { showToast } = useToast();
     
-    const [title, setTitle] = useState('');
-    const [content, setContent] = useState('');
-    const [postType, setPostType] = useState('0'); // 0 = Blog, 1 = Makale
+    const [title, setTitle] = useState(blog.title || '');
+    const [content, setContent] = useState(blog.content || '');
+    const [postType, setPostType] = useState(blog.type?.toString() || '0'); 
 
-    const [imagePreview, setImagePreview] = useState('');
+    const [imagePreview, setImagePreview] = useState(blog.cover_image_url || '');
+    const [isImageDeleted, setIsImageDeleted] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -25,34 +26,39 @@ export default function CreateBlogPage() {
         if (file) {
             setSelectedFile(file);
             setImagePreview(URL.createObjectURL(file));
+            setIsImageDeleted(false);
         }
     };
 
     const handleRemoveImage = () => {
         setSelectedFile(null);
         setImagePreview('');
+        setIsImageDeleted(true); 
     };
 
     const handleAction = async (formData: FormData) => {
         try {
-            // Slug artık arka planda oluşturulacak, sadece diğer verileri gönderiyoruz
+            formData.append('id', blog.id);
             formData.append('content', content);
-            formData.append('type', postType); 
+            formData.append('type', postType);
+            formData.append('old_image_url', blog.cover_image_url || '');
+            formData.append('remove_image', isImageDeleted.toString());
             
             if (selectedFile) {
                 formData.append('image_file', selectedFile);
             }
 
-            const result = await createBlog(formData) as { error?: string } | undefined;
+            // Slug göndermiyoruz, sunucu kendi üretecek
+            const result = await updateBlog(formData) as { error?: string } | undefined;
             
             if (result?.error) {
                 showToast(result.error, 'error');
             } else {
-                showToast('Yazı başarıyla yayınlandı!', 'success');
+                showToast('Yazı başarıyla güncellendi!', 'success');
             }
         } catch (error: any) {
             if (error?.message === 'NEXT_REDIRECT' || error?.digest?.startsWith('NEXT_REDIRECT')) {
-                showToast('Yazı başarıyla yayınlandı!', 'success');
+                showToast('Yazı başarıyla güncellendi!', 'success');
                 throw error; 
             }
             showToast('Sunucu ile iletişim kurulurken bir hata oluştu.', 'error');
@@ -64,7 +70,7 @@ export default function CreateBlogPage() {
             <div className="md:flex md:items-center md:justify-between mb-6">
                 <div className="min-w-0 flex-1">
                     <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
-                        Yeni Yazı / Duyuru Oluştur
+                        Yazıyı Düzenle
                     </h2>
                 </div>
                 <div className="mt-4 flex md:ml-4 md:mt-0">
@@ -86,7 +92,7 @@ export default function CreateBlogPage() {
                             </div>
                         </div>
 
-                        {/* YAZI TÜRÜ (0 veya 1) */}
+                        {/* YAZI TÜRÜ */}
                         <div className="sm:col-span-2">
                             <label htmlFor="type" className="block text-sm font-medium leading-6 text-gray-900">Yazı Türü</label>
                             <div className="mt-2">
@@ -120,7 +126,6 @@ export default function CreateBlogPage() {
                                             </label>
                                             <p className="pl-1">veya sürükle bırak</p>
                                         </div>
-                                        <p className="text-xs leading-5 text-gray-500 mt-1">Geniş formatlı görseller tercih edin (Örn: 1920x1080px)</p>
                                     </div>
                                 </div>
                             )}
@@ -130,7 +135,7 @@ export default function CreateBlogPage() {
                         <div className="col-span-full">
                             <label className="block text-sm font-medium leading-6 text-gray-900 mb-2">Blog İçeriği</label>
                             <div className="bg-white rounded-md">
-                                <ReactQuill theme="snow" value={content} onChange={setContent} className="h-80 mb-12" placeholder="Yazınızı buraya yazın..." />
+                                <ReactQuill theme="snow" value={content} onChange={setContent} className="h-80 mb-12" />
                             </div>
                         </div>
 
@@ -138,7 +143,7 @@ export default function CreateBlogPage() {
                 </div>
                 <div className="flex items-center justify-end gap-x-6 border-t border-gray-900/10 bg-gray-50 px-4 py-4 sm:px-8">
                     <button type="submit" className="rounded-md bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-500 transition-colors">
-                        Yayınla
+                        Değişiklikleri Kaydet
                     </button>
                 </div>
             </form>

@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS public.blogs (
   published_at TIMESTAMP WITH TIME ZONE,
   author_id UUID REFERENCES public.profiles(id),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-  tur TEXT
+  type tinyint DEFAULT 0
 );
 
 -- RLS for blogs
