@@ -15,7 +15,7 @@ export async function login(prevState: any, formData: FormData) {
     })
 
     if (error) {
-        return { error: error.message }
+        return { error: `Kullanıcı adı veya şifre yanlış. (${error.message})` }
     }
 
     redirect('/admin')

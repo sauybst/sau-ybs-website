@@ -24,7 +24,7 @@ export default async function PublicBlogsPage() {
                 <div className="text-center mb-16">
                     <h2 className="text-brand-600 font-semibold tracking-wide uppercase text-sm mb-2">İçeriklerimiz</h2>
                     <h1 className="text-4xl md:text-5xl font-heading font-extrabold text-slate-900 tracking-tight">Blog ve Duyurular</h1>
-                    <p className="mt-4 max-w-2xl text-lg text-slate-600 mx-auto font-light">
+                    <p className="mt-4 max-w-2xl text-lg text-slate-600 mx-auto font-monstserrat">
                         Topluluğumuzdan haberdar olun, bilim, teknoloji ve yönetim dünyasından yazılarımızı okuyun.
                     </p>
                 </div>
