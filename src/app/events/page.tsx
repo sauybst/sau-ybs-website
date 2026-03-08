@@ -70,14 +70,24 @@ export default async function PublicEventsPage(props: any) {
                                         </span>
                                     </div>
 
-                                    <div className="h-60 bg-slate-100 w-full relative overflow-hidden">
+                                    {/* Yükseklik biraz artırıldı (h-72) ve arka plan daha şık yapıldı */}
+                                    <div className="h-72 bg-slate-900 w-full relative overflow-hidden flex items-center justify-center">
                                         {event.image_url ? (
-                                            <img src={event.image_url} alt={event.title} className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-700 ease-in-out" />
+                                            <>
+                                                {/* Arka planda afişin bulanık hali (Sinematik etki yaratır ve boşlukları doldurur) */}
+                                                <div className="absolute inset-0 opacity-50">
+                                                    <img src={event.image_url} alt="" className="object-cover w-full h-full blur-xl scale-110" />
+                                                </div>
+                                                {/* Ana Afiş: object-contain ile asla kırpılmaz, tam boy görünür */}
+                                                <img src={event.image_url} alt={event.title} className="relative z-10 object-contain w-full h-full p-4 group-hover:scale-105 transition-transform duration-700 ease-in-out drop-shadow-2xl" />
+                                            </>
                                         ) : (
                                             <div className="absolute inset-0 bg-gradient-to-br from-brand-50 to-indigo-100 flex items-center justify-center text-brand-300">
                                                 <CalendarIcon className="h-20 w-20 opacity-40" />
                                             </div>
                                         )}
+                                        
+                                        {/* Tarih Overlay (Eski kodunla aynı kalabilir, z-20 ekledik ki resmin altında kalmasın) */}
                                         <div className="absolute top-4 left-4 z-20">
                                             <div className="flex flex-col items-center justify-center bg-white/95 backdrop-blur-sm rounded-xl overflow-hidden shadow-lg border border-white/50 w-16 h-16">
                                                 <span className="text-xs font-bold uppercase tracking-wider text-brand-600 bg-brand-50 w-full text-center py-1">

@@ -40,14 +40,24 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
                 {/* Ana İçerik Kartı */}
                 <article className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
                     
-                    {/* Görsel veya Gradient Arka Plan */}
-                    <div className="h-72 sm:h-96 w-full relative bg-slate-100">
+                    <div className="h-[28rem] sm:h-[36rem] w-full relative bg-slate-950 overflow-hidden flex items-center justify-center">
                         {event.image_url ? (
-                            <img 
-                                src={event.image_url} 
-                                alt={event.title} 
-                                className="object-cover w-full h-full" 
-                            />
+                            <>
+                                {/* Arka plan bulanık efekti (Sinematik etki) */}
+                                <div className="absolute inset-0 opacity-40">
+                                    <img 
+                                        src={event.image_url} 
+                                        alt="" 
+                                        className="object-cover w-full h-full blur-2xl scale-125" 
+                                    />
+                                </div>
+                                {/* Ana afiş (Kırpılmadan tam boy gösterilir) */}
+                                <img 
+                                    src={event.image_url} 
+                                    alt={event.title} 
+                                    className="relative z-10 object-contain w-full h-full p-4 sm:p-8 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]" 
+                                />
+                            </>
                         ) : (
                             <div className="absolute inset-0 bg-gradient-to-br from-brand-100 to-indigo-50 flex items-center justify-center text-brand-300">
                                 <CalendarIcon className="h-32 w-32 opacity-20" />
