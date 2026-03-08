@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS public.board_members (
   is_active BOOLEAN NOT NULL DEFAULT true,
   full_name TEXT NOT NULL,
   board_role TEXT NOT NULL,
+  board_level TEXT,
   image_url TEXT,
   linkedin_url TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL

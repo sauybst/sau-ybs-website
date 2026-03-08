@@ -7,120 +7,166 @@ import { redirect } from 'next/navigation'
 export async function createBoardMember(formData: FormData) {
     const supabase = await createClient()
 
+    // Formdan gelen verileri çekiyoruz
     const full_name = formData.get('full_name') as string
     const board_role = formData.get('board_role') as string
+    const board_level = formData.get('board_level') as string
     const term_year = formData.get('term_year') as string
-    const is_active = formData.get('is_active') === 'on'
-    const image_url = formData.get('image_url') as string
+    const is_active = formData.get('is_active') === 'true'
     const linkedin_url = formData.get('linkedin_url') as string
+    const imageFile = formData.get('image') as File | null
 
-    if (!full_name || !board_role || !term_year) {
-        throw new Error('Gerekli alanları doldurunuz.')
+    if (!full_name || !board_role || !term_year || !board_level) {
+        return { error: 'Gerekli alanları doldurunuz.' }
+    }
+
+    // --- STORAGE UPLOAD ---
+    let image_url: string | null = null
+
+    if (imageFile && imageFile.size > 0) {
+        // Dosya adı: timestamp-isim-soyisim.webp
+        const safeName = full_name.toLowerCase().replace(/ /g, '-').replace(/[^a-z0-9-]/g, '')
+        const fileName = `${Date.now()}-${safeName}.webp`
+        const filePath = `members/${fileName}`
+
+        const { error: uploadError } = await supabase.storage
+            .from('board') // Supabase'de 'board' bucket'ı oluşturduğundan emin ol
+            .upload(filePath, imageFile, {
+                contentType: 'image/webp',
+                upsert: false,
+            })
+
+        if (uploadError) {
+            console.error('Storage upload hatası:', uploadError)
+            return { error: 'Profil fotoğrafı yüklenirken hata oluştu: ' + uploadError.message }
+        }
+
+        const { data: urlData } = supabase.storage
+            .from('board')
+            .getPublicUrl(filePath)
+
+        image_url = urlData.publicUrl
     }
 
     const { error } = await supabase.from('board_members').insert({
         full_name,
         board_role,
+        board_level,
         term_year,
         is_active,
+        linkedin_url: linkedin_url || null,
         image_url,
-        linkedin_url
     })
 
     if (error) {
-        console.error('Error creating board member:', error)
-        throw new Error('Yönetim kurulu üyesi eklenirken hata oluştu.')
+        console.error('DB insert hatası:', error)
+        return { error: 'Üye eklenirken hata oluştu: ' + error.message }
     }
 
     revalidatePath('/admin/board')
+    revalidatePath('/about')
     redirect('/admin/board')
 }
 
 export async function deleteBoardMember(id: string) {
     const supabase = await createClient()
 
-    const { error } = await supabase.from('board_members').delete().eq('id', id)
+    // 1. Önce resmi bul
+    const { data: member } = await supabase
+        .from('board_members')
+        .select('image_url')
+        .eq('id', id)
+        .single()
 
-    if (error) {
-        console.error('Error deleting board member:', error)
-        throw new Error('Yönetim kurulu üyesi silinirken hata oluştu.')
-    }
-
-    revalidatePath('/admin/board')
-}
-
-// Admins only action: Creating a new user
-export async function createUser(formData: FormData) {
-    const supabase = await createClient()
-
-    // Sadece admin yetkisi olan kişilerin buraya erişimini garanti altına alıyoruz
-    const { data: { user } } = await supabase.auth.getUser()
-    const { data: adminProfile } = await supabase.from('profiles').select('role').eq('id', user?.id).single()
-
-    if (adminProfile?.role !== 'admin') {
-        throw new Error('Erişim Reddedildi. Yalnızca adminler kullanıcı ekleyebilir.')
-    }
-
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
-    const first_name = formData.get('first_name') as string
-    const last_name = formData.get('last_name') as string
-    const role = formData.get('role') as string
-
-    if (!email || !password || !first_name || !last_name) {
-        throw new Error('Tüm alanları doldurunuz.')
-    }
-
-    // Supabase Auth üzerinde kullanıcı oluşturma
-    const { data: newAuthUser, error: authError } = await supabase.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-    })
-
-    if (authError) {
-        console.error('Kullanıcı oluşturma hatası:', authError)
-        throw new Error('Kullanıcı hesabı oluşturulamadı.')
-    }
-
-    // Auth u id ile profiles tablosuna bilgilerini kaydetme
-    if (newAuthUser?.user) {
-        const { error: profileError } = await supabase.from('profiles').insert({
-            id: newAuthUser.user.id,
-            first_name,
-            last_name,
-            role
-        })
-
-        if (profileError) {
-            console.error('Profil oluşturma hatası:', profileError)
-            // Bu seviyede kullanıcı eklendi ancak profili eklenmediyse rollback yapılamayabilir
-            // bu yüzden try-catch ile dikkatli kullanılmalıdır.
-            throw new Error('Kullanıcı profili oluşturulamadı.')
+    // 2. Storage'dan sil
+    if (member?.image_url) {
+        const filePath = member.image_url.split('/storage/v1/object/public/board/')[1]
+        if (filePath) {
+            await supabase.storage.from('board').remove([filePath])
         }
     }
 
-    revalidatePath('/admin/users')
-    redirect('/admin/users')
-}
-
-export async function deleteUser(userId: string) {
-    const supabase = await createClient()
-
-    const { data: { user } } = await supabase.auth.getUser()
-    const { data: adminProfile } = await supabase.from('profiles').select('role').eq('id', user?.id).single()
-
-    if (adminProfile?.role !== 'admin') {
-        throw new Error('Erişim Reddedildi.')
-    }
-
-    // Öncelikle auth tablosundan sileriz, trigger veya Cascade ayarlandıysa profile da silinir.
-    const { error } = await supabase.auth.admin.deleteUser(userId)
+    // 3. DB'den sil
+    const { error } = await supabase.from('board_members').delete().eq('id', id)
 
     if (error) {
-        console.error('Kullanıcı silme hatası:', error)
-        throw new Error('Kullanıcı silinirken bir hata oluştu.')
+        console.error('Error deleting member:', error)
+        throw new Error('Üye silinirken hata oluştu.')
     }
 
-    revalidatePath('/admin/users')
+    revalidatePath('/admin/board')
+    revalidatePath('/about')
+}
+
+export async function updateBoardMember(formData: FormData) {
+    const supabase = await createClient()
+
+    const id = formData.get('id') as string
+    const full_name = formData.get('full_name') as string
+    const board_role = formData.get('board_role') as string
+    const board_level = formData.get('board_level') as string
+    const term_year = formData.get('term_year') as string
+    const is_active = formData.get('is_active') === 'true'
+    const linkedin_url = formData.get('linkedin_url') as string
+
+    const imageFile = formData.get('image_file') as File | null
+    const removeImage = formData.get('remove_image') === 'true'
+    const oldImageUrl = formData.get('old_image_url') as string
+
+    let finalImageUrl = oldImageUrl
+
+    const extractPathFromUrl = (url: string) => {
+        if (!url) return null
+        const parts = url.split('/storage/v1/object/public/board/')
+        return parts.length > 1 ? parts[1] : null
+    }
+
+    // Eski resmi temizleme
+    if ((removeImage || (imageFile && imageFile.size > 0)) && oldImageUrl) {
+        const pathToDelete = extractPathFromUrl(oldImageUrl)
+        if (pathToDelete) {
+            await supabase.storage.from('board').remove([pathToDelete])
+        }
+        if (removeImage) finalImageUrl = ''
+    }
+
+    // Yeni resim yükleme
+    if (imageFile && imageFile.size > 0) {
+        const safeName = full_name.toLowerCase().replace(/ /g, '-').replace(/[^a-z0-9-]/g, '')
+        const fileName = `${Date.now()}-${safeName}.webp`
+        const filePath = `members/${fileName}`
+
+        const { error: uploadError } = await supabase.storage
+            .from('board')
+            .upload(filePath, imageFile, {
+                contentType: 'image/webp',
+                upsert: false,
+            })
+
+        if (!uploadError) {
+            const { data: urlData } = supabase.storage.from('board').getPublicUrl(filePath)
+            finalImageUrl = urlData.publicUrl
+        }
+    }
+
+    const { error } = await supabase
+        .from('board_members')
+        .update({
+            full_name,
+            board_role,
+            board_level,
+            term_year,
+            is_active,
+            linkedin_url: linkedin_url || null,
+            image_url: finalImageUrl || null,
+        })
+        .eq('id', id)
+
+    if (error) {
+        return { error: 'Güncelleme hatası: ' + error.message }
+    }
+
+    revalidatePath('/admin/board')
+    revalidatePath('/about')
+    redirect('/admin/board')
 }
