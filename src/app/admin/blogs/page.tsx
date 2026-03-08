@@ -1,6 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import Link from 'next/link'
-import { FileText, Plus, Trash2, Clock, Eye, Edit, BookOpen } from 'lucide-react'
+import { FileText, Plus, Trash2, Clock, Eye, Edit, BookOpen, Megaphone } from 'lucide-react'
 import { deleteBlog } from '@/actions/blogs' // Bu fonksiyonu birazdan oluşturacağız
 import DeleteConfirmButton from '@/components/DeleteConfirmButton'
 
@@ -60,14 +60,22 @@ export default async function BlogsPage() {
                                 {/* Metin İçeriği */}
                                 <div className="flex flex-col min-w-0">
                                     <div className="flex items-center gap-3 mb-1.5">
-                                        {/* Dinamik Tür Rozeti */}
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${isArticle ? 'bg-purple-100 text-purple-700' : 'bg-brand-50 text-brand-700'}`}>
-                                            {isArticle ? (
-                                                <><BookOpen className="w-3 h-3 mr-1" /> Makale</>
-                                            ) : (
-                                                <><FileText className="w-3 h-3 mr-1" /> Blog</>
-                                            )}
-                                        </span>
+                                        
+                                        {/* YENİLENEN DİNAMİK TÜR ROZETİ MANTIĞI */}
+                                        {blog.type === 1 ? (
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-700">
+                                                <BookOpen className="w-3 h-3 mr-1" /> Makale
+                                            </span>
+                                        ) : blog.type === 2 ? (
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-700">
+                                                <Megaphone className="w-3 h-3 mr-1" /> Duyuru
+                                            </span>
+                                        ) : (
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-brand-50 text-brand-700">
+                                                <FileText className="w-3 h-3 mr-1" /> Blog
+                                            </span>
+                                        )}
+
                                         <h3 className="text-lg font-bold text-slate-900 truncate">
                                             {blog.title}
                                         </h3>

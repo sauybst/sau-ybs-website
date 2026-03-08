@@ -5,6 +5,7 @@ import ConditionalLayout from '@/components/ConditionalLayout'
 import ScrollToTop from '@/components/ScrollToTop';
 import CookieBanner from '@/components/CookieBanner'; 
 import NextTopLoader from 'nextjs-toploader';
+import { ToastProvider } from '@/components/ToastProvider'; 
 
 const montserrat = Montserrat({
   subsets: ['latin', 'latin-ext'],
@@ -52,9 +53,12 @@ export default function RootLayout({
               zIndex={1600} 
           />
 
-          <ConditionalLayout>
-            {children}
-          </ConditionalLayout>
+          {/* İŞTE SİHRİN GERÇEKLEŞTİĞİ YER: Tüm içerik ToastProvider ile sarmalandı */}
+          <ToastProvider>
+              <ConditionalLayout>
+                {children}
+              </ConditionalLayout>
+          </ToastProvider>
           
           <ScrollToTop />
           <CookieBanner />
