@@ -1,7 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import Link from 'next/link'
 import { Plus, Trash2, Building2, Briefcase } from 'lucide-react'
-import { deleteJobPosting } from '@/actions/projects_jobs'
+import { deleteJobPosting } from '@/actions/projects'
 
 export default async function JobsPage() {
     const supabase = await createClient()

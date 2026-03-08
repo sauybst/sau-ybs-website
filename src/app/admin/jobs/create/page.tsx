@@ -1,4 +1,4 @@
-import { createJobPosting } from '@/actions/projects_jobs'
+import { createJobPosting } from '@/actions/projects'
 import Link from 'next/link'
 
 export default function CreateJobPage() {
