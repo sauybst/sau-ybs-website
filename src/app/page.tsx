@@ -320,7 +320,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* 4. Recent Events / News Grid */}
+        {/* 4. Recent Events / News Grid */}
       <section id="events" className="py-24 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
@@ -345,20 +345,40 @@ export default async function Home() {
             ) : (
               upcomingEvents.map((event) => (
                 <Link href={`/events/${event.slug}`} key={event.id} className="group flex flex-col bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                  <div className="relative h-56 w-full overflow-hidden bg-slate-100">
+                  
+                  {/* YENİLENEN GÖRSEL ALANI */}
+                  <div className="relative h-64 w-full overflow-hidden bg-slate-950 flex items-center justify-center">
                     {event.image_url ? (
-                      <img src={event.image_url} alt={event.title} className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700" />
+                      <>
+                        {/* Arka plan bulanık efekti */}
+                        <div className="absolute inset-0 opacity-50">
+                          <img 
+                            src={event.image_url} 
+                            alt="" 
+                            className="object-cover w-full h-full blur-xl scale-125 group-hover:scale-150 transition-transform duration-700" 
+                          />
+                        </div>
+                        {/* Ana afiş (object-contain ile kırpılmadan tam boy gösterilir) */}
+                        <img 
+                          src={event.image_url} 
+                          alt={event.title} 
+                          className="relative z-10 object-contain w-full h-full p-3 group-hover:scale-105 transition-transform duration-700 drop-shadow-xl" 
+                        />
+                      </>
                     ) : (
                       <div className="absolute inset-0 bg-gradient-to-br from-brand-50 to-indigo-100 flex items-center justify-center text-brand-300">
                         <CalendarIcon className="h-16 w-16 opacity-50" />
                       </div>
                     )}
-                    <div className="absolute top-4 left-4">
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-white/90 backdrop-blur-sm text-brand-700 shadow-sm">
+                    
+                    {/* Tarih Rozeti (z-20 eklendi) */}
+                    <div className="absolute top-4 left-4 z-20">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-white/95 backdrop-blur-sm text-brand-700 shadow-sm border border-white/50">
                         {new Date(event.event_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}
                       </span>
                     </div>
                   </div>
+
                   <div className="p-6 flex flex-col flex-1">
                     <h3 className="text-xl font-heading font-bold text-slate-900 mb-3 line-clamp-2 group-hover:text-brand-600 transition-colors">
                       {event.title}
