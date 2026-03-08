@@ -4,7 +4,6 @@ import './globals.css'
 import ConditionalLayout from '@/components/ConditionalLayout'
 import ScrollToTop from '@/components/ScrollToTop';
 import CookieBanner from '@/components/CookieBanner'; 
-// YENİ EKLENEN İMPORT
 import NextTopLoader from 'nextjs-toploader';
 
 const montserrat = Montserrat({

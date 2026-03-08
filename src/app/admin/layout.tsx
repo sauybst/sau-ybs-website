@@ -2,7 +2,6 @@ import AdminSidebar from '@/components/AdminSidebar'
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { ToastProvider } from '@/components/ToastProvider';
-// YENİ EKLENEN İMPORT
 import NextTopLoader from 'nextjs-toploader'; 
 
 export const metadata = {
