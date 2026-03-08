@@ -27,28 +27,56 @@ const navItems = [
 export default function AdminSidebar() {
     const pathname = usePathname()
 
+    // Alt sayfaları da (örneğin /admin/events/create) aktif göstermek için ufak bir kontrol fonksiyonu
+    const isActiveRoute = (itemHref: string) => {
+        if (itemHref === '/admin') {
+            return pathname === '/admin';
+        }
+        return pathname.startsWith(itemHref);
+    };
+
     return (
-        <div className="flex flex-col w-64 bg-slate-900 h-screen text-white">
-            <div className="flex items-center justify-center h-16 border-b border-slate-800">
-                <h1 className="text-xl font-bold">YBS Panel</h1>
+        <div className="flex flex-col w-64 bg-slate-950 h-screen text-slate-300 border-r border-slate-800/50 shadow-2xl">
+            
+            {/* Üst Logo Bölümü */}
+            <div className="flex items-center justify-center h-20 px-6 border-b border-slate-800/50">
+                <Link href="/admin" className="flex items-center justify-center group w-full">
+                    <span className="sr-only">SAU YBS Panel</span>
+                    {/* brightness-0 invert sınıfı logoyu tamamen beyaza çevirir. Kendi orijinal rengini istersen bu iki sınıfı silebilirsin. */}
+                    <img 
+                        src="/logotip.png" 
+                        alt="SAU YBS Logo" 
+                        className="h-10 w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] group-hover:scale-105 transition-all duration-300 brightness-0 invert opacity-90 group-hover:opacity-100" 
+                    />
+                </Link>
             </div>
-            <div className="flex-1 overflow-y-auto py-4">
-                <nav className="space-y-1 px-2">
+            
+            {/* Menü Linkleri */}
+            <div className="flex-1 overflow-y-auto py-6 px-3 custom-scrollbar">
+                <nav className="space-y-1.5">
                     {navItems.map((item) => {
-                        const isActive = pathname === item.href
+                        const isActive = isActiveRoute(item.href)
                         const Icon = item.icon
+                        
                         return (
                             <Link
                                 key={item.name}
                                 href={item.href}
-                                className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${isActive
-                                        ? 'bg-slate-800 text-white'
-                                        : 'text-slate-300 hover:bg-slate-700 hover:text-white'
-                                    }`}
+                                className={`group relative flex items-center px-3 py-3 text-sm font-semibold rounded-xl transition-all duration-300 ${
+                                    isActive
+                                        ? 'bg-brand-500/10 text-brand-400'
+                                        : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-100 hover:translate-x-1'
+                                }`}
                             >
+                                {/* Aktif Sayfa Gösterge Çizgisi */}
+                                {isActive && (
+                                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-brand-500 rounded-r-full shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
+                                )}
+                                
                                 <Icon
-                                    className={`mr-3 flex-shrink-0 h-5 w-5 ${isActive ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'
-                                        }`}
+                                    className={`mr-3 flex-shrink-0 h-5 w-5 transition-colors ${
+                                        isActive ? 'text-brand-400' : 'text-slate-500 group-hover:text-slate-300'
+                                    }`}
                                     aria-hidden="true"
                                 />
                                 {item.name}
@@ -57,17 +85,20 @@ export default function AdminSidebar() {
                     })}
                 </nav>
             </div>
-            <div className="flex-shrink-0 flex border-t border-slate-800 p-4">
+
+            {/* Çıkış Yap Bölümü */}
+            <div className="flex-shrink-0 p-4 border-t border-slate-800/50 bg-slate-900/50">
                 <form action={logout} className="w-full">
                     <button
                         type="submit"
-                        className="flex-shrink-0 group block w-full flex items-center px-2 py-2 text-sm font-medium rounded-md text-red-400 hover:bg-slate-800 hover:text-red-300 transition-colors"
+                        className="group flex items-center justify-center w-full px-4 py-2.5 text-sm font-semibold rounded-xl text-slate-400 hover:bg-red-500/10 hover:text-red-400 border border-transparent hover:border-red-500/20 transition-all duration-300"
                     >
-                        <LogOut className="mr-3 h-5 w-5" />
-                        Çıkış Yap
+                        <LogOut className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+                        Güvenli Çıkış
                     </button>
                 </form>
             </div>
+            
         </div>
     )
 }
