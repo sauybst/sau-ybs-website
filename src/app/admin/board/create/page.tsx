@@ -2,6 +2,10 @@ import { createBoardMember } from '@/actions/board_users'
 import Link from 'next/link'
 
 export default function CreateBoardMemberPage() {
+    const handleSubmit = async (formData: FormData) => {
+        await createBoardMember(formData)
+    }
+
     return (
         <div className="max-w-3xl mx-auto">
             <div className="md:flex md:items-center md:justify-between mb-6">
@@ -20,7 +24,7 @@ export default function CreateBoardMemberPage() {
                 </div>
             </div>
 
-            <form action={createBoardMember} className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2">
+            <form action={handleSubmit} className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2">
                 <div className="px-4 py-6 sm:p-8">
                     <div className="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
 

@@ -1,5 +1,8 @@
-import { createJobPosting } from '@/actions/projects'
+'use client'
+
+import { createProject } from '@/actions/projects'
 import Link from 'next/link'
+import { FormEvent } from 'react'
 
 export default function CreateJobPage() {
     return (
@@ -20,7 +23,11 @@ export default function CreateJobPage() {
                 </div>
             </div>
 
-            <form action={createJobPosting} className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2">
+            <form onSubmit={async (e: FormEvent<HTMLFormElement>) => {
+                e.preventDefault()
+                const formData = new FormData(e.currentTarget)
+                await createProject(formData)
+            }} className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2">
                 <div className="px-4 py-6 sm:p-8">
                     <div className="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
 
