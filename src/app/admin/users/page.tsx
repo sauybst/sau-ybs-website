@@ -1,7 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import Link from 'next/link'
 import { Plus, Trash2, Shield, User } from 'lucide-react'
-import { deleteUser } from '@/actions/board_users'
+import { deleteBoardMember } from '@/actions/board_users'
 
 export default async function UsersPage() {
     const supabase = await createClient()
@@ -67,7 +67,7 @@ export default async function UsersPage() {
                                     {user?.id !== profile.id && (
                                         <form action={async () => {
                                             'use server'
-                                            await deleteUser(profile.id)
+                                            await deleteBoardMember(profile.id)
                                         }}>
                                             <button type="submit" className="text-red-500 hover:text-red-700" title="Kullanıcıyı Sil (Geri alınamaz)">
                                                 <Trash2 className="h-5 w-5" />
