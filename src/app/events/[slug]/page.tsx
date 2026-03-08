@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { CalendarIcon, MapPin, Clock, ArrowLeft, ExternalLink } from 'lucide-react'
 export const dynamic = 'force-dynamic';
+import ShareButton from '@/components/ShareButton'
 
 // Next.js 15 ile uyumlu dinamik parametre yakalama
 export default async function EventDetailPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -73,10 +74,17 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
                     </div>
 
                     <div className="p-8 sm:p-12">
-                        {/* Başlık ve Temel Bilgiler */}
-                        <h1 className="text-3xl sm:text-4xl font-heading font-extrabold text-slate-900 mb-6 tracking-tight leading-tight">
-                            {event.title}
-                        </h1>
+                        {/* Başlık ve Paylaş Butonu */}
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6 mb-6">
+                            <h1 className="text-3xl sm:text-4xl font-heading font-extrabold text-slate-900 tracking-tight leading-tight flex-1">
+                                {event.title}
+                            </h1>
+                            
+                            {/* Sihirli Paylaş Butonumuz */}
+                            <div className="flex-shrink-0 mt-1 sm:mt-0">
+                                <ShareButton title={event.title} />
+                            </div>
+                        </div>
 
                         <div className="flex flex-wrap items-center gap-6 mb-8 pb-8 border-b border-slate-100">
                             <div className="flex items-center text-slate-600">
@@ -87,10 +95,18 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
                                 <Clock className="w-5 h-5 mr-2 text-brand-500" />
                                 <span className="font-medium">{eventDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</span>
                             </div>
-                            <div className="flex items-center text-slate-600">
-                                <MapPin className="w-5 h-5 mr-2 text-brand-500" />
-                                <span className="font-medium">{event.location}</span>
-                            </div>
+                            <a 
+                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center text-slate-600 hover:text-brand-600 transition-colors group"
+                                title="Google Haritalar'da Aç"
+                            >
+                                <MapPin className="w-5 h-5 mr-2 text-brand-500 group-hover:scale-110 group-hover:text-brand-600 transition-transform" />
+                                <span className="font-medium underline decoration-transparent group-hover:decoration-brand-300 underline-offset-4 transition-all">
+                                    {event.location}
+                                </span>
+                            </a>
                         </div>
 
                         {/* Zengin Metin Açıklaması (React Quill HTML Çıktısı Buraya Basılır) */}

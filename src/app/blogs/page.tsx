@@ -7,10 +7,23 @@ export const metadata = {
     description: 'Makaleler, teknoloji haberleri ve topluluk duyuruları',
 }
 
-// React Quill'den gelen HTML etiketlerini temizleyip sadece düz metni gösteren yardımcı fonksiyon
+// React Quill'den gelen HTML etiketlerini kelimeleri birleştirmeden temizleyen Fonksiyon
 const stripHtml = (html: string) => {
     if (!html) return '';
-    return html.replace(/<[^>]*>?/gm, '');
+    return html
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/<\/?br\s*\/?>/gi, '\n') 
+        .replace(/<\/p>/gi, '\n')         
+        .replace(/<[^>]+>/g, ' ')         
+        .replace(/[ \t]+/g, ' ')          
+        .replace(/\n\s+/g, '\n')          
+        .replace(/\n+/g, '\n')            
+        .trim();
 };
 
 // Kategori (type) değerine göre renk ve ikon döndüren yardımcı fonksiyon
@@ -141,7 +154,7 @@ export default async function PublicBlogsPage({ searchParams }: { searchParams: 
                                         </h3>
 
                                         {/* React Quill HTML kodlarını gizleyip sadece düz metin (özet) gösteriyoruz */}
-                                        <p className="text-slate-600 text-sm flex-1 leading-relaxed line-clamp-3 mb-6 font-montserrat">
+                                        <p className="text-slate-600 text-sm flex-1 leading-relaxed line-clamp-3 mb-6 font-montserrat whitespace-pre-line">
                                             {stripHtml(blog.content)}
                                         </p>
 
