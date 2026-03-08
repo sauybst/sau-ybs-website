@@ -48,7 +48,7 @@ export default async function AdminLayout({
                         <div className="px-6 py-3 lg:px-8 flex justify-between items-center h-16">
                             
                             {/* Sol Taraf: Modern Başlık */}
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3 pl-10 lg:pl-0">
                                 <div className="h-6 w-1.5 bg-brand-500 rounded-full shadow-sm"></div>
                                 <h1 className="text-xl font-heading font-extrabold text-slate-800 tracking-tight">
                                     Yönetim Paneli
