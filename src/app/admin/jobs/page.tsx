@@ -1,7 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import Link from 'next/link'
 import { Plus, Trash2, Building2, Briefcase } from 'lucide-react'
-import { deleteJobPosting } from '@/actions/projects'
+import { deleteProject } from '@/actions/projects'
 
 export default async function JobsPage() {
     const supabase = await createClient()
@@ -55,7 +55,7 @@ export default async function JobsPage() {
                                     </span>
                                     <form action={async () => {
                                         'use server'
-                                        await deleteJobPosting(job.id)
+                                        await deleteProject(job.id)
                                     }}>
                                         <button type="submit" className="text-red-500 hover:text-red-700" title="Sil">
                                             <Trash2 className="h-5 w-5" />
