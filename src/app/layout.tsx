@@ -4,6 +4,8 @@ import './globals.css'
 import ConditionalLayout from '@/components/ConditionalLayout'
 import ScrollToTop from '@/components/ScrollToTop';
 import CookieBanner from '@/components/CookieBanner'; 
+// YENİ EKLENEN İMPORT
+import NextTopLoader from 'nextjs-toploader';
 
 const montserrat = Montserrat({
   subsets: ['latin', 'latin-ext'],
@@ -37,6 +39,20 @@ export default function RootLayout({
   return (
     <html lang="tr" className={`scroll-smooth ${poppins.variable} ${lato.variable}`}>
       <body className="font-sans antialiased bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+          
+          <NextTopLoader 
+              color="#2563eb" 
+              initialPosition={0.08} 
+              crawlSpeed={200} 
+              height={3} 
+              crawl={true} 
+              showSpinner={false} 
+              easing="ease" 
+              speed={200} 
+              shadow="0 0 10px #2563eb,0 0 5px #2563eb" 
+              zIndex={1600} 
+          />
+
           <ConditionalLayout>
             {children}
           </ConditionalLayout>

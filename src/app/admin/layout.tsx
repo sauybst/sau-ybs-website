@@ -2,6 +2,8 @@ import AdminSidebar from '@/components/AdminSidebar'
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { ToastProvider } from '@/components/ToastProvider';
+// YENİ EKLENEN İMPORT
+import NextTopLoader from 'nextjs-toploader'; 
 
 export const metadata = {
     title: 'YBS Yönetim Paneli',
@@ -21,12 +23,23 @@ export default async function AdminLayout({
         redirect('/login')
     }
 
-    // Kullanıcının baş harfini avatar için alıyoruz
     const userInitial = user.email ? user.email.charAt(0).toUpperCase() : 'U';
 
     return (
-        // Tüm admin panelini ToastProvider ile sarmalıyoruz
         <ToastProvider>
+            {/* TIKLADIĞIN ANDA ÇALIŞACAK İLERLEME ÇUBUĞU */}
+            <NextTopLoader 
+                color="#2563eb" /* brand-600 rengimiz (Mavi) */
+                initialPosition={0.08} 
+                crawlSpeed={200} 
+                height={3} 
+                crawl={true} 
+                showSpinner={false} 
+                easing="ease" 
+                speed={200} 
+                shadow="0 0 10px #2563eb,0 0 5px #2563eb" 
+            />
+            
             <div className="flex h-screen bg-slate-50">
                 <AdminSidebar />
                 <div className="flex-1 flex flex-col overflow-hidden relative">
@@ -46,7 +59,7 @@ export default async function AdminLayout({
                             {/* Sağ Taraf: Kullanıcı Profil Modülü */}
                             <div className="flex items-center gap-3 bg-white px-2 py-1.5 rounded-full border border-slate-200 shadow-sm hover:shadow-md transition-all cursor-default group">
                                 <div className="flex flex-col text-right hidden sm:flex pl-2">
-                                    <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Aktif Oturum</span>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Aktif Oturum</span>
                                     <span className="text-sm font-bold text-slate-700 leading-none group-hover:text-brand-600 transition-colors">
                                         {user.email}
                                     </span>
