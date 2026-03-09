@@ -99,7 +99,7 @@ export default async function AboutAndBoardPage() {
                                 <Target className="w-7 h-7" />
                             </div>
                             <h3 className="text-2xl font-bold text-slate-900 mb-5 font-heading relative z-10">Misyonumuz</h3>
-                            <ul className="space-y-3 relative z-10 mt-auto">
+                            <ul className="space-y-3 relative z-10">
                                 <li className="flex items-start text-slate-600 font-montserrat text-sm md:text-base">
                                     <span className="w-2 h-2 rounded-full bg-brand-500 mt-2 mr-3 flex-shrink-0"></span>
                                     <span>Akademik bilgiyi pratik deneyimle harmanlamak.</span>
@@ -122,7 +122,7 @@ export default async function AboutAndBoardPage() {
                                 <Lightbulb className="w-7 h-7" />
                             </div>
                             <h3 className="text-2xl font-bold text-slate-900 mb-5 font-heading relative z-10">Vizyonumuz</h3>
-                            <ul className="space-y-3 relative z-10 mt-auto">
+                            <ul className="space-y-3 relative z-10">
                                 <li className="flex items-start text-slate-600 font-montserrat text-sm md:text-base">
                                     <span className="w-2 h-2 rounded-full bg-amber-500 mt-2 mr-3 flex-shrink-0"></span>
                                     <span>Türkiye'nin en aktif öğrenci topluluğu olmak.</span>
@@ -145,7 +145,7 @@ export default async function AboutAndBoardPage() {
                                 <Compass className="w-7 h-7" />
                             </div>
                             <h3 className="text-2xl font-bold text-slate-900 mb-5 font-heading relative z-10">Değerlerimiz</h3>
-                            <ul className="space-y-3 relative z-10 mt-auto">
+                            <ul className="space-y-3 relative z-10">
                                 <li className="flex items-start text-slate-600 font-montserrat text-sm md:text-base">
                                     <span className="w-2 h-2 rounded-full bg-emerald-500 mt-2 mr-3 flex-shrink-0"></span>
                                     <span>Yenilikçilik ve sürekli gelişim.</span>

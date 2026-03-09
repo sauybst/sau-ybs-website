@@ -1,14 +1,22 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Menu, X } from 'lucide-react'
+import { usePathname } from 'next/navigation' // URL dinlemek için eklendi
 
 export default function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
+    const pathname = usePathname() // Mevcut rotayı (URL'yi) alır
 
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen)
     const closeMenu = () => setIsMenuOpen(false)
+
+    // SİHİRLİ DOKUNUŞ: URL her değiştiğinde bu efekt çalışır ve menüyü otomatik kapatır.
+    // Artık Link'lerin içine tek tek onClick yazmak zorunda değilsin!
+    useEffect(() => {
+        setIsMenuOpen(false)
+    }, [pathname])
 
     return (
         <header className="fixed w-full top-0 z-50 bg-white/80 backdrop-blur-md border-b border-brand-100/50 shadow-sm transition-all duration-300">
@@ -17,10 +25,8 @@ export default function Header() {
                     
                     {/* SOL KISIM: Logo */}
                     <div className="flex lg:flex-1">
-                        {/* Logonun header'ı esnetmemesi için mobilde -my-2, masaüstünde -my-3 negatif boşluğu verildi */}
-                        <Link href="/" onClick={closeMenu} className="flex items-center group -my-2 sm:-my-3 -ml-2 lg:-ml-6">
+                        <Link href="/" className="flex items-center group -my-2 sm:-my-3 -ml-2 lg:-ml-6">
                             <span className="sr-only">SAU YBS</span>
-                            {/* Yükseklik h-12 ve h-16 yapılarak belirgin şekilde büyütüldü, origin-left ile sola sabitlendi */}
                             <img 
                                 src="/logotip.png" 
                                 alt="SAU YBS Logo" 
@@ -41,7 +47,6 @@ export default function Header() {
 
                     {/* SAĞ KISIM: Buton ve Mobil Menü Tetikleyici */}
                     <div className="flex flex-1 items-center justify-end gap-4">
-                        {/* Masaüstü Butonu */}
                         <a 
                             href="https://topluluk.sabis.sakarya.edu.tr/sau-yonetim-bilisim-sistemleri-ogrenci-toplulugu" 
                             target="_blank" 
@@ -52,7 +57,6 @@ export default function Header() {
                             Topluluğumuza Katılın
                         </a>
 
-                        {/* Mobil Menü Butonu */}
                         <button
                             type="button"
                             className="inline-flex items-center justify-center p-2 mr-2 sm:mr-4 rounded-md text-slate-600 hover:text-brand-600 hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-500 lg:hidden"
@@ -75,16 +79,17 @@ export default function Header() {
                         isMenuOpen ? 'max-h-[500px] opacity-100 pb-4' : 'max-h-0 opacity-0'
                     }`}
                 >
+                    {/* Artık Link'lerin içindeki onClick={closeMenu} kodlarını tamamen kaldırdım, daha temiz oldu! */}
                     <div className="flex flex-col space-y-1 pt-2 border-t border-brand-50">
-                        <Link href="/" onClick={closeMenu} className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-brand-600 hover:bg-brand-50 transition-colors">Ana Sayfa</Link>
-                        <Link href="/events" onClick={closeMenu} className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-brand-600 hover:bg-brand-50 transition-colors">Etkinlikler</Link>
-                        <Link href="/blogs" onClick={closeMenu} className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-brand-600 hover:bg-brand-50 transition-colors">Duyurular & Blog</Link>
-                        <Link href="/projects" onClick={closeMenu} className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-brand-600 hover:bg-brand-50 transition-colors">Projeler</Link>
-                        <Link href="/board" onClick={closeMenu} className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-brand-600 hover:bg-brand-50 transition-colors">Hakkımızda</Link>
+                        <Link href="/" className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-brand-600 hover:bg-brand-50 transition-colors">Ana Sayfa</Link>
+                        <Link href="/events" className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-brand-600 hover:bg-brand-50 transition-colors">Etkinlikler</Link>
+                        <Link href="/blogs" className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-brand-600 hover:bg-brand-50 transition-colors">Duyurular & Blog</Link>
+                        <Link href="/projects" className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-brand-600 hover:bg-brand-50 transition-colors">Projeler</Link>
+                        <Link href="/board" className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-brand-600 hover:bg-brand-50 transition-colors">Hakkımızda</Link>
                         <Link href="/jobs" className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-brand-600 hover:bg-brand-50 transition-colors">Staj & İş İlanları</Link>
 
-                        {/* Mobil Menüdeki Buton */}
                         <div className="px-3 pt-4 pb-2 mt-2 border-t border-slate-100">
+                            {/* Dışarıya giden bağlantılarda sayfa değişmeyeceği için onClick={closeMenu} kalmalı */}
                             <a 
                                 href="https://topluluk.sabis.sakarya.edu.tr/sau-yonetim-bilisim-sistemleri-ogrenci-toplulugu" 
                                 target="_blank" 

@@ -1,133 +1,222 @@
-'use client'
+"use client" 
 
-import { createProject } from '@/actions/projects'
+import { useState, useEffect } from 'react'
+import { createJobPosting } from '@/actions/jobs'
 import Link from 'next/link'
-import { FormEvent } from 'react'
+import dynamic from 'next/dynamic'
+import { useToast } from '@/components/ToastProvider';
+import ImageUpload from '@/components/ImageUpload'; 
+
+// React Quill'i SSR hatası vermemesi için dinamik yüklüyoruz
+const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false })
+import 'react-quill-new/dist/quill.snow.css' 
 
 export default function CreateJobPage() {
+    const { showToast } = useToast();
+    const [description, setDescription] = useState('');
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [slug, setSlug] = useState(''); // Slug state'ini ekle
+    const [companyName, setCompanyName] = useState(''); // Şirket adını izlemek için value'yu state'e bağlamalısın
+    const [positionName, setPositionName] = useState(''); // Pozisyonu izlemek için value'yu state'e bağlamalısın
+
+    // Şirket veya Pozisyon değiştikçe otomatik slug üret
+    useEffect(() => {
+        const combined = `${companyName} ${positionName}`;
+        const generatedSlug = combined
+            .toLowerCase()
+            .trim()
+            .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
+            .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
+            .replace(/[^a-z0-9 -]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-'); 
+        setSlug(generatedSlug);
+    }, [companyName, positionName]);
+
+    const handleAction = async (formData: FormData) => {
+        try {
+            if (imageFile) {
+                formData.append('image', imageFile); 
+            }
+
+            const result = await createJobPosting(formData) as { error?: string } | undefined;
+            
+            if (result?.error) {
+                showToast(result.error, 'error');
+            } else {
+                showToast('İlan başarıyla oluşturuldu!', 'success');
+            }
+        } catch (error: any) {
+            if (error?.message === 'NEXT_REDIRECT' || error?.digest?.startsWith('NEXT_REDIRECT')) {
+                showToast('İlan başarıyla oluşturuldu!', 'success');
+                throw error; 
+            }
+            console.error("DETAYLI HATA:", error); 
+            showToast('Sunucu ile iletişim kurulurken bir hata oluştu.', 'error');
+        }
+    };
+
     return (
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-4xl mx-auto pb-12">
             <div className="md:flex md:items-center md:justify-between mb-6">
                 <div className="min-w-0 flex-1">
                     <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
-                        Yeni İlan Ekle
+                        Yeni İlan Oluştur
                     </h2>
                 </div>
                 <div className="mt-4 flex md:ml-4 md:mt-0">
                     <Link
                         href="/admin/jobs"
-                        className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                        className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-colors"
                     >
                         İptal
                     </Link>
                 </div>
             </div>
 
-            <form onSubmit={async (e: FormEvent<HTMLFormElement>) => {
-                e.preventDefault()
-                const formData = new FormData(e.currentTarget)
-                await createProject(formData)
-            }} className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2">
+            <form action={handleAction} className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2 overflow-hidden">
                 <div className="px-4 py-6 sm:p-8">
                     <div className="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+                        
+                        {/* Aktiflik Durumu */}
+                        <div className="sm:col-span-6 bg-brand-50 p-4 rounded-xl border border-brand-100">
+                            <div className="flex items-center gap-3">
+                                <input
+                                    type="checkbox"
+                                    id="is_active"
+                                    name="is_active"
+                                    value="true"
+                                    defaultChecked
+                                    className="h-5 w-5 rounded border-brand-300 text-brand-600 focus:ring-brand-600 transition-all cursor-pointer"
+                                />
+                                <label htmlFor="is_active" className="text-sm font-bold text-brand-900 cursor-pointer select-none">
+                                    İlanı şu anda "Aktif" (Görünür) olarak yayınla
+                                </label>
+                            </div>
+                        </div>
 
+                        {/* Şirket Adı */}
                         <div className="sm:col-span-3">
                             <label htmlFor="company_name" className="block text-sm font-medium leading-6 text-gray-900">
-                                Şirket Adı
+                                Şirket Adı <span className="text-red-500">*</span>
                             </label>
-                            <div className="mt-2">
+                            <div className="mt-2 text-gray-900">
                                 <input
                                     type="text"
                                     name="company_name"
                                     id="company_name"
                                     required
-                                    className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                    placeholder="Örn: Otokar"
+                                    className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-600 sm:text-sm sm:leading-6"
                                 />
                             </div>
                         </div>
 
+                        {/* Pozisyon / Unvan */}
                         <div className="sm:col-span-3">
                             <label htmlFor="position_name" className="block text-sm font-medium leading-6 text-gray-900">
-                                Pozisyon Adı
+                                Pozisyon / Unvan <span className="text-red-500">*</span>
                             </label>
-                            <div className="mt-2">
+                            <div className="mt-2 text-gray-900">
                                 <input
                                     type="text"
                                     name="position_name"
                                     id="position_name"
                                     required
-                                    className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                    placeholder="Örn: İş Analisti Stajyeri"
+                                    className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-600 sm:text-sm sm:leading-6"
                                 />
                             </div>
                         </div>
 
+                        {/* Çalışma Modeli (NORMALİZASYON İÇİN AÇILIR MENÜ YAPILDI) */}
                         <div className="sm:col-span-3">
                             <label htmlFor="work_model" className="block text-sm font-medium leading-6 text-gray-900">
-                                Çalışma Modeli (Uzaktan, Hibrit vs.)
+                                Çalışma Modeli <span className="text-red-500">*</span>
                             </label>
                             <div className="mt-2">
-                                <input
-                                    type="text"
-                                    name="work_model"
+                                <select
                                     id="work_model"
+                                    name="work_model"
                                     required
-                                    className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                />
+                                    defaultValue=""
+                                    className="block w-full rounded-md border-0 py-2.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-600 sm:text-sm sm:leading-6"
+                                >
+                                    <option value="" disabled>Seçiniz</option>
+                                    <option value="0">Yüzyüze</option>
+                                    <option value="1">Uzaktan</option>
+                                    <option value="2">Hibrit</option>
+                                    <option value="3">Belirtilmemiş</option>
+                                </select>
                             </div>
                         </div>
 
+                        {/* Son Başvuru Tarihi */}
                         <div className="sm:col-span-3">
                             <label htmlFor="deadline_date" className="block text-sm font-medium leading-6 text-gray-900">
-                                Son Başvuru Tarihi
+                                Son Başvuru Tarihi <span className="text-gray-400 font-normal text-xs ml-1">(İsteğe bağlı)</span>
                             </label>
                             <div className="mt-2">
                                 <input
-                                    type="date"
+                                    type="datetime-local"
                                     name="deadline_date"
                                     id="deadline_date"
-                                    className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                    className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-600 sm:text-sm sm:leading-6"
                                 />
                             </div>
                         </div>
 
+                        {/* Başvuru Linki */}
                         <div className="sm:col-span-6">
                             <label htmlFor="application_link" className="block text-sm font-medium leading-6 text-gray-900">
-                                Başvuru Linki / E-posta
+                                Başvuru Linki <span className="text-gray-400 font-normal text-xs ml-1">(İsteğe bağlı)</span>
                             </label>
                             <div className="mt-2">
                                 <input
-                                    type="text"
+                                    type="url"
                                     name="application_link"
                                     id="application_link"
-                                    className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                    placeholder="Örn: https://kariyer.net/..."
+                                    className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-600 sm:text-sm sm:leading-6"
                                 />
                             </div>
                         </div>
 
-                        <div className="col-span-full">
-                            <label htmlFor="description" className="block text-sm font-medium leading-6 text-gray-900">
-                                İlan Detayları
+                        {/* Şirket Logosu Yükleme */}
+                        <div className="sm:col-span-6">
+                            <label className="block text-sm font-medium leading-6 text-gray-900 mb-2">
+                                Şirket Logosu <span className="text-gray-400 font-normal text-xs ml-1">(Kare veya şeffaf PNG/WEBP önerilir)</span>
                             </label>
                             <div className="mt-2">
-                                <textarea
-                                    id="description"
-                                    name="description"
-                                    rows={4}
-                                    required
-                                    className="block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                    defaultValue={''}
-                                />
+                                <ImageUpload onImageSelect={(file) => setImageFile(file)} />
                             </div>
                         </div>
 
+                        {/* İlan Detayları (Zengin Metin Editörü) */}
+                        <div className="col-span-full">
+                            <label className="block text-sm font-medium leading-6 text-gray-900 mb-2">
+                                İlan Detayları ve Nitelikler <span className="text-red-500">*</span>
+                            </label>
+                            <div className="bg-white rounded-md">
+                                <ReactQuill 
+                                    theme="snow" 
+                                    value={description} 
+                                    onChange={setDescription} 
+                                    className="h-64 mb-12" 
+                                    placeholder="Aranan nitelikler, iş tanımı, staj programı detayları vb..."
+                                />
+                            </div>
+                            <input type="hidden" name="description" value={description} />
+                        </div>
+
+                        <input type="hidden" name="slug" value={slug} />
+                        
                     </div>
                 </div>
-                <div className="flex items-center justify-end gap-x-6 border-t border-gray-900/10 px-4 py-4 sm:px-8">
+                <div className="flex items-center justify-end gap-x-6 border-t border-gray-900/10 bg-gray-50 px-4 py-4 sm:px-8">
                     <button
                         type="submit"
-                        className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                        className="rounded-md bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 transition-colors"
                     >
-                        Kaydet
+                        İlanı Kaydet
                     </button>
                 </div>
             </form>
