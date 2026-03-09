@@ -17,26 +17,39 @@ import {
 } from 'lucide-react'
 import { logout } from '@/actions/auth'
 
+// Menü öğelerine RBAC filtrelemesi için kurallar ekledik
 const navItems = [
-    { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-    { name: 'Etkinlikler', href: '/admin/events', icon: Calendar },
-    { name: 'Blog & Duyurular', href: '/admin/blogs', icon: FileText },
-    { name: 'Projeler', href: '/admin/projects', icon: Lightbulb },
-    { name: 'İlanlar', href: '/admin/jobs', icon: Briefcase },
-    { name: 'Yönetim Kurulu', href: '/admin/board', icon: Users },
-    { name: 'Kullanıcılar', href: '/admin/users', icon: UserCog },
+    { name: 'Dashboard', href: '/admin', icon: LayoutDashboard, moduleId: null, adminOnly: false },
+    { name: 'Etkinlikler', href: '/admin/events', icon: Calendar, moduleId: 'events', adminOnly: false },
+    { name: 'Blog & Duyurular', href: '/admin/blogs', icon: FileText, moduleId: 'blogs', adminOnly: false },
+    { name: 'Projeler', href: '/admin/projects', icon: Lightbulb, moduleId: 'projects', adminOnly: false },
+    { name: 'İlanlar', href: '/admin/jobs', icon: Briefcase, moduleId: 'jobs', adminOnly: false },
+    { name: 'Yönetim Kurulu', href: '/admin/board', icon: Users, moduleId: null, adminOnly: true },
+    { name: 'Kullanıcılar', href: '/admin/users', icon: UserCog, moduleId: null, adminOnly: true },
 ]
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ role, accessibleModules }: { role: string, accessibleModules: string[] }) {
     const pathname = usePathname()
     const [isOpen, setIsOpen] = useState(false)
 
-    // Sayfa değişince mobil menüyü kapat
+    // Kullanıcının rolüne ve yetkisine göre menüyü filtrele (GÜVENLİK FİLTRESİ)
+    const filteredNavItems = navItems.filter(item => {
+        if (role === 'super_admin') return true; // Super admin her şeyi görür
+        if (item.adminOnly) return false; // Sadece adminlerin göreceği (Kullanıcılar vb.) editör ve izleyiciden gizlenir
+        if (role === 'viewer') return true; // İzleyici menüleri görür ama içerdeki sayfalarda işlem yapamaz
+        
+        // Eğer editör ise ve menünün bir modül ID'si varsa, yetkileri kontrol et
+        if (role === 'editor' && item.moduleId) {
+            return accessibleModules.includes(item.moduleId);
+        }
+        
+        return item.moduleId === null; // Dashboard gibi herkese açık sayfalar
+    });
+
     useEffect(() => {
         setIsOpen(false)
     }, [pathname])
 
-    // Menü açıkken sayfanın scroll'unu kilitle
     useEffect(() => {
         document.body.style.overflow = isOpen ? 'hidden' : ''
         return () => { document.body.style.overflow = '' }
@@ -50,7 +63,6 @@ export default function AdminSidebar() {
     const SidebarContent = () => (
         <div className="flex flex-col w-64 bg-slate-950 h-full text-slate-300 border-r border-slate-800/50 shadow-2xl">
 
-            {/* Üst Logo Bölümü */}
             <div className="flex items-center justify-between h-20 px-6 border-b border-slate-800/50">
                 <Link href="/admin" className="flex items-center group">
                     <span className="sr-only">SAU YBS Panel</span>
@@ -60,7 +72,6 @@ export default function AdminSidebar() {
                         className="h-10 w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] group-hover:scale-105 transition-all duration-300 brightness-0 invert opacity-90 group-hover:opacity-100"
                     />
                 </Link>
-                {/* Mobilde kapat butonu */}
                 <button
                     onClick={() => setIsOpen(false)}
                     className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
@@ -69,10 +80,10 @@ export default function AdminSidebar() {
                 </button>
             </div>
 
-            {/* Menü Linkleri */}
             <div className="flex-1 overflow-y-auto py-6 px-3 custom-scrollbar">
                 <nav className="space-y-1.5">
-                    {navItems.map((item) => {
+                    {/* Artık tüm menüyü değil, FİLTRELENMİŞ menüyü basıyoruz */}
+                    {filteredNavItems.map((item) => {
                         const isActive = isActiveRoute(item.href)
                         const Icon = item.icon
 
@@ -102,7 +113,6 @@ export default function AdminSidebar() {
                 </nav>
             </div>
 
-            {/* Çıkış Yap */}
             <div className="flex-shrink-0 p-4 border-t border-slate-800/50 bg-slate-900/50">
                 <form action={logout} className="w-full">
                     <button
@@ -119,12 +129,10 @@ export default function AdminSidebar() {
 
     return (
         <>
-            {/* Masaüstü: sabit sidebar */}
             <div className="hidden lg:flex h-screen">
                 <SidebarContent />
             </div>
 
-            {/* Mobil: hamburger butonu */}
             <button
                 onClick={() => setIsOpen(true)}
                 className="lg:hidden fixed top-4 left-4 z-40 p-2 rounded-xl bg-slate-950 text-slate-300 border border-slate-800 shadow-lg hover:bg-slate-800 transition-colors"
@@ -133,7 +141,6 @@ export default function AdminSidebar() {
                 <Menu className="h-5 w-5" />
             </button>
 
-            {/* Mobil: karartma overlay */}
             {isOpen && (
                 <div
                     className="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
@@ -141,7 +148,6 @@ export default function AdminSidebar() {
                 />
             )}
 
-            {/* Mobil: slide-in sidebar */}
             <div
                 className={`lg:hidden fixed top-0 left-0 z-50 h-full transition-transform duration-300 ease-in-out ${
                     isOpen ? 'translate-x-0' : '-translate-x-full'

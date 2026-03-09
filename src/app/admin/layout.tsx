@@ -22,13 +22,22 @@ export default async function AdminLayout({
         redirect('/login')
     }
 
+    // YENİ: Kullanıcının profil bilgilerini (rol ve modüller) çekiyoruz
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role, accessible_modules')
+        .eq('id', user.id)
+        .single()
+
+    const role = profile?.role || 'viewer'
+    const accessibleModules = profile?.accessible_modules || []
+
     const userInitial = user.email ? user.email.charAt(0).toUpperCase() : 'U';
 
     return (
         <ToastProvider>
-            {/* TIKLADIĞIN ANDA ÇALIŞACAK İLERLEME ÇUBUĞU */}
             <NextTopLoader 
-                color="#2563eb" /* brand-600 rengimiz (Mavi) */
+                color="#2563eb" 
                 initialPosition={0.08} 
                 crawlSpeed={200} 
                 height={3} 
@@ -40,14 +49,15 @@ export default async function AdminLayout({
             />
             
             <div className="flex h-screen bg-slate-50">
-                <AdminSidebar />
+                
+                {/* YENİ: Verileri AdminSidebar'a aktarıyoruz */}
+                <AdminSidebar role={role} accessibleModules={accessibleModules} />
+                
                 <div className="flex-1 flex flex-col overflow-hidden relative">
                     
-                    {/* YENİLENEN MODERN HEADER */}
                     <header className="bg-white/80 backdrop-blur-md border-b border-slate-200/60 sticky top-0 z-30 transition-all">
                         <div className="px-6 py-3 lg:px-8 flex justify-between items-center h-16">
                             
-                            {/* Sol Taraf: Modern Başlık */}
                             <div className="flex items-center gap-3 pl-10 lg:pl-0">
                                 <div className="h-6 w-1.5 bg-brand-500 rounded-full shadow-sm"></div>
                                 <h1 className="text-xl font-heading font-extrabold text-slate-800 tracking-tight">
@@ -55,10 +65,11 @@ export default async function AdminLayout({
                                 </h1>
                             </div>
 
-                            {/* Sağ Taraf: Kullanıcı Profil Modülü */}
                             <div className="flex items-center gap-3 bg-white px-2 py-1.5 rounded-full border border-slate-200 shadow-sm hover:shadow-md transition-all cursor-default group">
                                 <div className="flex flex-col text-right hidden sm:flex pl-2">
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Aktif Oturum</span>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                        {role === 'super_admin' ? 'Super Admin' : role === 'editor' ? 'Editör' : 'İzleyici'}
+                                    </span>
                                     <span className="text-sm font-bold text-slate-700 leading-none group-hover:text-brand-600 transition-colors">
                                         {user.email}
                                     </span>
@@ -71,7 +82,6 @@ export default async function AdminLayout({
                         </div>
                     </header>
 
-                    {/* ANA İÇERİK ALANI */}
                     <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50/50 p-6 md:p-8">
                         {children}
                     </main>
