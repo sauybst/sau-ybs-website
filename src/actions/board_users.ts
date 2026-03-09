@@ -7,13 +7,15 @@ import { redirect } from 'next/navigation'
 export async function createBoardMember(formData: FormData) {
     const supabase = await createClient()
 
-    // Formdan gelen verileri çekiyoruz
+    // Formdan gelen verileri çekiyoruz (slug ve description EKLENDİ)
     const full_name = formData.get('full_name') as string
+    const slug = formData.get('slug') as string
     const board_role = formData.get('board_role') as string
     const board_level = formData.get('board_level') as string
     const term_year = formData.get('term_year') as string
     const is_active = formData.get('is_active') === 'true'
     const linkedin_url = formData.get('linkedin_url') as string
+    const description = formData.get('description') as string
     const imageFile = formData.get('image') as File | null
 
     if (!full_name || !board_role || !term_year || !board_level) {
@@ -30,7 +32,7 @@ export async function createBoardMember(formData: FormData) {
         const filePath = `members/${fileName}`
 
         const { error: uploadError } = await supabase.storage
-            .from('board') // Supabase'de 'board' bucket'ı oluşturduğundan emin ol
+            .from('board') 
             .upload(filePath, imageFile, {
                 contentType: 'image/webp',
                 upsert: false,
@@ -48,13 +50,16 @@ export async function createBoardMember(formData: FormData) {
         image_url = urlData.publicUrl
     }
 
+    // Veritabanına Yazma (slug ve description EKLENDİ)
     const { error } = await supabase.from('board_members').insert({
         full_name,
+        slug,
         board_role,
         board_level,
         term_year,
         is_active,
         linkedin_url: linkedin_url || null,
+        description, 
         image_url,
     })
 
@@ -101,13 +106,16 @@ export async function deleteBoardMember(id: string) {
 export async function updateBoardMember(formData: FormData) {
     const supabase = await createClient()
 
+    // Verileri Yakalama (slug ve description EKLENDİ)
     const id = formData.get('id') as string
     const full_name = formData.get('full_name') as string
+    const slug = formData.get('slug') as string
     const board_role = formData.get('board_role') as string
     const board_level = formData.get('board_level') as string
     const term_year = formData.get('term_year') as string
     const is_active = formData.get('is_active') === 'true'
     const linkedin_url = formData.get('linkedin_url') as string
+    const description = formData.get('description') as string
 
     const imageFile = formData.get('image_file') as File | null
     const removeImage = formData.get('remove_image') === 'true'
@@ -149,15 +157,18 @@ export async function updateBoardMember(formData: FormData) {
         }
     }
 
+    // Veritabanını Güncelleme (slug ve description EKLENDİ)
     const { error } = await supabase
         .from('board_members')
         .update({
             full_name,
+            slug,
             board_role,
             board_level,
             term_year,
             is_active,
             linkedin_url: linkedin_url || null,
+            description,
             image_url: finalImageUrl || null,
         })
         .eq('id', id)
