@@ -27,8 +27,38 @@ const lato = Lato({
 })
 
 export const metadata: Metadata = {
-  title: 'SAU YBS Topluluğu',
-  description: 'Sakarya Üniversitesi Yönetim Bilişim Sistemleri Topluluğu Resmi Web Sitesi',
+    // 1. Tarayıcı Sekmesi ve Google Arama Sonuçları İçin
+    title: {
+        default: 'SAÜ YBS | Geleceğin Analisti',
+        template: '%s | SAÜ YBS' // Alt sayfalarda otomatik "Etkinlikler | SAÜ YBS" yazar
+    },
+    description: 'Sakarya Üniversitesi Yönetim Bilişim Sistemleri Topluluğu resmi web sitesi ve dijital ekosistemi.',
+    
+    // 2. WhatsApp, LinkedIn, Facebook vb. (Open Graph) İçin
+    openGraph: {
+        title: 'SAÜ YBS | Geleceğin Analisti',
+        description: 'Sakarya Üniversitesi Yönetim Bilişim Sistemleri Topluluğu resmi web sitesi ve dijital ekosistemi.',
+        url: 'https://sauybst.com',
+        siteName: 'SAÜ YBS',
+        images: [
+            {
+                url: 'https://sauybst.com/og-default.jpg', 
+                width: 1200,
+                height: 630,
+                alt: 'SAÜ YBS Kapak Görseli',
+            }
+        ],
+        locale: 'tr_TR',
+        type: 'website',
+    },
+
+    // 3. X (Twitter) İçin Özel Kart Yapısı
+    twitter: {
+        card: 'summary_large_image',
+        title: 'SAÜ YBS | Geleceğin Analisti',
+        description: 'Sakarya Üniversitesi Yönetim Bilişim Sistemleri Topluluğu',
+        images: ['https://sauybst.com/og-default.jpg'],
+    }
 }
 
 export default function RootLayout({

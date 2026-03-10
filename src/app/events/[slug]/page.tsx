@@ -4,6 +4,58 @@ import Link from 'next/link'
 import { CalendarIcon, MapPin, Clock, ArrowLeft, ExternalLink } from 'lucide-react'
 export const dynamic = 'force-dynamic';
 import ShareButton from '@/components/ShareButton'
+import { Metadata, ResolvingMetadata } from 'next'
+
+// Sayfanın aldığı parametreler (Örn: slug veya id)
+type Props = {
+    params: { slug: string }
+}
+
+// NEXT.JS DİNAMİK META OLUŞTURUCU (Sayfa yüklenmeden önce çalışır)
+export async function generateMetadata(
+    { params }: Props,
+    parent: ResolvingMetadata
+): Promise<Metadata> {
+    const supabase = await createClient()
+    
+    // Veritabanından sadece SEO için gerekli kısımları çek
+    const { data: event } = await supabase
+        .from('events')
+        .select('title, description, image_url') 
+        .eq('slug', params.slug)
+        .single()
+
+    // Eğer etkinlik bulunamazsa varsayılan layout.tsx'teki metalara geri dön (Fallback)
+    if (!event) return {} 
+
+    // Zengin metinden (Rich Text) HTML etiketlerini temizleyip 160 karaktere kırpıyoruz (SEO için ideal uzunluk)
+    const cleanDescription = event.description.replace(/<[^>]*>?/gm, '').substring(0, 160) + '...'
+
+    return {
+        title: event.title,
+        description: cleanDescription,
+        openGraph: {
+            title: event.title,
+            description: cleanDescription,
+            images: [
+                {
+                    // Etkinliğin kendi fotoğrafı varsa onu, yoksa sitenin varsayılan logosunu koy
+                    url: event.image_url || 'https://sauybst.com/og-default.jpg',
+                    width: 1200,
+                    height: 630,
+                    alt: event.title,
+                }
+            ],
+            type: 'article', // Bu bir yazı/etkinlik olduğu için website yerine article diyoruz
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title: event.title,
+            description: cleanDescription,
+            images: [event.image_url || 'https://sauybst.com/og-default.jpg'],
+        }
+    }
+}
 
 // Next.js 15 ile uyumlu dinamik parametre yakalama
 export default async function EventDetailPage({ params }: { params: Promise<{ slug: string }> }) {
