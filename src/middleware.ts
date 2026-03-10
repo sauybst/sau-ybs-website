@@ -11,6 +11,6 @@ export const config = {
         /*
          * Sayfa geçişlerinde performansı düşürmemek için statik dosyaları es geçiyoruz.
          */
-        '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+        '/((?!_next/static|_next/image|icon.png|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
     ],
 }
