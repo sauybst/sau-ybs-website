@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image' // Next.js Image bileşeni eklendi
 import { Menu, X } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { NAV_ITEMS, EXTERNAL_LINKS } from '@/utils/navigation'
@@ -27,9 +28,12 @@ export default function Header() {
                     <div className="flex lg:flex-1">
                         <Link href="/" className="flex items-center group -my-2 sm:-my-3 -ml-2 lg:-ml-6">
                             <span className="sr-only">SAU YBS</span>
-                            <img
+                            <Image
                                 src="/logotip.webp"
                                 alt="SAU YBS Logo"
+                                width={364}
+                                height={84}
+                                priority 
                                 className="h-12 sm:h-16 w-auto object-contain drop-shadow-sm origin-left group-hover:scale-105 transition-transform duration-300"
                             />
                         </Link>

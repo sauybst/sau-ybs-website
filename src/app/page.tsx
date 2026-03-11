@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import Image from 'next/image'
 import { ArrowRight, Users, Calendar as CalendarIcon, Clock, FileText } from 'lucide-react'
-
 import { getHomeData } from '@/lib/home-data'
 import { identityCards } from '@/data/identity-cards'
 import FloatingTechBackground from '@/components/FloatingTechBackground'
@@ -41,12 +41,16 @@ export default async function HomePage() {
         aria-label="Ana tanıtım"
         className="relative flex-1 flex items-center justify-center overflow-hidden bg-brand-900 py-12 sm:py-24"
       >
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-100"
-          style={{ backgroundImage: "url('/hero-arkaplan.webp')" }}
-          role="presentation"
-          aria-hidden="true"
-        />
+        <div className="absolute inset-0 opacity-100" aria-hidden="true">
+          <Image
+            src="/hero-arkaplan.webp"
+            alt="Hero Arka Plan"
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-center"
+          />
+        </div>
         <div className="absolute inset-0 bg-brand-900/40" aria-hidden="true" />
         <div className="absolute inset-0 bg-gradient-to-t from-brand-900 via-brand-900/20 to-transparent" aria-hidden="true" />
 
