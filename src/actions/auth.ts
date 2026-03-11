@@ -30,7 +30,7 @@ function isValidEmail(email: string): boolean {
 function getPasswordResetRedirectUrl(): string | null {
     const siteUrl = process.env.SITE_URL ?? process.env.NEXT_PUBLIC_SITE_URL
     if (!siteUrl) {
-        return process.env.NODE_ENV === 'development' ? 'http://localhost:3000/updatePassword' : null
+        return process.env.NODE_ENV === 'development' ? 'http://localhost:3000/forgot-password' : null
     }
 
     try {
@@ -44,7 +44,7 @@ function getPasswordResetRedirectUrl(): string | null {
         return new URL('/updatePassword', baseUrl).toString()
     } catch {
         console.error('Geçersiz SITE_URL/NEXT_PUBLIC_SITE_URL yapılandırması.')
-        return process.env.NODE_ENV === 'development' ? 'http://localhost:3000/updatePassword' : null
+        return process.env.NODE_ENV === 'development' ? 'http://localhost:3000/forgot-password' : null
     }
 }
 
