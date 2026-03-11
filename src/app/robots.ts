@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
         rules: {
             userAgent: '*', // Tüm arama motorları için geçerli
             allow: '/', // Sitenin genelini taramaya izin ver
-            disallow: ['/admin/', '/login', '/update-password'], // Yönetim paneli ve auth sayfalarını GİZLE
+            disallow: ['/admin/', '/login', '/forgot-password'], // Yönetim paneli ve auth sayfalarını GİZLE
         },
         sitemap: `${baseUrl}/sitemap.xml`, // Botlara sitemap'in yerini göster
     }

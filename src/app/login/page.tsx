@@ -4,6 +4,7 @@ import { login } from '@/actions/auth'
 import { useActionState } from 'react'
 import { useFormStatus } from 'react-dom'
 import Image from 'next/image'
+import Link from 'next/link'
 
 const initialState = {
     error: null as string | null,
@@ -155,6 +156,12 @@ export default function LoginPage() {
                             />
                         </div>
 
+                        <div className="flex justify-end items-center mb-1.5">
+                            <Link href="/forgot-password" className="text-xs font-medium text-blue-600 hover:text-blue-500">
+                                Şifremi Unuttum
+                            </Link>
+                        </div>
+                        
                         <div className="pt-1">
                             <SubmitButton />
                         </div>
