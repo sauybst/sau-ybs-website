@@ -3,17 +3,17 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Menu, X } from 'lucide-react'
-import { usePathname } from 'next/navigation' // URL dinlemek için eklendi
+import { usePathname } from 'next/navigation'
+import { NAV_ITEMS, EXTERNAL_LINKS } from '@/utils/navigation'
 
 export default function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
-    const pathname = usePathname() // Mevcut rotayı (URL'yi) alır
+    const pathname = usePathname()
 
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen)
     const closeMenu = () => setIsMenuOpen(false)
 
-    // SİHİRLİ DOKUNUŞ: URL her değiştiğinde bu efekt çalışır ve menüyü otomatik kapatır.
-    // Artık Link'lerin içine tek tek onClick yazmak zorunda değilsin!
+    // URL her değiştiğinde menüyü otomatik kapatan efekt
     useEffect(() => {
         setIsMenuOpen(false)
     }, [pathname])
@@ -22,34 +22,37 @@ export default function Header() {
         <header className="fixed w-full top-0 z-50 bg-white/80 backdrop-blur-md border-b border-brand-100/50 shadow-sm transition-all duration-300">
             <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8" aria-label="Top">
                 <div className="flex w-full items-center justify-between py-4">
-                    
+
                     {/* SOL KISIM: Logo */}
                     <div className="flex lg:flex-1">
                         <Link href="/" className="flex items-center group -my-2 sm:-my-3 -ml-2 lg:-ml-6">
                             <span className="sr-only">SAU YBS</span>
-                            <img 
-                                src="/logotip.png" 
-                                alt="SAU YBS Logo" 
-                                className="h-12 sm:h-16 w-auto object-contain drop-shadow-sm origin-left group-hover:scale-105 transition-transform duration-300" 
+                            <img
+                                src="/logotip.webp"
+                                alt="SAU YBS Logo"
+                                className="h-12 sm:h-16 w-auto object-contain drop-shadow-sm origin-left group-hover:scale-105 transition-transform duration-300"
                             />
                         </Link>
                     </div>
-                    
+
                     {/* ORTA KISIM: Sayfa Bağlantıları */}
                     <div className="hidden lg:flex items-center justify-center gap-x-8">
-                        <Link href="/" className="text-[15px] font-medium text-slate-600 hover:text-brand-600 transition-colors">Ana Sayfa</Link>
-                        <Link href="/events" className="text-[15px] font-medium text-slate-600 hover:text-brand-600 transition-colors">Etkinlikler</Link>
-                        <Link href="/blogs" className="text-[15px] font-medium text-slate-600 hover:text-brand-600 transition-colors">Duyurular & Blog</Link>
-                        <Link href="/projects" className="text-[15px] font-medium text-slate-600 hover:text-brand-600 transition-colors">Projeler</Link>
-                        <Link href="/board" className="text-[15px] font-medium text-slate-600 hover:text-brand-600 transition-colors">Hakkımızda</Link>
-                        <Link href="/jobs" className="text-[15px] font-medium text-slate-600 hover:text-brand-600 transition-colors">Staj & İş İlanları</Link>
+                        {NAV_ITEMS.map((item) => (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                className="text-[15px] font-medium text-slate-600 hover:text-brand-600 transition-colors"
+                            >
+                                {item.name}
+                            </Link>
+                        ))}
                     </div>
 
                     {/* SAĞ KISIM: Buton ve Mobil Menü Tetikleyici */}
                     <div className="flex flex-1 items-center justify-end gap-4">
-                        <a 
-                            href="https://topluluk.sabis.sakarya.edu.tr/sau-yonetim-bilisim-sistemleri-ogrenci-toplulugu" 
-                            target="_blank" 
+                        <a
+                            href={EXTERNAL_LINKS.SABIS_COMMUNITY}
+                            target="_blank"
                             rel="noopener noreferrer"
                             className="hidden lg:inline-flex items-center gap-2 px-5 py-2 rounded-full bg-brand-600 text-white text-sm font-semibold shadow-sm hover:bg-brand-700 hover:-translate-y-0.5 transition-all duration-200"
                         >
@@ -74,25 +77,26 @@ export default function Header() {
                 </div>
 
                 {/* MOBİL AKORDİYON MENÜ */}
-                <div 
-                    className={`lg:hidden transition-all duration-300 ease-in-out overflow-hidden ${
-                        isMenuOpen ? 'max-h-[500px] opacity-100 pb-4' : 'max-h-0 opacity-0'
-                    }`}
+                <div
+                    className={`lg:hidden transition-all duration-300 ease-in-out overflow-hidden ${isMenuOpen ? 'max-h-[500px] opacity-100 pb-4' : 'max-h-0 opacity-0'
+                        }`}
                 >
-                    {/* Artık Link'lerin içindeki onClick={closeMenu} kodlarını tamamen kaldırdım, daha temiz oldu! */}
                     <div className="flex flex-col space-y-1 pt-2 border-t border-brand-50">
-                        <Link href="/" className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-brand-600 hover:bg-brand-50 transition-colors">Ana Sayfa</Link>
-                        <Link href="/events" className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-brand-600 hover:bg-brand-50 transition-colors">Etkinlikler</Link>
-                        <Link href="/blogs" className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-brand-600 hover:bg-brand-50 transition-colors">Duyurular & Blog</Link>
-                        <Link href="/projects" className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-brand-600 hover:bg-brand-50 transition-colors">Projeler</Link>
-                        <Link href="/board" className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-brand-600 hover:bg-brand-50 transition-colors">Hakkımızda</Link>
-                        <Link href="/jobs" className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-brand-600 hover:bg-brand-50 transition-colors">Staj & İş İlanları</Link>
+                        {NAV_ITEMS.map((item) => (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-brand-600 hover:bg-brand-50 transition-colors"
+                            >
+                                {item.name}
+                            </Link>
+                        ))}
 
                         <div className="px-3 pt-4 pb-2 mt-2 border-t border-slate-100">
-                            {/* Dışarıya giden bağlantılarda sayfa değişmeyeceği için onClick={closeMenu} kalmalı */}
-                            <a 
-                                href="https://topluluk.sabis.sakarya.edu.tr/sau-yonetim-bilisim-sistemleri-ogrenci-toplulugu" 
-                                target="_blank" 
+                            {/* Dışarıya giden bağlantılarda sayfa değişmeyeceği için closeMenu kalmalı */}
+                            <a
+                                href={EXTERNAL_LINKS.SABIS_COMMUNITY}
+                                target="_blank"
                                 rel="noopener noreferrer"
                                 onClick={closeMenu}
                                 className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-full bg-brand-600 text-white text-[15px] font-semibold hover:bg-brand-700 transition-colors shadow-sm"

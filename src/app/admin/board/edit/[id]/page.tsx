@@ -10,7 +10,7 @@ export default async function EditBoardMemberPage({ params }: { params: Promise<
     // 2. Veritabanından o üyeyi bul
     const { data: member, error } = await supabase
         .from('board_members')
-        .select('*')
+        .select('id, slug, full_name, board_role, board_level, term_year, is_active, image_url, linkedin_url, description')
         .eq('id', id)
         .single()
 

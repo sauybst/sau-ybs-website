@@ -10,7 +10,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
     // 2. Veritabanından o etkinliği bul
     const { data: event, error } = await supabase
         .from('events')
-        .select('*')
+        .select('id, title, slug, event_date, location, description, image_url, registration_url')
         .eq('id', id)
         .single()
 

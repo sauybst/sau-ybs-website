@@ -1,10 +1,11 @@
+import type { Metadata } from 'next'
 import AdminSidebar from '@/components/AdminSidebar'
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { ToastProvider } from '@/components/ToastProvider';
 import NextTopLoader from 'nextjs-toploader'; 
 
-export const metadata = {
+export const metadata: Metadata = {
     title: 'YBS Yönetim Paneli',
     description: 'SAU YBS Yönetim Paneli',
 }
@@ -66,7 +67,7 @@ export default async function AdminLayout({
                             </div>
 
                             <div className="flex items-center gap-3 bg-white px-2 py-1.5 rounded-full border border-slate-200 shadow-sm hover:shadow-md transition-all cursor-default group">
-                                <div className="flex flex-col text-right hidden sm:flex pl-2">
+                                <div className="hidden sm:flex flex-col text-right pl-2">
                                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                                         {role === 'super_admin' ? 'Super Admin' : role === 'editor' ? 'Editör' : 'İzleyici'}
                                     </span>

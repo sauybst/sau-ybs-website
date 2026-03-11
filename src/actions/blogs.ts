@@ -3,77 +3,66 @@
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { requireAuth } from '@/utils/auth-guard'
+import { generateSlug } from '@/utils/slugify'
+import { uploadImage, deleteStorageFile, handleImageUpdate } from '@/utils/storage'
+import { BlogSchema } from '@/utils/schemas'
+import { STORAGE_BUCKETS, STORAGE_FOLDERS, USER_ROLES } from '@/utils/constants'
 
-// YENİ: Başlıktan otomatik Slug (SEO URL) üreten yardımcı fonksiyon
-function generateSlug(title: string) {
-    return title
-        .toLowerCase()
-        .trim()
-        .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
-        .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
-        .replace(/[^a-z0-9 -]/g, '') // Harf, rakam ve tire dışındaki her şeyi sil
-        .replace(/\s+/g, '-') // Boşlukları tireye çevir
-        .replace(/-+/g, '-'); // Yan yana gelmiş birden fazla tireyi tek tire yap
-}
+const ALLOWED_ROLES = [USER_ROLES.SUPER_ADMIN, USER_ROLES.EDITOR] as const
+const MODULE_NAME = 'blogs'
 
 export async function createBlog(formData: FormData) {
     const supabase = await createClient()
 
-    const title = formData.get('title') as string
-    const content = formData.get('content') as string
-    const postType = parseInt(formData.get('type') as string, 10) 
-    const imageFile = formData.get('image_file') as File | null
+    // — Yetki kontrolü
+    const auth = await requireAuth(supabase, {
+        allowedRoles: [...ALLOWED_ROLES],
+        requiredModule: MODULE_NAME,
+    })
+    if (!auth.authorized) return { error: auth.error }
 
-    // YENİ: Başlık varsa Slug'ı otomatik üret, yoksa boş bırak
-    const generatedSlug = title ? generateSlug(title) : '';
-
-    if (!title || !generatedSlug || !content) {
-        return { error: 'Gerekli alanları doldurunuz.' }
+    // — Girdi doğrulama
+    const raw = {
+        title: formData.get('title') as string,
+        content: formData.get('content') as string,
+        type: parseInt(formData.get('type') as string, 10),
     }
+    const validated = BlogSchema.safeParse(raw)
+    if (!validated.success) {
+        return { error: validated.error.issues[0].message }
+    }
+    const { title, content, type } = validated.data
 
-    const { data: { user } } = await supabase.auth.getUser()
+    const slug = generateSlug(title)
+    if (!slug) return { error: 'Başlıktan geçerli bir slug üretilemedi.' }
 
-    // --- STORAGE UPLOAD ---
+    // — Görsel yükleme
+    const imageFile = formData.get('image_file') as File | null
     let image_url: string | null = null
 
     if (imageFile && imageFile.size > 0) {
-        // Oluşturduğumuz slug'ı dosya isminde de kullanıyoruz
-        const fileName = `${Date.now()}-${generatedSlug}.webp`
-        const filePath = `blog-covers/${fileName}`
-
-        const { error: uploadError } = await supabase.storage
-            .from('blogs') 
-            .upload(filePath, imageFile, {
-                contentType: 'image/webp',
-                upsert: false,
-            })
-
-        if (uploadError) {
-            console.error('Storage upload hatası:', uploadError)
-            return { error: 'Kapak görseli yüklenirken hata oluştu: ' + uploadError.message }
-        }
-
-        const { data: urlData } = supabase.storage
-            .from('blogs')
-            .getPublicUrl(filePath)
-
-        image_url = urlData.publicUrl
+        const result = await uploadImage(
+            supabase, STORAGE_BUCKETS.BLOGS, STORAGE_FOLDERS.BLOG_COVERS, imageFile, slug,
+        )
+        if (result.error) return { error: result.error }
+        image_url = result.url
     }
 
-    // --- VERİTABANINA KAYIT ---
+    // — Veritabanına kayıt
     const { error } = await supabase.from('blogs').insert({
         title,
-        slug: generatedSlug, 
+        slug,
         content,
-        type: postType, 
-        cover_image_url: image_url, // Tablodaki 'cover_image_url' sütununa eşitliyoruz
-        author_id: user?.id,        // Tablodaki 'author_id' sütununa eşitliyoruz
-        published_at: new Date().toISOString(), // Yayınlanma tarihini de o anki saat olarak basıyoruz
+        type,
+        cover_image_url: image_url,
+        author_id: auth.userId,
+        published_at: new Date().toISOString(),
     })
 
     if (error) {
-        console.error('DB insert hatası:', error)
-        return { error: 'Yazı oluşturulurken hata oluştu: ' + error.message }
+        console.error('Blog oluşturma hatası:', error)
+        return { error: 'Yazı oluşturulurken bir hata oluştu.' }
     }
 
     revalidatePath('/admin/blogs')
@@ -83,129 +72,89 @@ export async function createBlog(formData: FormData) {
 export async function deleteBlog(id: string) {
     const supabase = await createClient()
 
-    // 1. Önce kaydı çek, kapak görseli URL'sini al
-    const { data: blog, error: fetchError } = await supabase
+    // — Yetki kontrolü
+    const auth = await requireAuth(supabase, {
+        allowedRoles: [...ALLOWED_ROLES],
+        requiredModule: MODULE_NAME,
+    })
+    if (!auth.authorized) return { error: auth.error }
+
+    // — Kapak görseli varsa Storage'dan sil
+    const { data: blog } = await supabase
         .from('blogs')
-        .select('cover_image_url') // Tablodaki sütun adımız cover_image_url
+        .select('cover_image_url')
         .eq('id', id)
         .single()
 
-    if (fetchError) {
-        console.error('Blog fetch hatası:', fetchError)
-    }
-
-    // 2. Storage'dan resmi sil
     if (blog?.cover_image_url) {
-        // Blogs bucket'ına göre URL'yi parçalıyoruz
-        const filePath = blog.cover_image_url.split('/storage/v1/object/public/blogs/')[1]
-        
-        if (filePath) {
-            const { error: storageError } = await supabase.storage
-                .from('blogs') // Bucket adımız blogs
-                .remove([filePath])
-
-            if (storageError) {
-                console.error('Storage silme hatası:', storageError)
-            }
-        }
+        await deleteStorageFile(supabase, STORAGE_BUCKETS.BLOGS, blog.cover_image_url)
     }
 
-    // 3. Veritabanından (DB) sil
+    // — Veritabanından sil
     const { error } = await supabase.from('blogs').delete().eq('id', id)
 
     if (error) {
-        console.error('Error deleting blog:', error)
-        throw new Error('Yazı silinirken hata oluştu.')
+        console.error('Blog silme hatası:', error)
+        return { error: 'Yazı silinirken bir hata oluştu.' }
     }
 
-    // Tabloyu güncelle
     revalidatePath('/admin/blogs')
 }
 
 export async function updateBlog(formData: FormData) {
     const supabase = await createClient()
 
+    // — Yetki kontrolü
+    const auth = await requireAuth(supabase, {
+        allowedRoles: [...ALLOWED_ROLES],
+        requiredModule: MODULE_NAME,
+    })
+    if (!auth.authorized) return { error: auth.error }
+
     const id = formData.get('id') as string
-    const title = formData.get('title') as string
-    const content = formData.get('content') as string
-    const postType = parseInt(formData.get('type') as string, 10) 
 
-    const imageFile = formData.get('image_file') as File | null
-    const removeImage = formData.get('remove_image') === 'true'
-    const oldImageUrl = formData.get('old_image_url') as string
-
-    // YENİ: Başlıktan otomatik Slug (SEO URL) üretiyoruz
-    const generatedSlug = title ? generateSlug(title) : '';
-
-    if (!title || !generatedSlug || !content) {
-        return { error: 'Gerekli alanları doldurunuz.' }
+    // — Girdi doğrulama
+    const raw = {
+        title: formData.get('title') as string,
+        content: formData.get('content') as string,
+        type: parseInt(formData.get('type') as string, 10),
     }
-
-    let finalImageUrl = oldImageUrl; 
-
-    const extractPathFromUrl = (url: string) => {
-        if (!url) return null;
-        const parts = url.split('/storage/v1/object/public/blogs/');
-        return parts.length > 1 ? parts[1] : null;
+    const validated = BlogSchema.safeParse(raw)
+    if (!validated.success) {
+        return { error: validated.error.issues[0].message }
     }
+    const { title, content, type } = validated.data
 
-    if ((removeImage || (imageFile && imageFile.size > 0)) && oldImageUrl) {
-        const pathToDelete = extractPathFromUrl(oldImageUrl);
-        if (pathToDelete) {
-            const { error: storageError } = await supabase.storage
-                .from('blogs')
-                .remove([pathToDelete]);
-            
-            if (storageError) {
-                console.error('Eski storage silme hatası:', storageError)
-            }
-        }
-        if (removeImage) {
-            finalImageUrl = ''; 
-        }
-    }
+    const slug = generateSlug(title)
+    if (!slug) return { error: 'Başlıktan geçerli bir slug üretilemedi.' }
 
-    if (imageFile && imageFile.size > 0) {
-        // Yeni dosya adını oluşturduğumuz otomatik slug ile kaydediyoruz
-        const fileName = `${Date.now()}-${generatedSlug}.webp`
-        const filePath = `blog-covers/${fileName}` 
+    // — Görsel güncelleme
+    const imageResult = await handleImageUpdate(supabase, STORAGE_BUCKETS.BLOGS, STORAGE_FOLDERS.BLOG_COVERS, {
+        newFile: formData.get('image_file') as File | null,
+        removeImage: formData.get('remove_image') === 'true',
+        oldImageUrl: formData.get('old_image_url') as string,
+        fileNameSlug: slug,
+    })
+    if (imageResult.error) return { error: imageResult.error }
 
-        const { error: uploadError } = await supabase.storage
-            .from('blogs')           
-            .upload(filePath, imageFile, {
-                contentType: 'image/webp',
-                upsert: false,
-            })
-
-        if (uploadError) {
-            console.error('Storage upload hatası:', uploadError)
-            return { error: 'Kapak görseli güncellenirken hata oluştu: ' + uploadError.message }
-        }
-
-        const { data: urlData } = supabase.storage
-            .from('blogs')           
-            .getPublicUrl(filePath)
-
-        finalImageUrl = urlData.publicUrl
-    }
-
+    // — Veritabanını güncelle
     const { error } = await supabase
         .from('blogs')
         .update({
             title,
-            slug: generatedSlug, // Artık formdan geleni değil, arka planda üretileni kaydediyoruz
+            slug,
             content,
-            type: postType,
-            cover_image_url: finalImageUrl || null, 
+            type,
+            cover_image_url: imageResult.url,
         })
         .eq('id', id)
 
     if (error) {
-        console.error('DB update hatası:', error)
-        return { error: 'Yazı güncellenirken bir hata oluştu: ' + error.message }
+        console.error('Blog güncelleme hatası:', error)
+        return { error: 'Yazı güncellenirken bir hata oluştu.' }
     }
 
     revalidatePath('/admin/blogs')
-    revalidatePath(`/blogs/${generatedSlug}`) // Cache'i yeni slug ile temizliyoruz
+    revalidatePath(`/blogs/${slug}`)
     redirect('/admin/blogs')
 }

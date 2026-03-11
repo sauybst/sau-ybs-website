@@ -10,7 +10,7 @@ export default async function BlogsPage() {
     // Blogları en son eklenenden en eskiye doğru sıralayarak çekiyoruz
     const { data: blogs, error } = await supabase
         .from('blogs')
-        .select('*')
+        .select('id, slug, title, type, cover_image_url, created_at')
         .order('created_at', { ascending: false })
 
     if (error) {

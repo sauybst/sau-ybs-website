@@ -37,12 +37,12 @@ export default function AdminSidebar({ role, accessibleModules }: { role: string
         if (role === 'super_admin') return true; // Super admin her şeyi görür
         if (item.adminOnly) return false; // Sadece adminlerin göreceği (Kullanıcılar vb.) editör ve izleyiciden gizlenir
         if (role === 'viewer') return true; // İzleyici menüleri görür ama içerdeki sayfalarda işlem yapamaz
-        
+
         // Eğer editör ise ve menünün bir modül ID'si varsa, yetkileri kontrol et
         if (role === 'editor' && item.moduleId) {
             return accessibleModules.includes(item.moduleId);
         }
-        
+
         return item.moduleId === null; // Dashboard gibi herkese açık sayfalar
     });
 
@@ -67,7 +67,7 @@ export default function AdminSidebar({ role, accessibleModules }: { role: string
                 <Link href="/admin" className="flex items-center group">
                     <span className="sr-only">SAU YBS Panel</span>
                     <img
-                        src="/logotip.png"
+                        src="/logotip.webp"
                         alt="SAU YBS Logo"
                         className="h-10 w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] group-hover:scale-105 transition-all duration-300 brightness-0 invert opacity-90 group-hover:opacity-100"
                     />
@@ -91,19 +91,17 @@ export default function AdminSidebar({ role, accessibleModules }: { role: string
                             <Link
                                 key={item.name}
                                 href={item.href}
-                                className={`group relative flex items-center px-3 py-3 text-sm font-semibold rounded-xl transition-all duration-300 ${
-                                    isActive
+                                className={`group relative flex items-center px-3 py-3 text-sm font-semibold rounded-xl transition-all duration-300 ${isActive
                                         ? 'bg-brand-500/10 text-brand-400'
                                         : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-100 hover:translate-x-1'
-                                }`}
+                                    }`}
                             >
                                 {isActive && (
                                     <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-brand-500 rounded-r-full shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
                                 )}
                                 <Icon
-                                    className={`mr-3 flex-shrink-0 h-5 w-5 transition-colors ${
-                                        isActive ? 'text-brand-400' : 'text-slate-500 group-hover:text-slate-300'
-                                    }`}
+                                    className={`mr-3 flex-shrink-0 h-5 w-5 transition-colors ${isActive ? 'text-brand-400' : 'text-slate-500 group-hover:text-slate-300'
+                                        }`}
                                     aria-hidden="true"
                                 />
                                 {item.name}
@@ -149,9 +147,8 @@ export default function AdminSidebar({ role, accessibleModules }: { role: string
             )}
 
             <div
-                className={`lg:hidden fixed top-0 left-0 z-50 h-full transition-transform duration-300 ease-in-out ${
-                    isOpen ? 'translate-x-0' : '-translate-x-full'
-                }`}
+                className={`lg:hidden fixed top-0 left-0 z-50 h-full transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'
+                    }`}
             >
                 <SidebarContent />
             </div>

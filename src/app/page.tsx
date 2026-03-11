@@ -1,221 +1,54 @@
-import { createClient } from '@/utils/supabase/server'
-import { syncSabisData } from '@/actions/sabisSync'
+import type { Metadata } from 'next'
 import Link from 'next/link'
-import {
-  Calendar as CalendarIcon,
-  MapPin,
-  ArrowRight,
-  Target,
-  Lightbulb,
-  Trophy,
-  Users,
-  Clock,
-  FileText,
-  CheckCircle,
-} from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
+import { ArrowRight, Users, Calendar as CalendarIcon, Clock, FileText } from 'lucide-react'
+
+import { getHomeData } from '@/lib/home-data'
+import { identityCards } from '@/data/identity-cards'
 import FloatingTechBackground from '@/components/FloatingTechBackground'
+import IdentityCard from '@/components/home/IdentityCard'
+import UpcomingEventCard from '@/components/home/UpcomingEventCard'
+import EmptyUpcomingEvents from '@/components/home/EmptyUpcomingEvents'
+import MetricCard from '@/components/home/MetricCard'
+import HomeJsonLd from '@/components/home/HomeJsonLd'
 
-type UpcomingEvent = {
-  id: string | number
-  slug: string
-  title: string
-  event_date: string
-  location: string | null
-  image_url: string | null
+/* ── SEO: Sayfa-Özel Metadata ── */
+export const metadata: Metadata = {
+  title: 'Ana Sayfa',
+  description:
+    'Sakarya Üniversitesi Yönetim Bilişim Sistemleri Topluluğu resmi web sitesi. Etkinlikler, projeler, staj ilanları ve topluluk haberleri.',
+  alternates: { canonical: '/' },
 }
 
-type HomeMetrics = {
-  memberCount: number
-  totalEvents: string
-  projectsCount: number
-}
-
-type IdentityCardItem = {
-  title: string
-  icon: LucideIcon
-  bullets: string[]
-}
-
-const FALLBACK_MEMBER_COUNT = 650
-const FALLBACK_TOTAL_EVENTS = '50+'
-const FALLBACK_PROJECTS_COUNT = 1
-
-const identityCards: IdentityCardItem[] = [
-  {
-    title: 'Amacımız',
-    icon: Target,
-    bullets: [
-      'Öğrencilerde takım çalışması, liderlik ve analitik düşünme becerilerini geliştirmek.',
-      'Bilişim ve yönetim bilimlerini harmanlayarak sektöre nitelikli yetenekler kazandırmak.',
-    ],
-  },
-  {
-    title: 'Vizyonumuz',
-    icon: Lightbulb,
-    bullets: [
-      'Sadece üniversite içinde değil, ulusal çapta teknoloji ve bilişim ekosistemine yön vermek.',
-      'Sektörel sorunlara çözüm sunan, yenilikçi projeler üreten öncü bir öğrenci topluluğu olmak.',
-    ],
-  },
-  {
-    title: 'Neden Biz?',
-    icon: Trophy,
-    bullets: [
-      'İdeathon ve kariyer zirveleriyle dolu dinamik bir ekosistem.',
-      'Yapay zeka ve topluluk otomasyonu gibi pratik projeler geliştirme imkanı.',
-      'Proje yönetimi ve kurumsal sistem analizi alanlarında gerçek dünya tecrübesi.',
-    ],
-  },
+/* ── Metrik kartları verisi ── */
+const metricCardsConfig = [
+  { icon: Users, suffix: '+', label: 'Aktif Üye', key: 'memberCount' as const },
+  { icon: CalendarIcon, suffix: '', label: 'Etkinlik', key: 'totalEvents' as const },
+  { icon: Clock, value: 'Gerçek Dünya Deneyimi', label: 'Sürekli Gelişim', key: null, textSize: 'text-2xl' },
+  { icon: FileText, suffix: '+', label: 'Açık Kaynak Proje', key: 'projectsCount' as const },
 ]
 
-function logIfError(scope: string, error: unknown) {
-  if (!error) return
-  console.error(`[HomeV2:${scope}]`, error)
-}
-
-async function getHomeData() {
-  const supabase = await createClient()
-
-  const [eventsResult, membersResult, eventsCountResult, projectsResult, sabisData] = await Promise.all([
-    supabase
-      .from('events')
-      .select('id,slug,title,event_date,location,image_url')
-      .gte('event_date', new Date().toISOString())
-      .order('event_date', { ascending: true })
-      .limit(3),
-    supabase.from('profiles').select('id', { count: 'exact', head: true }),
-    supabase.from('events').select('id', { count: 'exact', head: true }),
-    supabase.from('projects').select('id', { count: 'exact', head: true }),
-    syncSabisData(),
-  ])
-
-  logIfError('upcoming-events', eventsResult.error)
-  logIfError('members-count', membersResult.error)
-  logIfError('events-count', eventsCountResult.error)
-  logIfError('projects-count', projectsResult.error)
-
-  const upcomingEvents = (eventsResult.data ?? []) as UpcomingEvent[]
-
-  const memberCount =
-    sabisData.memberCount ?? membersResult.count ?? FALLBACK_MEMBER_COUNT
-
-  const totalEvents =
-    sabisData.totalEventCount ??
-    (eventsCountResult.count ? `${eventsCountResult.count}+` : FALLBACK_TOTAL_EVENTS)
-
-  const projectsCount = projectsResult.count ?? FALLBACK_PROJECTS_COUNT
-
-  const metrics: HomeMetrics = {
-    memberCount,
-    totalEvents,
-    projectsCount,
-  }
-
-  return { upcomingEvents, metrics }
-}
-
-function IdentityCard({ item }: { item: IdentityCardItem }) {
-  const Icon = item.icon
-
-  return (
-    <div className="bg-white/80 backdrop-blur-md border border-slate-100 p-8 rounded-3xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 relative group overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-brand-50/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-      <div className="relative z-10 flex flex-col items-center text-center">
-        <div className="w-16 h-16 bg-brand-50 text-brand-600 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-brand-600 group-hover:text-white group-hover:scale-110 transition-all duration-300 shadow-sm">
-          <Icon className="w-8 h-8" />
-        </div>
-        <h4 className="text-xl font-heading font-bold text-slate-900 mb-4">{item.title}</h4>
-        <ul className="mt-2 text-left space-y-4 text-sm md:text-base text-slate-700 font-normal leading-relaxed w-full font-montserrat">
-          {item.bullets.map((bullet) => (
-            <li key={bullet} className="flex items-start">
-              <CheckCircle className="w-5 h-5 text-brand-600 mr-2 flex-shrink-0 mt-0.5" />
-              <span>{bullet}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  )
-}
-
-function EmptyUpcomingEvents() {
-  return (
-    <div className="col-span-1 md:col-span-2 lg:col-span-3 bg-white p-12 text-center rounded-2xl border border-slate-200 shadow-sm">
-      <div className="w-16 h-16 mx-auto bg-slate-100 rounded-full flex items-center justify-center mb-4">
-        <CalendarIcon className="w-8 h-8 text-slate-400" />
-      </div>
-      <h4 className="text-lg font-heading font-semibold text-slate-900 mb-2">Yakında Görüşmek Üzere</h4>
-      <p className="text-slate-500">
-        Şu an için listelenmiş yeni bir etkinlik bulunmamaktadır. Sosyal medya hesaplarımızı takipte kalın!
-      </p>
-    </div>
-  )
-}
-
-function UpcomingEventCard({ event }: { event: UpcomingEvent }) {
-  return (
-    <Link
-      href={`/events/${event.slug}`}
-      className="group flex flex-col bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
-    >
-      <div className="relative h-64 w-full overflow-hidden bg-slate-950 flex items-center justify-center">
-        {event.image_url ? (
-          <>
-            <div className="absolute inset-0 opacity-50">
-              <img
-                src={event.image_url}
-                alt=""
-                className="object-cover w-full h-full blur-xl scale-125 group-hover:scale-150 transition-transform duration-700"
-              />
-            </div>
-            <img
-              src={event.image_url}
-              alt={event.title}
-              className="relative z-10 object-contain w-full h-full p-3 group-hover:scale-105 transition-transform duration-700 drop-shadow-xl"
-            />
-          </>
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-brand-50 to-indigo-100 flex items-center justify-center text-brand-300">
-            <CalendarIcon className="h-16 w-16 opacity-50" />
-          </div>
-        )}
-
-        <div className="absolute top-4 left-4 z-20">
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-white/95 backdrop-blur-sm text-brand-700 shadow-sm border border-white/50">
-            {new Date(event.event_date).toLocaleDateString('tr-TR', {
-              day: 'numeric',
-              month: 'short',
-            })}
-          </span>
-        </div>
-      </div>
-
-      <div className="p-6 flex flex-col flex-1">
-        <h3 className="text-xl font-heading font-bold text-slate-900 mb-3 line-clamp-2 group-hover:text-brand-600 transition-colors">
-          {event.title}
-        </h3>
-        <div className="flex items-center text-slate-500 text-sm mt-auto">
-          <MapPin className="h-4 w-4 mr-1.5 text-brand-400 flex-shrink-0" />
-          <span className="truncate">{event.location ?? 'Belirtilmedi'}</span>
-        </div>
-      </div>
-    </Link>
-  )
-}
-
-export default async function HomeV2() {
+export default async function HomePage() {
   const { upcomingEvents, metrics } = await getHomeData()
 
   return (
     <main className="min-h-[100dvh] flex flex-col pt-16">
-      <section className="relative flex-1 flex items-center justify-center overflow-hidden bg-brand-900 py-12 sm:py-24">
+      {/* SEO: JSON-LD Yapılandırılmış Veri */}
+      <HomeJsonLd />
+
+      {/* ── Hero Section ── */}
+      <section
+        id="hero"
+        aria-label="Ana tanıtım"
+        className="relative flex-1 flex items-center justify-center overflow-hidden bg-brand-900 py-12 sm:py-24"
+      >
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-100"
-          style={{ backgroundImage: "url('/hero-arkaplan.jpg')" }}
+          style={{ backgroundImage: "url('/hero-arkaplan.webp')" }}
+          role="presentation"
+          aria-hidden="true"
         />
-        <div className="absolute inset-0 bg-brand-900/40" />
-        <div className="absolute inset-0 bg-gradient-to-t from-brand-900 via-brand-900/20 to-transparent" />
+        <div className="absolute inset-0 bg-brand-900/40" aria-hidden="true" />
+        <div className="absolute inset-0 bg-gradient-to-t from-brand-900 via-brand-900/20 to-transparent" aria-hidden="true" />
 
         <div className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
           <div className="w-full sm:w-auto bg-white/10 backdrop-blur-sm rounded-2xl px-4 sm:px-6 py-5 mb-6">
@@ -255,19 +88,19 @@ export default async function HomeV2() {
           </div>
         </div>
 
-        <div className="absolute bottom-6 sm:bottom-10 left-1/2 -translate-x-1/2 animate-bounce text-white/50 hidden sm:block">
+        <div className="absolute bottom-6 sm:bottom-10 left-1/2 -translate-x-1/2 animate-bounce text-white/50 hidden sm:block" aria-hidden="true">
           <ArrowRight className="w-6 h-6 rotate-90" />
         </div>
       </section>
 
-      <section className="py-24 bg-white relative overflow-hidden">
-        
+      {/* ── Kurumsal Kimlik Section ── */}
+      <section id="identity" aria-label="Kurumsal kimliğimiz" className="py-24 bg-white relative overflow-hidden">
         <FloatingTechBackground />
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-brand-600 font-semibold tracking-wide uppercase text-sm mb-2">Kurumsal Kimliğimiz</h2>
-            <h3 className="text-3xl md:text-4xl font-heading font-bold text-slate-900">Önce Kendimizi Tanıtarak Başlayalım</h3>
+            <span className="text-brand-600 font-semibold tracking-wide uppercase text-sm mb-2 block">Kurumsal Kimliğimiz</span>
+            <h2 className="text-3xl md:text-4xl font-heading font-bold text-slate-900">Önce Kendimizi Tanıtarak Başlayalım</h2>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -278,48 +111,44 @@ export default async function HomeV2() {
         </div>
       </section>
 
-      <section className="relative py-24 bg-slate-950 overflow-hidden">
+      {/* ── Metrikler Section ── */}
+      <section id="metrics" aria-label="Topluluk istatistikleri" className="relative py-24 bg-slate-950 overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center bg-fixed opacity-80 grayscale"
-          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop')" }}
+          style={{ backgroundImage: "url('/background.webp')" }}
+          role="presentation"
+          aria-hidden="true"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-brand-950/95 via-brand-900/80 to-brand-900/50" />
+        <div className="absolute inset-0 bg-gradient-to-t from-brand-950/95 via-brand-900/80 to-brand-900/50" aria-hidden="true" />
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="sr-only">Topluluk İstatistikleri</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            <div className="p-8 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 shadow-xl hover:-translate-y-1 hover:bg-white/20 transition-all duration-300">
-              <Users className="w-12 h-12 mx-auto text-brand-300 mb-5 drop-shadow-md" />
-              <div className="text-5xl font-heading font-extrabold text-white mb-3 drop-shadow-md">{metrics.memberCount}+</div>
-              <div className="text-brand-200 text-sm font-semibold tracking-wide uppercase">Aktif Üye</div>
-            </div>
-
-            <div className="p-8 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 shadow-xl hover:-translate-y-1 hover:bg-white/20 transition-all duration-300">
-              <CalendarIcon className="w-12 h-12 mx-auto text-brand-300 mb-5 drop-shadow-md" />
-              <div className="text-5xl font-heading font-extrabold text-white mb-3 drop-shadow-md">{metrics.totalEvents}</div>
-              <div className="text-brand-200 text-sm font-semibold tracking-wide uppercase">Etkinlik</div>
-            </div>
-
-            <div className="p-8 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 shadow-xl hover:-translate-y-1 hover:bg-white/20 transition-all duration-300">
-              <Clock className="w-12 h-12 mx-auto text-brand-300 mb-5 drop-shadow-md" />
-              <div className="text-2xl font-heading font-extrabold text-white mb-3 drop-shadow-md">Gerçek Dünya Deneyimi</div>
-              <div className="text-brand-200 text-sm font-semibold tracking-wide uppercase">Sürekli Gelişim</div>
-            </div>
-
-            <div className="p-8 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 shadow-xl hover:-translate-y-1 hover:bg-white/20 transition-all duration-300">
-              <FileText className="w-12 h-12 mx-auto text-brand-300 mb-5 drop-shadow-md" />
-              <div className="text-5xl font-heading font-extrabold text-white mb-3 drop-shadow-md">{metrics.projectsCount}+</div>
-              <div className="text-brand-200 text-sm font-semibold tracking-wide uppercase">Açık Kaynak Proje</div>
-            </div>
+            {metricCardsConfig.map((card) => {
+              const displayValue = card.key
+                ? `${metrics[card.key]}${card.suffix}`
+                : card.value!
+              return (
+                <MetricCard
+                  key={card.label}
+                  icon={card.icon}
+                  value={displayValue}
+                  label={card.label}
+                  textSize={card.textSize}
+                />
+              )
+            })}
           </div>
         </div>
       </section>
 
-      <section id="events" className="py-24 bg-slate-50">
+      {/* ── Yaklaşan Etkinlikler Section ── */}
+      <section id="events" aria-label="Yaklaşan etkinlikler" className="py-24 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
             <div className="max-w-2xl">
-              <h2 className="text-brand-600 font-semibold tracking-wide uppercase text-sm mb-2">Son Olaylar</h2>
-              <h3 className="text-3xl md:text-4xl font-heading font-bold text-slate-900">Yaklaşan Etkinliklerimiz</h3>
+              <span className="text-brand-600 font-semibold tracking-wide uppercase text-sm mb-2 block">Son Olaylar</span>
+              <h2 className="text-3xl md:text-4xl font-heading font-bold text-slate-900">Yaklaşan Etkinliklerimiz</h2>
             </div>
             <Link
               href="/events"

@@ -44,12 +44,12 @@ export default function CreateJobPage() {
             } else {
                 showToast('İlan başarıyla oluşturuldu!', 'success');
             }
-        } catch (error: any) {
-            if (error?.message === 'NEXT_REDIRECT' || error?.digest?.startsWith('NEXT_REDIRECT')) {
+        } catch (error: unknown) {
+            const err = error as Record<string, unknown> | null;
+            if (err?.message === 'NEXT_REDIRECT' || (typeof err?.digest === 'string' && err.digest.startsWith('NEXT_REDIRECT'))) {
                 showToast('İlan başarıyla oluşturuldu!', 'success');
-                throw error; 
+                throw error;
             }
-            console.error("DETAYLI HATA:", error); 
             showToast('Sunucu ile iletişim kurulurken bir hata oluştu.', 'error');
         }
     };
@@ -104,6 +104,8 @@ export default function CreateJobPage() {
                                     name="company_name"
                                     id="company_name"
                                     required
+                                    value={companyName}
+                                    onChange={(e) => setCompanyName(e.target.value)}
                                     placeholder="Örn: Otokar"
                                     className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-600 sm:text-sm sm:leading-6"
                                 />
@@ -121,6 +123,8 @@ export default function CreateJobPage() {
                                     name="position_name"
                                     id="position_name"
                                     required
+                                    value={positionName}
+                                    onChange={(e) => setPositionName(e.target.value)}
                                     placeholder="Örn: İş Analisti Stajyeri"
                                     className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-600 sm:text-sm sm:leading-6"
                                 />

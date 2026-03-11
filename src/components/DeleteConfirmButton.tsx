@@ -6,7 +6,7 @@ import { useToast } from '@/components/ToastProvider'
 
 interface Props {
     id: string;
-    onDelete: (id: string) => Promise<void>;
+    onDelete: (id: string) => Promise<void | { error?: string }>;
     itemName: string; 
 }
 
@@ -19,8 +19,12 @@ export default function DeleteConfirmButton({ id, onDelete, itemName }: Props) {
     const handleDelete = () => {
         startTransition(async () => {
             try {
-                await onDelete(id);
-                showToast('Kayıt başarıyla silindi.', 'success');
+                const result = await onDelete(id);
+                if (result && 'error' in result && result.error) {
+                    showToast(result.error, 'error');
+                } else {
+                    showToast('Kayıt başarıyla silindi.', 'success');
+                }
                 setIsOpen(false);
             } catch (error) {
                 showToast('Silinirken bir hata oluştu.', 'error');

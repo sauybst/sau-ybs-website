@@ -63,7 +63,7 @@ export default function LoginPage() {
                 {/* Logo — üstte */}
                 <div className="relative z-10 flex items-center gap-3 self-start">
                     <Image
-                        src="/logotip.png"
+                        src="/logotip.webp"
                         alt="SAÜ YBS Logo"
                         width={400}
                         height={400}
@@ -98,7 +98,7 @@ export default function LoginPage() {
                 {/* Mobilde logo — ortalı */}
                 <div className="lg:hidden flex flex-col items-center gap-3 mb-10">
                     <Image
-                        src="/logotip.png"
+                        src="/logotip.webp"
                         alt="SAÜ YBS Logo"
                         width={400}
                         height={400}

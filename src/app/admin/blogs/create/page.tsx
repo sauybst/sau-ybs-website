@@ -50,8 +50,9 @@ export default function CreateBlogPage() {
             } else {
                 showToast('Yazı başarıyla yayınlandı!', 'success');
             }
-        } catch (error: any) {
-            if (error?.message === 'NEXT_REDIRECT' || error?.digest?.startsWith('NEXT_REDIRECT')) {
+        } catch (error: unknown) {
+            const err = error as Record<string, unknown> | null;
+            if (err?.message === 'NEXT_REDIRECT' || (typeof err?.digest === 'string' && err.digest.startsWith('NEXT_REDIRECT'))) {
                 showToast('Yazı başarıyla yayınlandı!', 'success');
                 throw error; 
             }

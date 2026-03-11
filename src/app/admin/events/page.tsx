@@ -10,11 +10,11 @@ export default async function EventsPage() {
     // Etkinlikleri tarihe göre en yeniden en eskiye sıralayarak çekiyoruz
     const { data: events, error } = await supabase
         .from('events')
-        .select('*')
+        .select('id, slug, title, event_date, location, image_url')
         .order('event_date', { ascending: false })
 
     if (error) {
-        console.error('Error fetching events:')
+        console.error('[Events:admin]', error)
     }
 
     return (
@@ -107,9 +107,9 @@ export default async function EventsPage() {
 
                                 {/* Silme Formu ve Butonu */}
                                 <DeleteConfirmButton
-                                    id = {event.id}
-                                    onDelete= {deleteEvent}
-                                    itemName= {event.title}
+                                    id={event.id}
+                                    onDelete={deleteEvent}
+                                    itemName={event.title}
                                 />
                             </div>
 

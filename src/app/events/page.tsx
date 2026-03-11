@@ -1,145 +1,104 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/utils/supabase/server'
 import Link from 'next/link'
-import { CalendarIcon, MapPin, ExternalLink, Clock } from 'lucide-react'
+import EventListCard from '@/components/events/EventListCard'
+import type { EventListItem } from '@/types/event'
 
-export const metadata = {
-    title: 'Etkinlikler - YBS Topluluğu',
-    description: 'Sakarya Üniversitesi YBS Topluluğu etkinlikleri',
+export const metadata: Metadata = {
+  title: 'Etkinlikler',
+  description:
+    'Sakarya Üniversitesi YBS Topluluğu etkinlikleri — ideathonlar, eğitimler, seminerler ve anma programları.',
+  alternates: { canonical: '/events' },
 }
 
-export default async function PublicEventsPage(props: any) {
-    const searchParams = await props.searchParams;
-    const currentFilter = searchParams?.filter || 'upcoming';
+/** Liste sayfasında kullanılan alanlar (select('*') yerine) */
+const EVENT_LIST_SELECT = 'id,slug,title,event_date,location,image_url,registration_url' as const
 
-    const supabase = await createClient()
+type SearchParams = Promise<{ filter?: string }>
 
-    const { data: events, error } = await supabase
-        .from('events')
-        .select('*')
-        .order('event_date', { ascending: false })
+export default async function PublicEventsPage({
+  searchParams,
+}: {
+  searchParams: SearchParams
+}) {
+  const { filter } = await searchParams
+  const currentFilter = filter === 'past' ? 'past' : 'upcoming'
 
-    const filteredEvents = events?.filter((event) => {
-        const isUpcoming = new Date(event.event_date) > new Date();
-        return currentFilter === 'upcoming' ? isUpcoming : !isUpcoming;
-    });
+  const supabase = await createClient()
 
-    return (
-        <div className="bg-slate-50 min-h-screen pt-24 pb-16">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="text-center mb-12">
-                    <h2 className="text-brand-600 font-semibold tracking-wide uppercase text-sm mb-2">Takvim</h2>
-                    <h1 className="text-4xl md:text-5xl font-heading font-extrabold text-slate-900 tracking-tight">Etkinliklerimiz</h1>
-                    <p className="mt-4 max-w-2xl text-medium text-slate-600 mx-auto font-montserrat">
-                        İdeathonlar, eğitimler, seminerler ve anma programları. Geçmişten geleceğe tüm YBS buluşmaları.
-                    </p>
+  /* Filtrelemeyi Supabase seviyesinde yap — gereksiz veri çekmekten kaçın */
+  const now = new Date().toISOString()
+  let query = supabase
+    .from('events')
+    .select(EVENT_LIST_SELECT)
+    .order('event_date', { ascending: currentFilter === 'upcoming' })
 
-                    <div className="flex justify-center items-center gap-4 mt-8">
-                        <Link 
-                            href="?filter=upcoming" 
-                            scroll={false}
-                            className={`px-6 py-2.5 rounded-full text-sm font-bold tracking-wide transition-all duration-300 ${currentFilter === 'upcoming' ? 'bg-brand-600 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}`}
-                        >
-                            Yaklaşan Etkinlikler
-                        </Link>
-                        <Link 
-                            href="?filter=past" 
-                            scroll={false}
-                            className={`px-6 py-2.5 rounded-full text-sm font-bold tracking-wide transition-all duration-300 ${currentFilter === 'past' ? 'bg-brand-600 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}`}
-                        >
-                            Geçmiş Etkinlikler
-                        </Link>
-                    </div>
-                </div>
+  if (currentFilter === 'upcoming') {
+    query = query.gte('event_date', now)
+  } else {
+    query = query.lt('event_date', now)
+  }
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                    {(!filteredEvents || filteredEvents.length === 0) ? (
-                        <p className="text-slate-500 col-span-1 md:col-span-2 lg:col-span-3 text-center py-16 bg-white rounded-2xl shadow-sm border border-dashed border-slate-300">
-                            Şu an için listelenmiş bir etkinlik bulunmamaktadır.
-                        </p>
-                    ) : (
-                        filteredEvents.map((event) => {
-                            const isUpcoming = new Date(event.event_date) > new Date()
+  const { data: events } = await query
 
-                            return (
-                                <div key={event.id} className="relative bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-xl hover:-translate-y-2 transition-all duration-300 flex flex-col group">
-                                    
-                                    <div className="absolute top-4 right-4 z-20">
-                                        <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-md backdrop-blur-md ${isUpcoming ? 'bg-gradient-to-r from-green-400 to-emerald-500 text-white' : 'bg-slate-800/90 text-white'}`}>
-                                            {isUpcoming ? 'Yaklaşan' : 'Geçmiş'}
-                                        </span>
-                                    </div>
+  const typedEvents = (events ?? []) as EventListItem[]
+  const isUpcoming = currentFilter === 'upcoming'
 
-                                    {/* Yükseklik biraz artırıldı (h-72) ve arka plan daha şık yapıldı */}
-                                    <div className="h-72 bg-slate-900 w-full relative overflow-hidden flex items-center justify-center">
-                                        {event.image_url ? (
-                                            <>
-                                                {/* Arka planda afişin bulanık hali (Sinematik etki yaratır ve boşlukları doldurur) */}
-                                                <div className="absolute inset-0 opacity-50">
-                                                    <img src={event.image_url} alt="" className="object-cover w-full h-full blur-xl scale-110" />
-                                                </div>
-                                                {/* Ana Afiş: object-contain ile asla kırpılmaz, tam boy görünür */}
-                                                <img src={event.image_url} alt={event.title} className="relative z-10 object-contain w-full h-full p-4 group-hover:scale-105 transition-transform duration-700 ease-in-out drop-shadow-2xl" />
-                                            </>
-                                        ) : (
-                                            <div className="absolute inset-0 bg-gradient-to-br from-brand-50 to-indigo-100 flex items-center justify-center text-brand-300">
-                                                <CalendarIcon className="h-20 w-20 opacity-40" />
-                                            </div>
-                                        )}
-                                        
-                                        {/* Tarih Overlay (Eski kodunla aynı kalabilir, z-20 ekledik ki resmin altında kalmasın) */}
-                                        <div className="absolute top-4 left-4 z-20">
-                                            <div className="flex flex-col items-center justify-center bg-white/95 backdrop-blur-sm rounded-xl overflow-hidden shadow-lg border border-white/50 w-16 h-16">
-                                                <span className="text-xs font-bold uppercase tracking-wider text-brand-600 bg-brand-50 w-full text-center py-1">
-                                                    {new Date(event.event_date).toLocaleDateString('tr-TR', { month: 'short' })}
-                                                </span>
-                                                <span className="text-2xl font-heading font-extrabold text-slate-900 leading-none mt-1">
-                                                    {new Date(event.event_date).getDate()}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
+  return (
+    <section aria-label="Etkinlik listesi" className="bg-slate-50 min-h-screen pt-24 pb-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Başlık */}
+        <header className="text-center mb-12">
+          <span className="text-brand-600 font-semibold tracking-wide uppercase text-sm mb-2 block">
+            Takvim
+          </span>
+          <h1 className="text-4xl md:text-5xl font-heading font-extrabold text-slate-900 tracking-tight">
+            Etkinliklerimiz
+          </h1>
+          <p className="mt-4 max-w-2xl text-medium text-slate-600 mx-auto font-montserrat">
+            İdeathonlar, eğitimler, seminerler ve anma programları. Geçmişten geleceğe tüm YBS buluşmaları.
+          </p>
 
-                                    <div className="p-8 flex flex-col flex-1">
-                                        <div className="flex items-center space-x-2 text-sm text-brand-500 font-semibold mb-3">
-                                            <Clock className="h-4 w-4" />
-                                            <time dateTime={event.event_date}>
-                                                {new Date(event.event_date).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
-                                            </time>
-                                        </div>
+          {/* Filtre */}
+          <nav aria-label="Etkinlik filtresi" className="flex justify-center items-center gap-4 mt-8">
+            <Link
+              href="?filter=upcoming"
+              scroll={false}
+              className={`px-6 py-2.5 rounded-full text-sm font-bold tracking-wide transition-all duration-300 ${
+                currentFilter === 'upcoming'
+                  ? 'bg-brand-600 text-white shadow-md'
+                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+              }`}
+            >
+              Yaklaşan Etkinlikler
+            </Link>
+            <Link
+              href="?filter=past"
+              scroll={false}
+              className={`px-6 py-2.5 rounded-full text-sm font-bold tracking-wide transition-all duration-300 ${
+                currentFilter === 'past'
+                  ? 'bg-brand-600 text-white shadow-md'
+                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+              }`}
+            >
+              Geçmiş Etkinlikler
+            </Link>
+          </nav>
+        </header>
 
-                                        {/* DEĞİŞİKLİK BURADA: Başlığa Link eklendi ve tüm karta yayıldı */}
-                                        <h3 className="text-2xl font-heading font-bold text-slate-900 mb-4 tracking-tight leading-tight group-hover:text-brand-600 transition-colors">
-                                            <Link href={`/events/${event.slug}`}>
-                                                <span className="absolute inset-0 z-10" aria-hidden="true"></span>
-                                                {event.title}
-                                            </Link>
-                                        </h3>
-
-                                        <div className="flex items-start text-slate-500 text-sm mb-6">
-                                            <MapPin className="h-5 w-5 mr-2 flex-shrink-0 text-brand-400 mt-0.5" />
-                                            <span>{event.location}</span>
-                                        </div>
-
-                                        <div className="mt-auto pt-6 border-t border-slate-100 flex items-center justify-between">
-                                            {event.registration_url && isUpcoming ? (
-                                                <a href={event.registration_url} target="_blank" rel="noopener noreferrer" className="relative z-20 inline-flex items-center justify-center px-4 py-2.5 border border-transparent text-sm font-semibold rounded-xl text-white bg-brand-600 hover:bg-brand-500 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-all w-full group-hover:-translate-y-0.5">
-                                                    Hemen Kayıt Ol <ExternalLink className="ml-2 -mr-1 h-4 w-4" />
-                                                </a>
-                                            ) : (
-                                                <span className="text-slate-400 text-sm italic font-medium">
-                                                    {isUpcoming ? 'Kayıt linki yok' : 'Etkinlik sona erdi'}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            )
-                        })
-                    )}
-                </div>
-            </div>
-            </div>
+        {/* Etkinlik Kartları */}
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+          {typedEvents.length === 0 ? (
+            <p className="text-slate-500 col-span-1 md:col-span-2 lg:col-span-3 text-center py-16 bg-white rounded-2xl shadow-sm border border-dashed border-slate-300">
+              Şu an için listelenmiş bir etkinlik bulunmamaktadır.
+            </p>
+          ) : (
+            typedEvents.map((event) => (
+              <EventListCard key={event.id} event={event} isUpcoming={isUpcoming} />
+            ))
+          )}
         </div>
-    )
+      </div>
+    </section>
+  )
 }

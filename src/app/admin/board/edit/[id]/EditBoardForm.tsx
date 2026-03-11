@@ -1,4 +1,4 @@
- "use client" 
+"use client"
 
 import { useState, useEffect, useMemo } from 'react'
 import { updateBoardMember } from '@/actions/board_users'
@@ -10,7 +10,20 @@ import { Trash2, ImagePlus, User as UserIcon } from 'lucide-react';
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false })
 import 'react-quill-new/dist/quill.snow.css' 
 
-export default function EditBoardMemberForm({ member }: { member: any }) {
+type BoardMemberEditData = {
+    id: string
+    slug: string
+    full_name: string
+    board_role: string
+    board_level: number | string
+    term_year: string
+    is_active: boolean
+    image_url: string | null
+    linkedin_url: string | null
+    description: string | null
+}
+
+export default function EditBoardMemberForm({ member }: { member: BoardMemberEditData }) {
     const { showToast } = useToast();
     
     // Temel Bilgiler
@@ -114,10 +127,11 @@ export default function EditBoardMemberForm({ member }: { member: any }) {
             } else {
                 showToast('Üye başarıyla güncellendi!', 'success');
             }
-        } catch (error: any) {
-            if (error?.message === 'NEXT_REDIRECT' || error?.digest?.startsWith('NEXT_REDIRECT')) {
+        } catch (error: unknown) {
+            const err = error as Record<string, unknown> | null;
+            if (err?.message === 'NEXT_REDIRECT' || (typeof err?.digest === 'string' && err.digest.startsWith('NEXT_REDIRECT'))) {
                 showToast('Üye başarıyla güncellendi!', 'success');
-                throw error; 
+                throw error;
             }
             showToast('Sunucu ile iletişim kurulurken bir hata oluştu.', 'error');
         }

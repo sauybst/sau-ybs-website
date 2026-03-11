@@ -1,4 +1,4 @@
- "use client" 
+"use client"
 
 import { useState, useEffect } from 'react'
 import { updateJobPosting } from '@/actions/jobs'
@@ -10,7 +10,20 @@ import { Trash2, ImagePlus } from 'lucide-react';
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false })
 import 'react-quill-new/dist/quill.snow.css' 
 
-export default function EditJobForm({ job }: { job: any }) {
+type JobEditData = {
+    id: string
+    slug: string | null
+    company_name: string
+    company_logo_url: string | null
+    position_name: string
+    work_model: number
+    description: string
+    deadline_date: string | null
+    application_link: string | null
+    is_active: boolean
+}
+
+export default function EditJobForm({ job }: { job: JobEditData }) {
     const { showToast } = useToast();
     
     // Form Stateleri (Veritabanından gelen verilerle dolduruluyor)
@@ -26,7 +39,11 @@ export default function EditJobForm({ job }: { job: any }) {
     useEffect(() => {
         const combined = `${companyName} ${positionName}`;
         const generatedSlug = combined
-            // ... replace kodları
+            .toLowerCase()
+            .trim()
+            .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
+            .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
+            .replace(/[^a-z0-9 -]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
         setSlug(generatedSlug);
     }, [companyName, positionName]);
     
@@ -78,10 +95,11 @@ export default function EditJobForm({ job }: { job: any }) {
             } else {
                 showToast('İlan başarıyla güncellendi!', 'success');
             }
-        } catch (error: any) {
-            if (error?.message === 'NEXT_REDIRECT' || error?.digest?.startsWith('NEXT_REDIRECT')) {
+        } catch (error: unknown) {
+            const err = error as Record<string, unknown> | null;
+            if (err?.message === 'NEXT_REDIRECT' || (typeof err?.digest === 'string' && err.digest.startsWith('NEXT_REDIRECT'))) {
                 showToast('İlan başarıyla güncellendi!', 'success');
-                throw error; 
+                throw error;
             }
             showToast('Sunucu ile iletişim kurulurken bir hata oluştu.', 'error');
         }
@@ -171,7 +189,7 @@ export default function EditJobForm({ job }: { job: any }) {
                         <div className="sm:col-span-6">
                             <label htmlFor="application_link" className="block text-sm font-medium leading-6 text-gray-900">Başvuru Linki <span className="text-gray-400 font-normal text-xs ml-1">(İsteğe bağlı)</span></label>
                             <div className="mt-2">
-                                <input type="url" name="application_link" id="application_link" defaultValue={job.application_link} className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-600 sm:text-sm sm:leading-6" />
+                                <input type="url" name="application_link" id="application_link" defaultValue={job.application_link ?? undefined} className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-600 sm:text-sm sm:leading-6" />
                             </div>
                         </div>
 

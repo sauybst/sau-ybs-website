@@ -34,30 +34,28 @@ export default function CreateEventPage() {
         setSlug(generatedSlug);
     }, [title]);
 
-        const handleAction = async (formData: FormData) => {
-                try {
-                    // Seçilen fiziksel dosyayı Server Action'a göndermek üzere form verisine ekliyoruz
-                    if (imageFile) {
-                        formData.append('image', imageFile); 
-                    }
+    const handleAction = async (formData: FormData) => {
+        try {
+            if (imageFile) {
+                formData.append('image', imageFile);
+            }
 
-                    const result = await createEvent(formData) as { error?: string } | undefined;
-                    
-                    if (result?.error) {
-                        showToast(result.error, 'error');
-                    } else {
-                        showToast('Etkinlik başarıyla oluşturuldu!', 'success');
-                    }
-                } catch (error: any) {
-                    // Yönlendirme hatasını (Next.js redirect) başarılı sayıp hata fırlatmayı engelliyoruz
-                    if (error?.message === 'NEXT_REDIRECT' || error?.digest?.startsWith('NEXT_REDIRECT')) {
-                        showToast('Etkinlik başarıyla oluşturuldu!', 'success');
-                        throw error; 
-                    }
-                    console.error("DETAYLI HATA:", error); 
-                    showToast('Sunucu ile iletişim kurulurken bir hata oluştu.', 'error');
-                }
-        };
+            const result = await createEvent(formData) as { error?: string } | undefined;
+
+            if (result?.error) {
+                showToast(result.error, 'error');
+            } else {
+                showToast('Etkinlik başarıyla oluşturuldu!', 'success');
+            }
+        } catch (error: unknown) {
+            const err = error as Record<string, unknown> | null;
+            if (err?.message === 'NEXT_REDIRECT' || (typeof err?.digest === 'string' && err.digest.startsWith('NEXT_REDIRECT'))) {
+                showToast('Etkinlik başarıyla oluşturuldu!', 'success');
+                throw error;
+            }
+            showToast('Sunucu ile iletişim kurulurken bir hata oluştu.', 'error');
+        }
+    };
 
     return (
         <div className="max-w-4xl mx-auto pb-12">

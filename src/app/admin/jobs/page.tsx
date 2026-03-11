@@ -1,15 +1,9 @@
 import { createClient } from '@/utils/supabase/server'
 import Link from 'next/link'
-import { Plus, Eye, Edit, Briefcase, Building2, MapPin, Calendar, Laptop } from 'lucide-react'
-import { deleteJobPosting } from '@/actions/jobs' // Bu fonksiyonu action dosyasında oluşturacağız
+import { Plus, Eye, Edit, Briefcase, Calendar } from 'lucide-react'
+import { deleteJobPosting } from '@/actions/jobs'
 import DeleteConfirmButton from '@/components/DeleteConfirmButton'
-
-const workModelMap: Record<number, string> = {
-    0: 'Yüzyüze',
-    1: 'Uzaktan',
-    2: 'Hibrit',
-    3: 'Belirtilmemiş'
-};
+import { workModelLabels, workModelIcons } from '@/data/job-types'
 
 export default async function JobsAdminPage() {
     const supabase = await createClient()
@@ -17,7 +11,7 @@ export default async function JobsAdminPage() {
     // İlanları en yeniden eskiye sıralayarak çekiyoruz
     const { data: jobs, error } = await supabase
         .from('job_postings')
-        .select('*')
+        .select('id, slug, company_name, company_logo_url, position_name, work_model, deadline_date, is_active')
         .order('created_at', { ascending: false })
 
     if (error) {
@@ -51,12 +45,7 @@ export default async function JobsAdminPage() {
                     const isExpired = job.deadline_date ? new Date(job.deadline_date) < new Date() : false;
                     const isActiveStatus = job.is_active && !isExpired;
 
-                    // Çalışma modeline göre ikon belirleme
-                    const getWorkModelIcon = (modelId: number) => {
-                        if (modelId === 1) return <Laptop className="flex-shrink-0 mr-1.5 h-4 w-4 text-brand-400" />; // Uzaktan
-                        if (modelId === 2) return <MapPin className="flex-shrink-0 mr-1.5 h-4 w-4 text-brand-400" />; // Hibrit
-                        return <Building2 className="flex-shrink-0 mr-1.5 h-4 w-4 text-brand-400" />; // Yüzyüze veya Belirtilmemiş
-                    };
+                    const WorkModelIcon = workModelIcons[job.work_model] || workModelIcons[0];
 
                     return (
                         <div key={job.id} className={`bg-white rounded-2xl shadow-sm hover:shadow-md border border-slate-100 transition-all duration-300 p-4 sm:p-5 flex flex-col sm:flex-row gap-5 sm:items-center justify-between group ${!isActiveStatus ? 'bg-slate-50' : ''}`}>
@@ -90,8 +79,8 @@ export default async function JobsAdminPage() {
                                             <span className="truncate max-w-[150px] sm:max-w-xs">{job.company_name}</span>
                                         </div>
                                         <div className="flex items-center">
-                                            {getWorkModelIcon(job.work_model)}
-                                            <span>{workModelMap[job.work_model]}</span>
+                                            <WorkModelIcon className="flex-shrink-0 mr-1.5 h-4 w-4 text-brand-400" />
+                                            <span>{workModelLabels[job.work_model]}</span>
                                         </div>
                                         {job.deadline_date && (
                                             <div className="flex items-center">

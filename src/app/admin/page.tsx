@@ -2,8 +2,20 @@ import { createClient } from '@/utils/supabase/server'
 import { Activity, Users, Calendar, FileText, Plus, ArrowRight, Briefcase, ShieldAlert, Clock, Sparkles, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import type { LucideIcon } from 'lucide-react'
 
-// Tarih formatlamak için yardımcı fonksiyon
+/** Dashboard aktivite akışı için tip tanımı */
+type DashboardActivity = {
+    id: string
+    title: string
+    created_at: string
+    type: string
+    icon: LucideIcon
+    color: string
+    bgColor: string
+}
+
+/** Tarih formatlamak için yardımcı fonksiyon */
 const formatDate = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }
     return new Date(dateString).toLocaleDateString('tr-TR', options)
@@ -18,8 +30,12 @@ export default async function AdminDashboard() {
 
     const { data: profile } = await supabase.from('profiles').select('role, accessible_modules, first_name').eq('id', user.id).single()
     const role = profile?.role || 'viewer'
-    const modules = profile?.accessible_modules || []
+    const modules: string[] = profile?.accessible_modules || []
     const firstName = profile?.first_name || 'Yönetici'
+
+    /** Rol bazlı modül erişim kontrolü */
+    const hasAccess = (module: string) =>
+        role === 'super_admin' || role === 'viewer' || (role === 'editor' && modules.includes(module))
 
     // 2. Dinamik Selamlama (Türkiye Saati UTC+3'e göre)
     const hour = new Date(new Date().getTime() + 3 * 60 * 60 * 1000).getUTCHours()
@@ -28,37 +44,48 @@ export default async function AdminDashboard() {
     else if (hour >= 12 && hour < 18) greeting = 'İyi günler'
     else if (hour >= 18 && hour < 22) greeting = 'İyi akşamlar'
 
-    // 3. İstatistikler
-    const { count: eventsCount } = await supabase.from('events').select('*', { count: 'exact', head: true })
-    const { count: blogsCount } = await supabase.from('blogs').select('*', { count: 'exact', head: true })
-    const { count: usersCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true })
-    const { count: projectsCount } = await supabase.from('projects').select('*', { count: 'exact', head: true })
-    const { count: jobsCount } = await supabase.from('job_postings').select('*', { count: 'exact', head: true })
+    // 3. İstatistikler — Paralel çalışır (performans)
+    const [
+        { count: eventsCount },
+        { count: blogsCount },
+        { count: usersCount },
+        { count: projectsCount },
+        { count: jobsCount },
+    ] = await Promise.all([
+        supabase.from('events').select('*', { count: 'exact', head: true }),
+        supabase.from('blogs').select('*', { count: 'exact', head: true }),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }),
+        supabase.from('projects').select('*', { count: 'exact', head: true }),
+        supabase.from('job_postings').select('*', { count: 'exact', head: true }),
+    ])
 
-    // 4. CANLI HAREKETLİLİK AKIŞI (Son eklenenleri çekme)
-    // Sadece yetkisi olan (veya super_admin/viewer) kişilere ilgili modüllerin son verilerini çekeriz
-    let activities: any[] = []
-
-    if (role !== 'editor' || modules.includes('events')) {
-        const { data: latestEvents } = await supabase.from('events').select('id, title, created_at').order('created_at', { ascending: false }).limit(2)
-        if (latestEvents) activities.push(...latestEvents.map(e => ({ ...e, type: 'Etkinlik', icon: Calendar, color: 'text-brand-600', bgColor: 'bg-brand-50' })))
-    }
-    
-    if (role !== 'editor' || modules.includes('blogs')) {
-        const { data: latestBlogs } = await supabase.from('blogs').select('id, title, created_at').order('created_at', { ascending: false }).limit(2)
-        if (latestBlogs) activities.push(...latestBlogs.map(b => ({ ...b, type: 'Blog', icon: FileText, color: 'text-green-600', bgColor: 'bg-green-50' })))
-    }
-
-    if (role !== 'editor' || modules.includes('jobs')) {
-        const { data: latestJobs } = await supabase.from('job_postings').select('id, title, created_at').order('created_at', { ascending: false }).limit(2)
-        if (latestJobs) activities.push(...latestJobs.map(j => ({ ...j, type: 'İlan', icon: Briefcase, color: 'text-blue-600', bgColor: 'bg-blue-50' })))
+    // 4. Son Hareketlilik Akışı — Paralel sorgular
+    const fetchEvents = async (): Promise<DashboardActivity[]> => {
+        if (!hasAccess('events')) return []
+        const { data } = await supabase.from('events').select('id, title, created_at').order('created_at', { ascending: false }).limit(2)
+        return (data || []).map(e => ({ ...e, type: 'Etkinlik', icon: Calendar, color: 'text-brand-600', bgColor: 'bg-brand-50' }))
     }
 
-    // Tarihe göre en yenileri üste al ve sadece son 4 işlemi göster
+    const fetchBlogs = async (): Promise<DashboardActivity[]> => {
+        if (!hasAccess('blogs')) return []
+        const { data } = await supabase.from('blogs').select('id, title, created_at').order('created_at', { ascending: false }).limit(2)
+        return (data || []).map(b => ({ ...b, type: 'Blog', icon: FileText, color: 'text-green-600', bgColor: 'bg-green-50' }))
+    }
+
+    const fetchJobs = async (): Promise<DashboardActivity[]> => {
+        if (!hasAccess('jobs')) return []
+        const { data } = await supabase.from('job_postings').select('id, position_name, created_at').order('created_at', { ascending: false }).limit(2)
+        return (data || []).map(j => ({ id: j.id, title: j.position_name, created_at: j.created_at, type: 'İlan', icon: Briefcase, color: 'text-blue-600', bgColor: 'bg-blue-50' }))
+    }
+
+    const activityArrays = await Promise.all([fetchEvents(), fetchBlogs(), fetchJobs()])
+    const activities: DashboardActivity[] = activityArrays.flat()
+
+    // Tarihe göre en yenileri üste, son 4 işlem
     activities.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     const recentActivities = activities.slice(0, 4)
 
-    // Kartlar
+    // İstatistik Kartları
     const allStats = [
         { id: 'events', name: 'Toplam Etkinlik', stat: eventsCount || 0, icon: Calendar, color: 'text-brand-600', bgColor: 'bg-brand-50', trend: 'Aktif takvim', adminOnly: false },
         { id: 'blogs', name: 'Toplam Blog', stat: blogsCount || 0, icon: FileText, color: 'text-green-600', bgColor: 'bg-green-50', trend: 'Yayında', adminOnly: false },
@@ -68,16 +95,13 @@ export default async function AdminDashboard() {
     ]
 
     const visibleStats = allStats.filter(item => {
-        if (role === 'super_admin') return true; 
-        if (item.adminOnly) return false; 
-        if (role === 'viewer') return true; 
-        if (role === 'editor') return modules.includes(item.id);
-        return false;
+        if (item.adminOnly && role !== 'super_admin') return false
+        return hasAccess(item.id)
     })
 
-    const canCreateEvents = role === 'super_admin' || (role === 'editor' && modules.includes('events'))
-    const canCreateBlogs = role === 'super_admin' || (role === 'editor' && modules.includes('blogs'))
-    const canCreateJobs = role === 'super_admin' || (role === 'editor' && modules.includes('jobs'))
+    const canCreateEvents = hasAccess('events') && role !== 'viewer'
+    const canCreateBlogs = hasAccess('blogs') && role !== 'viewer'
+    const canCreateJobs = hasAccess('jobs') && role !== 'viewer'
     const hasQuickActions = canCreateEvents || canCreateBlogs || canCreateJobs
 
     return (
@@ -85,7 +109,7 @@ export default async function AdminDashboard() {
             
             {/* Dinamik Üst Karşılama Alanı */}
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-brand-50 rounded-full blur-3xl opacity-50 -translate-y-1/2 translate-x-1/3"></div>
+                <div className="absolute top-0 right-0 w-64 h-64 bg-brand-50 rounded-full blur-3xl opacity-50 -translate-y-1/2 translate-x-1/3" aria-hidden="true" />
                 <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-2 text-brand-600 font-bold text-sm tracking-wider uppercase">
                         <Sparkles className="w-4 h-4" />
@@ -123,7 +147,7 @@ export default async function AdminDashboard() {
                     const IconComponent = item.icon
                     return (
                         <div key={item.name} className="relative bg-white p-6 rounded-3xl shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group overflow-hidden flex flex-col justify-between h-40">
-                            <div className={`absolute -right-6 -top-6 w-32 h-32 rounded-full opacity-20 transition-transform group-hover:scale-150 duration-700 ease-out ${item.bgColor}`}></div>
+                            <div className={`absolute -right-6 -top-6 w-32 h-32 rounded-full opacity-20 transition-transform group-hover:scale-150 duration-700 ease-out ${item.bgColor}`} aria-hidden="true" />
                             <div className="relative z-10 flex items-start justify-between">
                                 <div className={`p-3 rounded-2xl ${item.bgColor} text-opacity-90 group-hover:scale-110 transition-transform`}>
                                     <IconComponent className={`h-6 w-6 ${item.color}`} />
@@ -146,10 +170,10 @@ export default async function AdminDashboard() {
             {/* Alt Bölüm: Hızlı İşlemler & Son Hareketlilik */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-4">
                 
-                {/* Sol Kısım: Hızlı İşlemler (1 Kolon) */}
+                {/* Sol Kısım: Hızlı İşlemler */}
                 <div className="lg:col-span-1 flex flex-col gap-6">
                     <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-[2rem] shadow-lg p-7 text-white relative overflow-hidden flex-1">
-                        <Activity className="absolute -bottom-4 -right-4 w-32 h-32 text-white opacity-5" />
+                        <Activity className="absolute -bottom-4 -right-4 w-32 h-32 text-white opacity-5" aria-hidden="true" />
                         <h3 className="text-xl font-heading font-bold mb-6 relative z-10 flex items-center">
                             <Sparkles className="w-5 h-5 mr-2 text-brand-400" /> Operasyon Merkezi
                         </h3>
@@ -192,7 +216,7 @@ export default async function AdminDashboard() {
                     </div>
                 </div>
 
-                {/* Sağ Kısım: Son Hareketlilik Akışı (2 Kolon) */}
+                {/* Sağ Kısım: Son Hareketlilik Akışı */}
                 <div className="lg:col-span-2 bg-white rounded-[2rem] shadow-sm border border-slate-100 p-7">
                     <div className="flex items-center justify-between mb-8 border-b border-slate-100 pb-4">
                         <h3 className="text-xl font-heading font-bold text-slate-900 flex items-center">
@@ -203,7 +227,7 @@ export default async function AdminDashboard() {
 
                     {recentActivities.length > 0 ? (
                         <div className="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
-                            {recentActivities.map((activity, index) => {
+                            {recentActivities.map((activity) => {
                                 const Icon = activity.icon;
                                 return (
                                     <div key={`${activity.type}-${activity.id}`} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">

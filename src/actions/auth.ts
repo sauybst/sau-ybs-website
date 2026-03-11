@@ -2,10 +2,19 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
+import type { ActionState } from '@/utils/schemas'
 
-export async function login(prevState: any, formData: FormData) {
+type LoginState = {
+    error: string | null
+}
+
+export async function login(prevState: LoginState, formData: FormData) {
     const email = formData.get('email') as string
     const password = formData.get('password') as string
+
+    if (!email || !password) {
+        return { error: 'E-posta ve şifre alanları zorunludur.' }
+    }
 
     const supabase = await createClient()
 
@@ -15,7 +24,9 @@ export async function login(prevState: any, formData: FormData) {
     })
 
     if (error) {
-        return { error: `Kullanıcı adı veya şifre yanlış. (${error.message})` }
+        // Güvenlik: Hata detaylarını kullanıcıya sızdırmıyoruz
+        console.error('Login hatası:', error.message)
+        return { error: 'Kullanıcı adı veya şifre yanlış.' }
     }
 
     redirect('/admin')

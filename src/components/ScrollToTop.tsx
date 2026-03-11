@@ -1,59 +1,56 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { ArrowUp } from 'lucide-react';
 
 export default function ScrollToTop() {
     const [isVisible, setIsVisible] = useState(false);
     const [progress, setProgress] = useState(0);
+    const ticking = useRef(false);
+
+    const handleScroll = useCallback(() => {
+        if (!ticking.current) {
+            window.requestAnimationFrame(() => {
+                const totalScroll = document.documentElement.scrollTop;
+                const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+                const scrollPercent = windowHeight > 0 ? (totalScroll / windowHeight) * 100 : 0;
+
+                setProgress(scrollPercent);
+                setIsVisible(totalScroll > 200);
+                ticking.current = false;
+            });
+            ticking.current = true;
+        }
+    }, []);
 
     useEffect(() => {
-        const handleScroll = () => {
-            // Sayfanın ne kadarının kaydırıldığını matematiksel olarak hesapla
-            const totalScroll = document.documentElement.scrollTop;
-            const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-            const scrollPercent = (totalScroll / windowHeight) * 100;
-            
-            setProgress(scrollPercent);
-
-            // Sayfa 200px'den fazla aşağı kaydırıldıysa butonu göster
-            if (totalScroll > 200) {
-                setIsVisible(true);
-            } else {
-                setIsVisible(false);
-            }
-        };
-
-        window.addEventListener('scroll', handleScroll);
-        // Bileşen ekrandan kalkarsa listener'ı temizle (Performans için önemli)
+        window.addEventListener('scroll', handleScroll, { passive: true });
         return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
+    }, [handleScroll]);
 
     const scrollToTop = () => {
         window.scrollTo({
             top: 0,
-            behavior: 'smooth', // Yumuşak bir şekilde yukarı kaydırır
+            behavior: 'smooth',
         });
     };
 
-    // SVG Çemberi için matematiksel hesaplamalar
-    const radius = 22; // Çemberin yarıçapı
-    const circumference = 2 * Math.PI * radius; // Çemberin çevresi
-    const strokeDashoffset = circumference - (progress / 100) * circumference; // Doldurulacak kısım
+    // SVG Çemberi için hesaplamalar
+    const radius = 22;
+    const circumference = 2 * Math.PI * radius;
+    const strokeDashoffset = circumference - (progress / 100) * circumference;
 
     return (
         <button
             onClick={scrollToTop}
-            // isVisible durumuna göre butonu ekrana yumuşakça sok veya çıkar
             className={`fixed bottom-6 right-6 z-50 flex items-center justify-center transition-all duration-500 ${
                 isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'
             }`}
             aria-label="Yukarı Çık"
         >
-            {/* Etrafı dolan Progress Ring (SVG) */}
-            {/* -rotate-90 ile dolumun saat 12 yönünden başlamasını sağlıyoruz */}
+            {/* Progress Ring (SVG) */}
             <svg width="56" height="56" className="transform -rotate-90 drop-shadow-lg">
-                {/* Arka plandaki silik halka */}
+                {/* Arka plan halkası */}
                 <circle
                     cx="28"
                     cy="28"
@@ -63,7 +60,7 @@ export default function ScrollToTop() {
                     fill="transparent"
                     className="text-slate-200/50"
                 />
-                {/* Kaydırdıkça dolan renkli ana halka */}
+                {/* Kaydırdıkça dolan halka */}
                 <circle
                     cx="28"
                     cy="28"
@@ -74,11 +71,11 @@ export default function ScrollToTop() {
                     strokeDasharray={circumference}
                     strokeDashoffset={strokeDashoffset}
                     className="text-brand-600 transition-all duration-150 ease-out"
-                    strokeLinecap="round" // Çizginin uçlarını yuvarlatır
+                    strokeLinecap="round"
                 />
             </svg>
             
-            {/* İç Buton ve İkon (SVG'nin tam ortasına oturtulur) */}
+            {/* İç Buton ve İkon */}
             <div className="absolute inset-0 flex items-center justify-center m-auto w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full shadow-sm text-slate-700 hover:text-brand-600 hover:bg-brand-50 hover:scale-105 transition-all duration-300">
                 <ArrowUp className="w-5 h-5" />
             </div>

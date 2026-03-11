@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, useCallback, ReactNode } from 'react';
 import { CheckCircle, XCircle, Info, X } from 'lucide-react';
 
 type ToastType = 'success' | 'error' | 'info';
@@ -19,21 +19,35 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
     const [toasts, setToasts] = useState<Toast[]>([]);
+    const timers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
 
-    // Bildirimi çağıran ana fonksiyon
-    const showToast = (message: string, type: ToastType = 'info') => {
+    // Bileşen unmount olduğunda tüm timer'ları temizle
+    useEffect(() => {
+        return () => {
+            timers.current.forEach((timer) => clearTimeout(timer));
+            timers.current.clear();
+        };
+    }, []);
+
+    const removeToast = useCallback((id: number) => {
+        setToasts((prev) => prev.filter((toast) => toast.id !== id));
+        const timer = timers.current.get(id);
+        if (timer) {
+            clearTimeout(timer);
+            timers.current.delete(id);
+        }
+    }, []);
+
+    const showToast = useCallback((message: string, type: ToastType = 'info') => {
         const id = Date.now();
         setToasts((prev) => [...prev, { id, message, type }]);
 
-        // 3 saniye sonra ekrandan otomatik sil
-        setTimeout(() => {
-            setToasts((prev) => prev.filter((toast) => toast.id !== id));
+        // 3 saniye sonra otomatik kaldır
+        const timer = setTimeout(() => {
+            removeToast(id);
         }, 3000);
-    };
-
-    const removeToast = (id: number) => {
-        setToasts((prev) => prev.filter((toast) => toast.id !== id));
-    };
+        timers.current.set(id, timer);
+    }, [removeToast]);
 
     return (
         <ToastContext.Provider value={{ showToast }}>
@@ -43,7 +57,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 {toasts.map((toast) => (
                     <div 
                         key={toast.id} 
-                        // Animasyonlar ve Tailwind stilleri
                         className={`pointer-events-auto flex items-center w-full max-w-sm p-4 bg-white rounded-2xl shadow-2xl border-l-4 transform transition-all duration-500 ease-out translate-y-0 opacity-100 ${
                             toast.type === 'success' ? 'border-green-500' : 
                             toast.type === 'error' ? 'border-red-500' : 

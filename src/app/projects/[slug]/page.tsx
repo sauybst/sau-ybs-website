@@ -1,174 +1,207 @@
 import { createClient } from '@/utils/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { FolderOpen, User, CalendarIcon, ArrowLeft, ExternalLink } from 'lucide-react'
+import Image from 'next/image'
+import { FolderOpen, User, Calendar, ArrowLeft, ExternalLink } from 'lucide-react'
+import { Metadata } from 'next'
+
 import ShareButton from '@/components/ShareButton'
-import { Metadata, ResolvingMetadata } from 'next'
+import ProjectJsonLd from '@/components/projects/ProjectJsonLd'
+import { sanitizeHtml } from '@/lib/sanitize'
+import type { ProjectDetail } from '@/types/project'
 
-// Sayfanın aldığı parametreler (Örn: slug veya id)
+export const dynamic = 'force-dynamic'
+
+/** Detay sayfasında kullanılan alanlar */
+const PROJECT_DETAIL_SELECT =
+  'id,slug,title,description,image_url,project_url,developer_names,category,created_at' as const
+
 type Props = {
-    params: { slug: string }
+  params: Promise<{ slug: string }>
 }
 
-// NEXT.JS DİNAMİK META OLUŞTURUCU (Sayfa yüklenmeden önce çalışır)
-export async function generateMetadata(
-    { params }: Props,
-    parent: ResolvingMetadata
-): Promise<Metadata> {
-    const supabase = await createClient()
-    
-    // Veritabanından sadece SEO için gerekli kısımları çek
-    const { data: event } = await supabase
-        .from('projects')
-        .select('title, description, image_url') // image_url sende cover_image falan olabilir, kendi sütun adını yaz
-        .eq('slug', params.slug)
-        .single()
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params
+  const supabase = await createClient()
 
-    // Eğer etkinlik bulunamazsa varsayılan layout.tsx'teki metalara geri dön (Fallback)
-    if (!event) return {} 
+  const { data: project } = await supabase
+    .from('projects')
+    .select('title, description, image_url')
+    .eq('slug', slug)
+    .single()
 
-    // Zengin metinden (Rich Text) HTML etiketlerini temizleyip 160 karaktere kırpıyoruz (SEO için ideal uzunluk)
-    const cleanDescription = event.description.replace(/<[^>]*>?/gm, '').substring(0, 160) + '...'
+  if (!project) return {}
 
-    return {
-        title: event.title,
-        description: cleanDescription,
-        openGraph: {
-            title: event.title,
-            description: cleanDescription,
-            images: [
-                {
-                    // Etkinliğin kendi fotoğrafı varsa onu, yoksa sitenin varsayılan logosunu koy
-                    url: event.image_url || 'https://sauybst.com/og-default.jpg',
-                    width: 1200,
-                    height: 630,
-                    alt: event.title,
-                }
-            ],
-            type: 'article', // Bu bir yazı/etkinlik olduğu için website yerine article diyoruz
+  const cleanDescription =
+    project.description?.replace(/<[^>]*>?/gm, '').substring(0, 160) + '...'
+
+  return {
+    title: project.title,
+    description: cleanDescription,
+    alternates: { canonical: `/projects/${slug}` },
+    openGraph: {
+      title: project.title,
+      description: cleanDescription,
+      images: [
+        {
+          url: project.image_url || '/og-default.webp',
+          width: 1200,
+          height: 630,
+          alt: project.title,
         },
-        twitter: {
-            card: 'summary_large_image',
-            title: event.title,
-            description: cleanDescription,
-            images: [event.image_url || 'https://sauybst.com/og-default.jpg'],
-        }
-    }
+      ],
+      type: 'article',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: project.title,
+      description: cleanDescription,
+      images: [project.image_url || '/og-default.webp'],
+    },
+  }
 }
 
-export const dynamic = 'force-dynamic';
+export default async function ProjectDetailPage({ params }: Props) {
+  const { slug } = await params
+  const supabase = await createClient()
 
-export default async function ProjectDetailPage({ params }: { params: Promise<{ slug: string }> }) {
-    const { slug } = await params;
-    const supabase = await createClient();
+  const { data: project, error } = await supabase
+    .from('projects')
+    .select(PROJECT_DETAIL_SELECT)
+    .eq('slug', slug)
+    .single()
 
-    const { data: project, error } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('slug', slug)
-        .single();
+  if (error || !project) {
+    if (error) console.error('[Projects:detail]', error)
+    notFound()
+  }
 
-    if (error || !project) {
-        notFound();
-    }
+  const typedProject = project as unknown as ProjectDetail
+  const createdDate = new Date(typedProject.created_at)
 
-    const createdDate = new Date(project.created_at);
+  /* XSS koruması: Veritabanından gelen HTML'i DOMPurify ile temizle */
+  const safeDescription = typedProject.description
+    ? sanitizeHtml(typedProject.description)
+    : '<p>Bu proje için henüz bir açıklama girilmemiş.</p>'
 
-    return (
-        <div className="bg-slate-50 min-h-screen pt-24 pb-16">
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                
-                {/* Geri Dön Butonu */}
-                <Link 
-                    href="/projects" 
-                    className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-brand-600 transition-colors mb-8 group"
-                >
-                    <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-                    Projelere Dön
-                </Link>
+  return (
+    <section aria-label="Proje detayı" className="bg-slate-50 min-h-screen pt-24 pb-16">
+      {/* JSON-LD Yapılandırılmış Veri */}
+      <ProjectJsonLd project={typedProject} />
 
-                {/* Ana İçerik Kartı */}
-                <article className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-                    
-                    <div className="h-[28rem] sm:h-[36rem] w-full relative bg-slate-950 overflow-hidden flex items-center justify-center">
-                        {project.image_url ? (
-                            <>
-                                <div className="absolute inset-0 opacity-40">
-                                    <img 
-                                        src={project.image_url} 
-                                        alt="" 
-                                        className="object-cover w-full h-full blur-2xl scale-125" 
-                                    />
-                                </div>
-                                <img 
-                                    src={project.image_url} 
-                                    alt={project.title} 
-                                    className="relative z-10 object-contain w-full h-full p-4 sm:p-8 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]" 
-                                />
-                            </>
-                        ) : (
-                            <div className="absolute inset-0 bg-gradient-to-br from-brand-100 to-indigo-50 flex items-center justify-center text-brand-300">
-                                <FolderOpen className="h-32 w-32 opacity-20" />
-                            </div>
-                        )}
-                        
-                        {/* Kategori Rozeti */}
-                        <div className="absolute top-6 right-6 z-10">
-                            <span className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wider shadow-lg backdrop-blur-md bg-slate-900/90 text-white">
-                                {project.category}
-                            </span>
-                        </div>
-                    </div>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Geri Dön */}
+        <Link
+          href="/projects"
+          className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-brand-600 transition-colors mb-8 group"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+          Projelere Dön
+        </Link>
 
-                    <div className="p-8 sm:p-12">
-                        {/* Başlık ve Paylaş Butonu */}
-                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6 mb-6">
-                            <h1 className="text-3xl sm:text-4xl font-heading font-extrabold text-slate-900 tracking-tight leading-tight flex-1">
-                                {project.title}
-                            </h1>
-                            
-                            <div className="flex-shrink-0 mt-1 sm:mt-0">
-                                <ShareButton title={project.title} />
-                            </div>
-                        </div>
+        <article className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+          {/* Görsel Alanı */}
+          <div className="h-[28rem] sm:h-[36rem] w-full relative bg-slate-950 overflow-hidden flex items-center justify-center">
+            {typedProject.image_url ? (
+              <>
+                <div className="absolute inset-0 opacity-40" aria-hidden="true">
+                  <Image
+                    src={typedProject.image_url}
+                    alt=""
+                    fill
+                    className="object-cover blur-2xl scale-125"
+                    sizes="100vw"
+                    priority
+                  />
+                </div>
+                <Image
+                  src={typedProject.image_url}
+                  alt={typedProject.title}
+                  fill
+                  className="relative z-10 object-contain p-4 sm:p-8 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+                  sizes="(max-width: 896px) 100vw, 896px"
+                  priority
+                />
+              </>
+            ) : (
+              <div
+                className="absolute inset-0 bg-gradient-to-br from-brand-100 to-indigo-50 flex items-center justify-center text-brand-300"
+                aria-hidden="true"
+              >
+                <FolderOpen className="h-32 w-32 opacity-20" />
+              </div>
+            )}
 
-                        {/* Alt Bilgi Barı (Geliştiriciler, Tarih, Kategori) */}
-                        <div className="flex flex-wrap items-center gap-6 mb-8 pb-8 border-b border-slate-100">
-                            <div className="flex items-center text-slate-600">
-                                <User className="w-5 h-5 mr-2 text-brand-500" />
-                                <span className="font-medium">{project.developer_names}</span>
-                            </div>
-                            <div className="flex items-center text-slate-600">
-                                <FolderOpen className="w-5 h-5 mr-2 text-brand-500" />
-                                <span className="font-medium">{project.category}</span>
-                            </div>
-                            <div className="flex items-center text-slate-600">
-                                <CalendarIcon className="w-5 h-5 mr-2 text-brand-500" />
-                                <span className="font-medium">{createdDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-                            </div>
-                        </div>
+            {/* Kategori Rozeti */}
+            {typedProject.category && (
+              <div className="absolute top-6 right-6 z-10">
+                <span className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wider shadow-lg backdrop-blur-md bg-slate-900/90 text-white">
+                  {typedProject.category}
+                </span>
+              </div>
+            )}
+          </div>
 
-                        {/* Zengin Metin Açıklaması (React Quill Çıktısı) */}
-                        <div className="prose prose-slate prose-lg max-w-none font-montserrat prose-a:text-brand-600 hover:prose-a:text-brand-700 prose-img:rounded-xl prose-img:shadow-sm">
-                            <div dangerouslySetInnerHTML={{ __html: project.description || '<p>Bu proje için henüz bir açıklama girilmemiş.</p>' }} />
-                        </div>
-
-                        {/* Proje / GitHub Link Butonu */}
-                        {project.project_url && (
-                            <div className="mt-12 pt-8 border-t border-slate-100 flex justify-center">
-                                <a 
-                                    href={project.project_url} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer" 
-                                    className="inline-flex items-center justify-center px-8 py-4 text-lg font-bold rounded-2xl text-white bg-brand-600 hover:bg-brand-500 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all w-full sm:w-auto group"
-                                >
-                                    Projeyi İncele <ExternalLink className="ml-2 w-5 h-5 group-hover:rotate-12 transition-transform" />
-                                </a>
-                            </div>
-                        )}
-                    </div>
-                </article>
+          {/* İçerik */}
+          <div className="p-8 sm:p-12">
+            {/* Başlık ve Paylaş */}
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6 mb-6">
+              <h1 className="text-3xl sm:text-4xl font-heading font-extrabold text-slate-900 tracking-tight leading-tight flex-1">
+                {typedProject.title}
+              </h1>
+              <div className="flex-shrink-0 mt-1 sm:mt-0">
+                <ShareButton title={typedProject.title} />
+              </div>
             </div>
-        </div>
-    )
+
+            {/* Meta Bilgileri */}
+            <div className="flex flex-wrap items-center gap-6 mb-8 pb-8 border-b border-slate-100">
+              {typedProject.developer_names && (
+                <div className="flex items-center text-slate-600">
+                  <User className="w-5 h-5 mr-2 text-brand-500" />
+                  <span className="font-medium">{typedProject.developer_names}</span>
+                </div>
+              )}
+              {typedProject.category && (
+                <div className="flex items-center text-slate-600">
+                  <FolderOpen className="w-5 h-5 mr-2 text-brand-500" />
+                  <span className="font-medium">{typedProject.category}</span>
+                </div>
+              )}
+              <div className="flex items-center text-slate-600">
+                <Calendar className="w-5 h-5 mr-2 text-brand-500" />
+                <time dateTime={typedProject.created_at} className="font-medium">
+                  {createdDate.toLocaleDateString('tr-TR', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                  })}
+                </time>
+              </div>
+            </div>
+
+            {/* Açıklama — DOMPurify ile sanitize edilmiş HTML */}
+            <div className="prose prose-slate prose-lg max-w-none font-montserrat prose-a:text-brand-600 hover:prose-a:text-brand-700 prose-img:rounded-xl prose-img:shadow-sm">
+              <div dangerouslySetInnerHTML={{ __html: safeDescription }} />
+            </div>
+
+            {/* Proje / GitHub Link Butonu */}
+            {typedProject.project_url && (
+              <div className="mt-12 pt-8 border-t border-slate-100 flex justify-center">
+                <a
+                  href={typedProject.project_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center px-8 py-4 text-lg font-bold rounded-2xl text-white bg-brand-600 hover:bg-brand-500 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all w-full sm:w-auto group"
+                >
+                  Projeyi İncele{' '}
+                  <ExternalLink className="ml-2 w-5 h-5 group-hover:rotate-12 transition-transform" />
+                </a>
+              </div>
+            )}
+          </div>
+        </article>
+      </div>
+    </section>
+  )
 }

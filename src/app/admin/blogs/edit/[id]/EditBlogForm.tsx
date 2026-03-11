@@ -10,7 +10,15 @@ import { ImagePlus, Trash2 } from 'lucide-react'
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false })
 import 'react-quill-new/dist/quill.snow.css'
 
-export default function EditBlogForm({ blog }: { blog: any }) {
+type BlogEditData = {
+    id: string
+    title: string
+    content: string
+    type: number | null
+    cover_image_url: string | null
+}
+
+export default function EditBlogForm({ blog }: { blog: BlogEditData }) {
     const { showToast } = useToast();
     
     const [title, setTitle] = useState(blog.title || '');
@@ -56,8 +64,9 @@ export default function EditBlogForm({ blog }: { blog: any }) {
             } else {
                 showToast('Yazı başarıyla güncellendi!', 'success');
             }
-        } catch (error: any) {
-            if (error?.message === 'NEXT_REDIRECT' || error?.digest?.startsWith('NEXT_REDIRECT')) {
+        } catch (error: unknown) {
+            const err = error as Record<string, unknown> | null;
+            if (err?.message === 'NEXT_REDIRECT' || (typeof err?.digest === 'string' && err.digest.startsWith('NEXT_REDIRECT'))) {
                 showToast('Yazı başarıyla güncellendi!', 'success');
                 throw error; 
             }

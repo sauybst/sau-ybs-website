@@ -10,7 +10,7 @@ export default async function EditBlogPage({ params }: { params: Promise<{ id: s
     // Düzenlenecek blogun mevcut verilerini veritabanından çekiyoruz
     const { data: blog, error } = await supabase
         .from('blogs')
-        .select('*')
+        .select('id, title, content, type, cover_image_url')
         .eq('id', id)
         .single()
 

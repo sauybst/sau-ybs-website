@@ -1,7 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import Link from 'next/link'
 import { Plus, Eye, Edit, Users, User, Calendar, Shield } from 'lucide-react'
-import { deleteBoardMember } from '@/actions/board_users' 
+import { deleteBoardMember } from '@/actions/board_users'
 import DeleteConfirmButton from '@/components/DeleteConfirmButton'
 
 export default async function BoardAdminPage() {
@@ -10,7 +10,7 @@ export default async function BoardAdminPage() {
     // Üyeleri önce döneme, sonra seviyeye (başkandan aşağı doğru) sıralayarak çekiyoruz
     const { data: members, error } = await supabase
         .from('board_members')
-        .select('*')
+        .select('id, slug, full_name, board_role, board_level, term_year, is_active, image_url')
         .order('term_year', { ascending: false })
         .order('board_level', { ascending: true })
 
@@ -20,7 +20,7 @@ export default async function BoardAdminPage() {
 
     return (
         <div className="max-w-7xl mx-auto space-y-6 pb-12">
-            
+
             {/* Üst Header ve Aksiyon Bölümü */}
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
                 <div>
@@ -29,8 +29,8 @@ export default async function BoardAdminPage() {
                     </h2>
                     <p className="text-sm text-slate-500 mt-1">Aktif ve geçmiş dönem yönetim kurulu üyelerini görüntüleyin, düzenleyin veya silin.</p>
                 </div>
-                <Link 
-                    href="/admin/board/create" 
+                <Link
+                    href="/admin/board/create"
                     className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl shadow-sm text-sm font-bold text-white bg-brand-600 hover:bg-brand-500 hover:-translate-y-0.5 transition-all duration-200"
                 >
                     <Plus className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
@@ -45,7 +45,7 @@ export default async function BoardAdminPage() {
 
                     return (
                         <div key={member.id} className="bg-white rounded-2xl shadow-sm hover:shadow-md border border-slate-100 transition-all duration-300 p-4 sm:p-5 flex flex-col sm:flex-row gap-5 sm:items-center justify-between group">
-                            
+
                             {/* SOL KISIM: Görsel ve Bilgiler */}
                             <div className="flex items-center gap-4 sm:gap-6 min-w-0">
                                 {/* Profil Fotoğrafı (Yuvarlak) */}
@@ -68,7 +68,7 @@ export default async function BoardAdminPage() {
                                             {member.full_name}
                                         </h3>
                                     </div>
-                                    
+
                                     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-500 font-medium mt-1">
                                         <div className="flex items-center text-brand-600 font-bold">
                                             <Shield className="flex-shrink-0 mr-1.5 h-4 w-4" />
@@ -90,8 +90,8 @@ export default async function BoardAdminPage() {
                             {/* SAĞ KISIM: Aksiyon Butonları */}
                             <div className="flex items-center gap-2 mt-4 sm:mt-0 pt-4 sm:pt-0 border-t sm:border-t-0 border-slate-100">
                                 {/* Görüntüle Butonu (Canlı Siteye Gider) */}
-                                <Link 
-                                    href="/about" 
+                                <Link
+                                    href="/board"
                                     target="_blank"
                                     className="p-2.5 text-slate-400 bg-slate-50 hover:bg-brand-50 hover:text-brand-600 rounded-xl transition-colors tooltip-trigger"
                                     title="Sitede Görüntüle"
@@ -100,8 +100,8 @@ export default async function BoardAdminPage() {
                                 </Link>
 
                                 {/* Düzenle Butonu */}
-                                <Link 
-                                    href={`/admin/board/edit/${member.id}`} 
+                                <Link
+                                    href={`/admin/board/edit/${member.id}`}
                                     className="p-2.5 text-slate-400 bg-slate-50 hover:bg-amber-50 hover:text-amber-600 rounded-xl transition-colors"
                                     title="Düzenle"
                                 >
@@ -130,8 +130,8 @@ export default async function BoardAdminPage() {
                         <p className="text-slate-500 text-sm mb-6 text-center max-w-sm">
                             Sistemde kayıtlı herhangi bir yönetim kurulu üyesi bulunamadı. Aktif ekibinizi ekleyerek hemen başlayabilirsiniz.
                         </p>
-                        <Link 
-                            href="/admin/board/create" 
+                        <Link
+                            href="/admin/board/create"
                             className="inline-flex items-center justify-center px-4 py-2 text-sm font-bold text-brand-600 bg-brand-50 rounded-xl hover:bg-brand-100 transition-colors"
                         >
                             <Plus className="w-4 h-4 mr-1.5" />

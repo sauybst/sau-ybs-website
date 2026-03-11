@@ -10,7 +10,7 @@ export default async function EditJobPage({ params }: { params: Promise<{ id: st
     // 2. Veritabanından o ilanı bul
     const { data: job, error } = await supabase
         .from('job_postings')
-        .select('*')
+        .select('id, slug, company_name, company_logo_url, position_name, work_model, description, deadline_date, application_link, is_active')
         .eq('id', id)
         .single()
 

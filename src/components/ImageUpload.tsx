@@ -1,8 +1,12 @@
 'use client';
 
-import React, { useState, ChangeEvent, useRef } from 'react';
+import React, { useState, useEffect, ChangeEvent, useRef } from 'react';
 import { UploadCloud, Image as ImageIcon, Loader2, X } from 'lucide-react';
 import { compressImage } from '@/utils/supabase/imageCompression';
+import { useToast } from '@/components/ToastProvider';
+
+const MAX_RAW_FILE_SIZE = 20 * 1024 * 1024; // 20MB — sıkıştırma öncesi client-side üst limit
+const ACCEPTED_TYPES = 'image/png,image/jpeg,image/webp';
 
 interface ImageUploadProps {
   onImageSelect: (file: File | null) => void;
@@ -18,6 +22,16 @@ export default function ImageUpload({
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [localPreview, setLocalPreview] = useState<string | null>(previewUrl);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { showToast } = useToast();
+
+  // Memory leak önleme: bileşen unmount olduğunda blob URL'yi temizle
+  useEffect(() => {
+    return () => {
+      if (localPreview && localPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(localPreview);
+      }
+    };
+  }, [localPreview]);
 
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -25,25 +39,35 @@ export default function ImageUpload({
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      alert('Lütfen geçerli bir resim dosyası seçin.');
+      showToast('Lütfen geçerli bir resim dosyası seçin.', 'error');
+      return;
+    }
+
+    if (file.size > MAX_RAW_FILE_SIZE) {
+      showToast('Dosya boyutu 20MB\'dan küçük olmalıdır.', 'error');
       return;
     }
 
     try {
       setIsProcessing(true);
 
-      // 1. İş Mantığını Çağır: Resmi sıkıştır
+      // 1. Resmi sıkıştır
       const compressedFile = await compressImage(file);
 
-      // 2. Önizleme URL'si oluştur
+      // 2. Eski blob URL'yi temizle (memory leak önleme)
+      if (localPreview && localPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(localPreview);
+      }
+
+      // 3. Yeni önizleme URL'si oluştur
       const objectUrl = URL.createObjectURL(compressedFile);
       setLocalPreview(objectUrl);
 
-      // 3. Üst (Parent) bileşene sıkıştırılmış dosyayı gönder
+      // 4. Üst (Parent) bileşene sıkıştırılmış dosyayı gönder
       onImageSelect(compressedFile);
 
     } catch (error) {
-      alert('Resim işlenirken bir hata oluştu. Lütfen tekrar deneyin.');
+      showToast('Resim işlenirken bir hata oluştu. Lütfen tekrar deneyin.', 'error');
     } finally {
       setIsProcessing(false);
     }
@@ -51,6 +75,9 @@ export default function ImageUpload({
 
   const handleRemoveImage = (e: React.MouseEvent) => {
     e.preventDefault();
+    if (localPreview && localPreview.startsWith('blob:')) {
+      URL.revokeObjectURL(localPreview);
+    }
     setLocalPreview(null);
     onImageSelect(null);
     if (fileInputRef.current) {
@@ -99,7 +126,7 @@ export default function ImageUpload({
           ref={fileInputRef}
           type="file"
           className="hidden"
-          accept="image/*"
+          accept={ACCEPTED_TYPES}
           onChange={handleFileChange}
           disabled={isProcessing}
         />

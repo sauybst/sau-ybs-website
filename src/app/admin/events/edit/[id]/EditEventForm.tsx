@@ -10,7 +10,18 @@ import { Trash2, ImagePlus } from 'lucide-react';
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false })
 import 'react-quill-new/dist/quill.snow.css' 
 
-export default function EditEventForm({ event }: { event: any }) {
+type EventEditData = {
+    id: string
+    title: string
+    slug: string
+    event_date: string
+    location: string
+    description: string | null
+    image_url: string | null
+    registration_url: string | null
+}
+
+export default function EditEventForm({ event }: { event: EventEditData }) {
     const { showToast } = useToast();
     
     const [title, setTitle] = useState(event.title || '');
@@ -69,10 +80,11 @@ export default function EditEventForm({ event }: { event: any }) {
             } else {
                 showToast('Etkinlik başarıyla güncellendi!', 'success');
             }
-        } catch (error: any) {
-            if (error?.message === 'NEXT_REDIRECT' || error?.digest?.startsWith('NEXT_REDIRECT')) {
+        } catch (error: unknown) {
+            const err = error as Record<string, unknown> | null;
+            if (err?.message === 'NEXT_REDIRECT' || (typeof err?.digest === 'string' && err.digest.startsWith('NEXT_REDIRECT'))) {
                 showToast('Etkinlik başarıyla güncellendi!', 'success');
-                throw error; 
+                throw error;
             }
             showToast('Sunucu ile iletişim kurulurken bir hata oluştu.', 'error');
         }
@@ -152,7 +164,7 @@ export default function EditEventForm({ event }: { event: any }) {
                         <div className="sm:col-span-6">
                             <label htmlFor="registration_url" className="block text-sm font-medium leading-6 text-gray-900">Kayıt Linki <span className="text-gray-400 font-normal text-xs ml-1">(İsteğe bağlı)</span></label>
                             <div className="mt-2">
-                                <input type="url" name="registration_url" id="registration_url" defaultValue={event.registration_url} className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-600 sm:text-sm sm:leading-6" />
+                                <input type="url" name="registration_url" id="registration_url" defaultValue={event.registration_url ?? undefined} className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-600 sm:text-sm sm:leading-6" />
                             </div>
                         </div>
 
