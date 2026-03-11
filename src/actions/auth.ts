@@ -27,25 +27,13 @@ function isValidEmail(email: string): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
 
-function getPasswordResetRedirectUrl(): string | null {
-    const siteUrl = process.env.SITE_URL ?? process.env.NEXT_PUBLIC_SITE_URL
-    if (!siteUrl) {
-        return process.env.NODE_ENV === 'development' ? 'http://localhost:3000/update-password' : null
-    }
+function getPasswordResetRedirectUrl(): string {
 
-    try {
-        const baseUrl = new URL(siteUrl)
+    let siteUrl = process.env.URL || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
-        if (process.env.NODE_ENV === 'production' && baseUrl.protocol !== 'https:') {
-            console.error('SITE_URL üretimde HTTPS olmalıdır.')
-            return null
-        }
+    siteUrl = siteUrl.replace(/\/$/, '');
 
-        return new URL('/updatePassword', baseUrl).toString()
-    } catch {
-        console.error('Geçersiz SITE_URL/NEXT_PUBLIC_SITE_URL yapılandırması.')
-        return process.env.NODE_ENV === 'development' ? 'http://localhost:3000/update-password' : null
-    }
+    return `${siteUrl}/update-password`;
 }
 
 export async function login(prevState: LoginState, formData: FormData) {
