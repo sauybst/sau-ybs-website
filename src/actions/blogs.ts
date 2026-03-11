@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation'
 import { requireAuth } from '@/utils/auth-guard'
 import { generateSlug } from '@/utils/slugify'
 import { uploadImage, deleteStorageFile, handleImageUpdate } from '@/utils/storage'
-import { BlogSchema } from '@/utils/schemas'
+import { BlogSchema, UUIDSchema } from '@/utils/schemas'
 import { STORAGE_BUCKETS, STORAGE_FOLDERS, USER_ROLES } from '@/utils/constants'
 
 const ALLOWED_ROLES = [USER_ROLES.SUPER_ADMIN, USER_ROLES.EDITOR] as const
@@ -70,6 +70,9 @@ export async function createBlog(formData: FormData) {
 }
 
 export async function deleteBlog(id: string) {
+    const idCheck = UUIDSchema.safeParse(id)
+    if (!idCheck.success) return { error: 'Geçersiz kayıt kimliği.' }
+
     const supabase = await createClient()
 
     // — Yetki kontrolü
@@ -112,6 +115,8 @@ export async function updateBlog(formData: FormData) {
     if (!auth.authorized) return { error: auth.error }
 
     const id = formData.get('id') as string
+    const idCheck = UUIDSchema.safeParse(id)
+    if (!idCheck.success) return { error: 'Geçersiz kayıt kimliği.' }
 
     // — Girdi doğrulama
     const raw = {

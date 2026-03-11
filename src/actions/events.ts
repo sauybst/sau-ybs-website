@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { requireAuth } from '@/utils/auth-guard'
 import { uploadImage, deleteStorageFile, handleImageUpdate } from '@/utils/storage'
-import { EventSchema } from '@/utils/schemas'
+import { EventSchema, UUIDSchema } from '@/utils/schemas'
 import { STORAGE_BUCKETS, STORAGE_FOLDERS, USER_ROLES } from '@/utils/constants'
 
 const ALLOWED_ROLES = [USER_ROLES.SUPER_ADMIN, USER_ROLES.EDITOR] as const
@@ -70,6 +70,9 @@ export async function createEvent(formData: FormData) {
 }
 
 export async function deleteEvent(id: string) {
+    const idCheck = UUIDSchema.safeParse(id)
+    if (!idCheck.success) return { error: 'Geçersiz kayıt kimliği.' }
+
     const supabase = await createClient()
 
     // — Yetki kontrolü
@@ -112,6 +115,8 @@ export async function updateEvent(formData: FormData) {
     if (!auth.authorized) return { error: auth.error }
 
     const id = formData.get('id') as string
+    const idCheck = UUIDSchema.safeParse(id)
+    if (!idCheck.success) return { error: 'Geçersiz kayıt kimliği.' }
 
     // — Girdi doğrulama
     const raw = {

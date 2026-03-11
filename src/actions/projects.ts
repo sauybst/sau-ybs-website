@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { requireAuth } from '@/utils/auth-guard'
 import { uploadImage, deleteStorageFile, handleImageUpdate } from '@/utils/storage'
-import { ProjectSchema } from '@/utils/schemas'
+import { ProjectSchema, UUIDSchema } from '@/utils/schemas'
 import { STORAGE_BUCKETS, STORAGE_FOLDERS, USER_ROLES } from '@/utils/constants'
 
 const ALLOWED_ROLES = [USER_ROLES.SUPER_ADMIN, USER_ROLES.EDITOR] as const
@@ -71,6 +71,9 @@ export async function createProject(formData: FormData) {
 }
 
 export async function deleteProject(id: string) {
+    const idCheck = UUIDSchema.safeParse(id)
+    if (!idCheck.success) return { error: 'Geçersiz kayıt kimliği.' }
+
     const supabase = await createClient()
 
     // — Yetki kontrolü
@@ -114,6 +117,8 @@ export async function updateProject(formData: FormData) {
     if (!auth.authorized) return { error: auth.error }
 
     const id = formData.get('id') as string
+    const idCheck = UUIDSchema.safeParse(id)
+    if (!idCheck.success) return { error: 'Geçersiz kayıt kimliği.' }
 
     // — Girdi doğrulama
     const raw = {

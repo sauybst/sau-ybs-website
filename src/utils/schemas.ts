@@ -70,6 +70,23 @@ export const CreateUserSchema = z.object({
     role: z.string().min(1, 'Rol zorunludur.'),
 })
 
+// --- UUID Doğrulama ---
+
+export const UUIDSchema = z.string().uuid('Geçersiz kayıt kimliği.')
+
+// --- Kullanıcı Yetki Güncelleme ---
+
+const VALID_ROLES = ['super_admin', 'editor', 'viewer'] as const
+const VALID_MODULES = ['blogs', 'events', 'jobs', 'projects'] as const
+
+export const UpdateUserPermissionsSchema = z.object({
+    userId: z.string().uuid('Geçersiz kullanıcı kimliği.'),
+    role: z.enum(VALID_ROLES, { error: 'Geçersiz rol.' }),
+    modules: z.array(
+        z.enum(VALID_MODULES, { error: 'Geçersiz modül.' })
+    ),
+})
+
 // --- Yardımcı tip ---
 
 export type ActionState = {

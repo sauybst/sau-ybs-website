@@ -3,9 +3,16 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import type { ActionState } from '@/utils/schemas'
+import { checkRateLimit } from '@/utils/rate-limit'
 
 type LoginState = {
     error: string | null
+}
+
+// Rate limit ayarları: 15 dakikada en fazla 5 deneme
+const LOGIN_RATE_LIMIT = {
+    maxAttempts: 5,
+    windowMs: 15 * 60 * 1000, // 15 dakika
 }
 
 export async function login(prevState: LoginState, formData: FormData) {
@@ -14,6 +21,14 @@ export async function login(prevState: LoginState, formData: FormData) {
 
     if (!email || !password) {
         return { error: 'E-posta ve şifre alanları zorunludur.' }
+    }
+
+    // — Rate limit kontrolü (e-posta bazlı)
+    const rateLimitKey = `login:${email.toLowerCase().trim()}`
+    const rateCheck = checkRateLimit(rateLimitKey, LOGIN_RATE_LIMIT)
+    if (!rateCheck.allowed) {
+        const retryMinutes = Math.ceil(rateCheck.retryAfterMs / 60000)
+        return { error: `Çok fazla başarısız deneme. Lütfen ${retryMinutes} dakika sonra tekrar deneyin.` }
     }
 
     const supabase = await createClient()
@@ -37,3 +52,4 @@ export async function logout() {
     await supabase.auth.signOut()
     redirect('/login')
 }
+

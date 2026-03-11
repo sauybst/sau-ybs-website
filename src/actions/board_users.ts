@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { requireAuth } from '@/utils/auth-guard'
 import { uploadImage, deleteStorageFile, handleImageUpdate } from '@/utils/storage'
-import { BoardMemberSchema } from '@/utils/schemas'
+import { BoardMemberSchema, UUIDSchema } from '@/utils/schemas'
 import { STORAGE_BUCKETS, STORAGE_FOLDERS, USER_ROLES } from '@/utils/constants'
 
 const ALLOWED_ROLES = [USER_ROLES.SUPER_ADMIN] as const
@@ -71,6 +71,9 @@ export async function createBoardMember(formData: FormData) {
 }
 
 export async function deleteBoardMember(id: string) {
+    const idCheck = UUIDSchema.safeParse(id)
+    if (!idCheck.success) return { error: 'Geçersiz kayıt kimliği.' }
+
     const supabase = await createClient()
 
     // — Yetki kontrolü
@@ -108,6 +111,8 @@ export async function updateBoardMember(formData: FormData) {
     if (!auth.authorized) return { error: auth.error }
 
     const id = formData.get('id') as string
+    const idCheck = UUIDSchema.safeParse(id)
+    if (!idCheck.success) return { error: 'Geçersiz kayıt kimliği.' }
 
     // — Girdi doğrulama
     const raw = {

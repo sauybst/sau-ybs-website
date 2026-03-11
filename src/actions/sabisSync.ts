@@ -3,6 +3,8 @@
 import * as cheerio from 'cheerio'
 import { createClient } from '@/utils/supabase/server'
 import { generateSlug } from '@/utils/slugify'
+import { requireAuth } from '@/utils/auth-guard'
+import { USER_ROLES } from '@/utils/constants'
 
 // SABIS'teki karmaşık tarihleri standart ISO formatına çeviren yardımcı fonksiyon
 function parseSabisDate(dateStr: string): string {
@@ -52,6 +54,12 @@ interface SabisActivity {
 
 export async function syncSabisData() {
     const supabase = await createClient()
+
+    // — Yetki kontrolü: Sadece super_admin
+    const auth = await requireAuth(supabase, {
+        allowedRoles: [USER_ROLES.SUPER_ADMIN],
+    })
+    if (!auth.authorized) return { success: false, error: auth.error }
 
     const urlAnaSayfa = 'https://topluluk.sabis.sakarya.edu.tr/sau-yonetim-bilisim-sistemleri-ogrenci-toplulugu'
     const urlToplulukListesi = 'https://topluluk.sabis.sakarya.edu.tr/Topluluk/ToplulukListesi?ToplulukKategori=Teknoloji'

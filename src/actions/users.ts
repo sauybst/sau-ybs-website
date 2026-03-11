@@ -4,7 +4,7 @@ import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { requireAuth } from '@/utils/auth-guard'
-import { CreateUserSchema } from '@/utils/schemas'
+import { CreateUserSchema, UpdateUserPermissionsSchema } from '@/utils/schemas'
 import { USER_ROLES } from '@/utils/constants'
 
 /**
@@ -83,6 +83,12 @@ export async function createUserByAdmin(formData: FormData) {
 export async function updateUserPermissions(userId: string, role: string, modules: string[]) {
     const supabase = await createClient()
 
+    // — Girdi doğrulama
+    const validated = UpdateUserPermissionsSchema.safeParse({ userId, role, modules })
+    if (!validated.success) {
+        return { error: validated.error.issues[0].message }
+    }
+
     // — Yetki kontrolü: Sadece super_admin
     const auth = await requireAuth(supabase, {
         allowedRoles: [USER_ROLES.SUPER_ADMIN],
@@ -100,10 +106,10 @@ export async function updateUserPermissions(userId: string, role: string, module
     const { error } = await supabaseAdmin
         .from('profiles')
         .update({
-            role,
-            accessible_modules: role === USER_ROLES.EDITOR ? modules : [],
+            role: validated.data.role,
+            accessible_modules: validated.data.role === USER_ROLES.EDITOR ? validated.data.modules : [],
         })
-        .eq('id', userId)
+        .eq('id', validated.data.userId)
 
     if (error) {
         console.error('Yetki güncelleme hatası:', error)
