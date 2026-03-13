@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/utils/supabase/server'
-import { Users, History, Target, Lightbulb, Compass } from 'lucide-react'
+import { Users, History, Target, Lightbulb, Compass, Linkedin } from 'lucide-react'
 import FloatingTechBackground from '@/components/FloatingTechBackground'
 import MemberCard from '@/components/board/MemberCard'
 import type { BoardMemberListItem } from '@/types/board-member'
+import ArchiveViewer from '@/components/board/ArchiveViewer' 
 
 export const metadata: Metadata = {
   title: 'Hakkımızda & Yönetim Kurulu',
@@ -30,14 +31,20 @@ export default async function AboutAndBoardPage() {
   }
 
   const typedMembers = (members ?? []) as unknown as BoardMemberListItem[]
-
-  const activeMembers = typedMembers.filter((m) => m.is_active)
-  const pastMembers = typedMembers.filter((m) => !m.is_active)
+  
+  const activeMembers = typedMembers.filter((m) => m.is_active && String(m.board_level) !== '4')
+  const pastMembers = typedMembers.filter((m) => !m.is_active && String(m.board_level) !== '4')
+  
+  const currentTermYear = activeMembers.length > 0 ? activeMembers[0].term_year : ''
+  
+  const allContributors = typedMembers.filter((m) => String(m.board_level) === '4')
+  
+  const currentContributors = allContributors.filter((m) => m.term_year === currentTermYear)
+  const pastContributors = allContributors.filter((m) => m.term_year !== currentTermYear)
 
   const president = activeMembers.find((m) => m.board_level === '1')
   const vicePresidents = activeMembers.filter((m) => m.board_level === '2')
   const others = activeMembers.filter((m) => m.board_level === '3' || !m.board_level)
-
   const pastTerms = pastMembers.reduce(
     (acc, member) => {
       if (!acc[member.term_year]) acc[member.term_year] = []
@@ -47,7 +54,18 @@ export default async function AboutAndBoardPage() {
     {} as Record<string, BoardMemberListItem[]>
   )
 
-  const sortedPastTerms = Object.keys(pastTerms).sort((a, b) => b.localeCompare(a))
+  const contributorTerms = pastContributors.reduce(
+    (acc, member) => {
+      const year = member.term_year || 'Bilinmeyen Dönem';
+      if (!acc[year]) acc[year] = [];
+      acc[year].push(member);
+      return acc;
+    },
+    {} as Record<string, BoardMemberListItem[]>
+  )
+
+  const allYearsSet = new Set([...Object.keys(pastTerms), ...Object.keys(contributorTerms)]);
+  const sortedPastTerms = Array.from(allYearsSet).sort((a, b) => b.localeCompare(a));
 
   return (
     <div className="bg-slate-50 min-h-screen">
@@ -219,10 +237,62 @@ export default async function AboutAndBoardPage() {
           )}
         </section>
 
-        {/* Geçmiş Yönetim Kurulları */}
-        <section aria-label="Geçmiş yönetim kurulları" className="bg-white py-24 border-t border-slate-200 rounded-t-[3rem]">
+        {/* --- EMEĞİ GEÇENLER / ERKEN AYRILANLAR BÖLÜMÜ --- */}
+        {currentContributors.length > 0 && (
+          <section aria-label="Topluluğa Emeği Geçenler" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-24">
+            <header className="text-center mb-12 flex flex-col items-center">
+              <div className="h-12 w-12 bg-amber-50 text-amber-500 rounded-xl flex items-center justify-center mb-4 border border-amber-100">
+                <Users className="h-6 w-6" />
+              </div>
+              <h2 className="text-2xl md:text-3xl font-heading font-bold text-slate-800 tracking-tight">
+                Topluluğumuza Emeği Geçenler
+              </h2>
+              <p className="mt-3 max-w-2xl text-base text-slate-500 mx-auto font-medium font-montserrat">
+                Görev süresini tamamlamadan aramızdan ayrılan, ancak topluluğumuza değerli katkılar sunan ekip arkadaşlarımız.
+              </p>
+            </header>
+
+            {/* Biraz daha küçük, şık ve tatlı bir kart tasarımı kullanıyoruz */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 opacity-90 hover:opacity-100 transition-opacity duration-300">
+              {currentContributors.map(member => (
+                <div key={member.id} className="text-center flex flex-col items-center bg-white p-5 rounded-3xl shadow-sm border border-slate-100 hover:border-brand-200 hover:-translate-y-1 transition-all duration-300">
+                  {member.image_url ? (
+                    <img src={member.image_url} alt={member.full_name} className="w-20 h-20 rounded-full object-cover mb-4 shadow-sm" />
+                  ) : (
+                    <div className="w-20 h-20 rounded-full bg-slate-50 flex items-center justify-center mb-4 text-slate-300 border border-slate-100">
+                       <Users className="w-8 h-8" />
+                    </div>
+                  )}
+                  <h3 className="font-semibold text-slate-800 text-sm line-clamp-1" title={member.full_name}>{member.full_name}</h3>
+                  <p className="text-xs text-brand-600 font-medium mt-1 line-clamp-1">{member.board_role}</p>
+                  {/* Badge (Etiket) ve LinkedIn Butonu Yan Yana */}
+                  <div className="mt-5 flex items-center justify-center gap-3">
+                    <span className="text-sm text-slate-500 px-4 py-1.5 bg-slate-50 rounded-full border border-slate-100 font-medium">
+                      {member.term_year}
+                    </span>
+                    
+                    {member.linkedin_url && (
+                      <a
+                        href={member.linkedin_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-slate-400 hover:text-[#0A66C2] transition-colors p-2 bg-slate-50 hover:bg-blue-50 rounded-full border border-slate-100 hover:border-blue-100"
+                        title={`${member.full_name} LinkedIn Profili`}
+                      >
+                        <Linkedin className="w-4 h-4" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Geçmiş Yönetim Kurulları ve Arşiv */}
+        <section aria-label="Geçmiş yönetim kurulları ve arşiv" className="bg-white py-24 border-t border-slate-200 rounded-t-[3rem]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <header className="text-center mb-20 flex flex-col items-center">
+            <header className="text-center mb-16 flex flex-col items-center">
               <div className="h-16 w-16 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center mb-6 border border-slate-100">
                 <History className="h-8 w-8" />
               </div>
@@ -230,41 +300,20 @@ export default async function AboutAndBoardPage() {
                 Arşiv
               </span>
               <h2 className="text-3xl md:text-4xl font-heading font-bold text-slate-900 tracking-tight">
-                Geçmiş Yönetim Kurulları
+                Geçmiş Dönem Arşivi
               </h2>
               <p className="mt-4 max-w-2xl text-lg text-slate-500 mx-auto font-medium font-montserrat">
-                Kurumsal hafızamızı yaşatıyoruz. Önceki dönemlerde topluluğumuza hizmet eden ve
-                vizyonumuzu şekillendiren değerli üyelerimiz.
+                Kurumsal hafızamızı yaşatıyoruz. Topluluğumuza hizmet eden, vizyonumuzu şekillendiren ve emeği geçen tüm değerli ekip arkadaşlarımız.
               </p>
             </header>
 
-            {sortedPastTerms.length === 0 ? (
-              <p className="text-center text-slate-400 bg-slate-50 py-12 rounded-2xl">
-                Arşivde geçmiş dönem kaydı bulunmamaktadır.
-              </p>
-            ) : (
-              <div className="space-y-24">
-                {sortedPastTerms.map((term) => (
-                  <div key={term} className="relative">
-                    <div className="flex items-center mb-12">
-                      <h3 className="text-2xl font-heading font-bold text-slate-800 pr-6 bg-white relative z-10">
-                        {term}{' '}
-                        <span className="text-slate-400 font-medium text-lg ml-2">Dönemi</span>
-                      </h3>
-                      <div
-                        className="absolute left-0 right-0 h-px bg-gradient-to-r from-slate-200 to-transparent top-1/2 -translate-y-1/2"
-                        aria-hidden="true"
-                      />
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 opacity-80 hover:opacity-100 transition-opacity">
-                      {pastTerms[term].map((member) => (
-                        <MemberCard key={member.id} member={member} />
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            {/* Yeni Client Bileşenimiz Burada Devreye Giriyor */}
+            <ArchiveViewer 
+              pastTerms={pastTerms} 
+              contributorTerms={contributorTerms} 
+              allYears={sortedPastTerms} 
+            />
+            
           </div>
         </section>
       </div>

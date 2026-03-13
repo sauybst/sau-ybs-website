@@ -248,6 +248,7 @@ export default function EditBoardMemberForm({ member }: { member: BoardMemberEdi
                                     <option value="1">1. Seviye (Başkan)</option>
                                     <option value="2">2. Seviye (Başkan Yrd. / Gen. Sekreter)</option>
                                     <option value="3">3. Seviye (Koordinatörler ve Üyeler)</option>
+                                    <option value="4">4. Seviye (Emeği Geçenler / Erken Ayrılanlar)</option>
                                 </select>
                             </div>
                         </div>
