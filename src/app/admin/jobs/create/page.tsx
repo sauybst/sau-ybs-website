@@ -15,9 +15,11 @@ export default function CreateJobPage() {
     const { showToast } = useToast();
     const [description, setDescription] = useState('');
     const [imageFile, setImageFile] = useState<File | null>(null);
-    const [slug, setSlug] = useState(''); // Slug state'ini ekle
-    const [companyName, setCompanyName] = useState(''); // Şirket adını izlemek için value'yu state'e bağlamalısın
-    const [positionName, setPositionName] = useState(''); // Pozisyonu izlemek için value'yu state'e bağlamalısın
+    const [slug, setSlug] = useState(''); 
+    const [companyName, setCompanyName] = useState(''); 
+    const [positionName, setPositionName] = useState(''); 
+
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Şirket veya Pozisyon değiştikçe otomatik slug üret
     useEffect(() => {
@@ -31,6 +33,16 @@ export default function CreateJobPage() {
         setSlug(generatedSlug);
     }, [companyName, positionName]);
 
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
+        if (isSubmitting) return;
+        setIsSubmitting(true);
+
+        const formData = new FormData(e.currentTarget);  
+        await handleAction(formData);
+    };
+
     const handleAction = async (formData: FormData) => {
         try {
             if (imageFile) {
@@ -41,6 +53,7 @@ export default function CreateJobPage() {
             
             if (result?.error) {
                 showToast(result.error, 'error');
+                setIsSubmitting(false);
             } else {
                 showToast('İlan başarıyla oluşturuldu!', 'success');
             }
@@ -51,6 +64,7 @@ export default function CreateJobPage() {
                 throw error;
             }
             showToast('Sunucu ile iletişim kurulurken bir hata oluştu.', 'error');
+            setIsSubmitting(false);
         }
     };
 
@@ -72,7 +86,7 @@ export default function CreateJobPage() {
                 </div>
             </div>
 
-            <form action={handleAction} className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2 overflow-hidden">
+            <form onSubmit={handleSubmit} className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2 overflow-hidden">
                 <div className="px-4 py-6 sm:p-8">
                     <div className="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                         
@@ -216,11 +230,26 @@ export default function CreateJobPage() {
                     </div>
                 </div>
                 <div className="flex items-center justify-end gap-x-6 border-t border-gray-900/10 bg-gray-50 px-4 py-4 sm:px-8">
-                    <button
-                        type="submit"
-                        className="rounded-md bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 transition-colors"
+                    <button 
+                        type="submit" 
+                        disabled={isSubmitting}
+                        className={`rounded-md px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors flex items-center justify-center gap-2
+                            ${isSubmitting 
+                                ? 'bg-brand-400 cursor-not-allowed opacity-75' 
+                                : 'bg-brand-600 hover:bg-brand-500'
+                            }`}
                     >
-                        İlanı Kaydet
+                        {isSubmitting ? (
+                            <>
+                                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Kaydediliyor...
+                            </>
+                        ) : (
+                            'İlanı Kaydet'
+                        )}
                     </button>
                 </div>
             </form>

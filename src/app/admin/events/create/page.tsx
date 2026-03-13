@@ -15,7 +15,9 @@ export default function CreateEventPage() {
     const [title, setTitle] = useState('');
     const [slug, setSlug] = useState('');
     const [description, setDescription] = useState('');
-    const [imageFile, setImageFile] = useState<File | null>(null); // Seçilen resmi tutacağımız state eklendi
+    const [imageFile, setImageFile] = useState<File | null>(null); 
+
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         const generatedSlug = title
@@ -34,6 +36,16 @@ export default function CreateEventPage() {
         setSlug(generatedSlug);
     }, [title]);
 
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
+        if (isSubmitting) return;
+        setIsSubmitting(true);
+
+        const formData = new FormData(e.currentTarget);
+        await handleAction(formData);
+    };
+
     const handleAction = async (formData: FormData) => {
         try {
             if (imageFile) {
@@ -44,6 +56,7 @@ export default function CreateEventPage() {
 
             if (result?.error) {
                 showToast(result.error, 'error');
+                setIsSubmitting(false);
             } else {
                 showToast('Etkinlik başarıyla oluşturuldu!', 'success');
             }
@@ -54,6 +67,7 @@ export default function CreateEventPage() {
                 throw error;
             }
             showToast('Sunucu ile iletişim kurulurken bir hata oluştu.', 'error');
+            setIsSubmitting(false);
         }
     };
 
@@ -75,8 +89,7 @@ export default function CreateEventPage() {
                 </div>
             </div>
 
-            <form action={handleAction} className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2 overflow-hidden">
-                {/* Ekranda görünmeyen ama arka planda veritabanına giden gizli Slug verisi */}
+            <form onSubmit={handleSubmit} className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2 overflow-hidden">
                 <input type="hidden" name="slug" value={slug} />
 
                 <div className="px-4 py-6 sm:p-8">
@@ -175,11 +188,26 @@ export default function CreateEventPage() {
                     </div>
                 </div>
                 <div className="flex items-center justify-end gap-x-6 border-t border-gray-900/10 bg-gray-50 px-4 py-4 sm:px-8">
-                    <button
-                        type="submit"
-                        className="rounded-md bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 transition-colors"
+                    <button 
+                        type="submit" 
+                        disabled={isSubmitting}
+                        className={`rounded-md px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors flex items-center justify-center gap-2
+                            ${isSubmitting 
+                                ? 'bg-brand-400 cursor-not-allowed opacity-75' 
+                                : 'bg-brand-600 hover:bg-brand-500'
+                            }`}
                     >
-                        Etkinliği Kaydet
+                        {isSubmitting ? (
+                            <>
+                                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Kaydediliyor...
+                            </>
+                        ) : (
+                            'Etkinliği Kaydet'
+                        )}
                     </button>
                 </div>
             </form>
