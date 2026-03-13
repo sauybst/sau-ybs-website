@@ -3,7 +3,6 @@ import { createClient } from '@/utils/supabase/server'
 import Link from 'next/link'
 import EventListCard from '@/components/events/EventListCard'
 import type { EventListItem } from '@/types/event'
-export const runtime = 'edge';
 
 export const metadata: Metadata = {
   title: 'Etkinlikler',

@@ -6,7 +6,6 @@ import { FileText } from 'lucide-react'
 import BlogListCard from '@/components/blogs/BlogListCard'
 import { blogFilterButtons, VALID_BLOG_TYPE_FILTERS } from '@/data/blog-types'
 import type { BlogListItem } from '@/types/blog'
-export const runtime = 'edge';
 
 export const metadata: Metadata = {
   title: 'Blog ve Duyurular',

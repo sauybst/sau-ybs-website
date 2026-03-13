@@ -9,7 +9,6 @@ import ImageUpload from '@/components/ImageUpload';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false })
 import 'react-quill-new/dist/quill.snow.css' 
-export const runtime = 'edge';
 
 export default function CreateEventPage() {
     const { showToast } = useToast();

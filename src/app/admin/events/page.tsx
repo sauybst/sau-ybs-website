@@ -3,7 +3,6 @@ import Link from 'next/link'
 import { Calendar, Plus, Trash2, MapPin, Eye, Edit } from 'lucide-react'
 import { deleteEvent } from '@/actions/events'
 import DeleteConfirmButton from '@/components/DeleteConfirmButton'
-export const runtime = 'edge';
 
 export default async function EventsPage() {
     const supabase = await createClient()

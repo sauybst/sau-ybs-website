@@ -5,7 +5,6 @@ import Link from 'next/link'
 import ProjectListCard from '@/components/projects/ProjectListCard'
 import type { ProjectListItem } from '@/types/project'
 
-export const runtime = 'edge';
 
 export const metadata: Metadata = {
   title: 'Açık Kaynak Projeler',

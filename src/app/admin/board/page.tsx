@@ -3,7 +3,6 @@ import Link from 'next/link'
 import { Plus, Eye, Edit, Users, User, Calendar, Shield } from 'lucide-react'
 import { deleteBoardMember } from '@/actions/board_users'
 import DeleteConfirmButton from '@/components/DeleteConfirmButton'
-export const runtime = 'edge';
 
 export default async function BoardAdminPage() {
     const supabase = await createClient()

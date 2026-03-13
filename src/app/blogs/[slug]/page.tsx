@@ -11,7 +11,6 @@ import { sanitizeHtml } from '@/lib/sanitize'
 import { getBlogTypeConfig } from '@/data/blog-types'
 import type { BlogDetail } from '@/types/blog'
 
-export const runtime = 'edge';
 export const dynamic = 'force-dynamic'
 
 /** Detay sayfasında kullanılan alanlar */

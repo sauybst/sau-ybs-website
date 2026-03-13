@@ -2,7 +2,6 @@ import { createClient } from '@/utils/supabase/server'
 import { Users, ShieldAlert } from 'lucide-react'
 import UserRoleCard from './UserRoleCard'
 import CreateUserForm from './CreateUserForm'
-export const runtime = 'edge';
 
 export const metadata = {
     title: 'Kullanıcı Yönetimi - YBS Admin',

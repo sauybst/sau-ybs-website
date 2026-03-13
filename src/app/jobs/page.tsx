@@ -5,7 +5,6 @@ import Link from 'next/link'
 import JobListCard from '@/components/jobs/JobListCard'
 import type { JobListItem } from '@/types/job'
 
-export const runtime = 'edge';
 
 export const metadata: Metadata = {
   title: 'Staj ve İş İlanları',

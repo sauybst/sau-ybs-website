@@ -1,7 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import { notFound } from 'next/navigation'
 import EditJobForm from './EditJobsForm'
-export const runtime = 'edge';
 
 export default async function EditJobPage({ params }: { params: Promise<{ id: string }> }) {
     // 1. URL'den ID'yi al

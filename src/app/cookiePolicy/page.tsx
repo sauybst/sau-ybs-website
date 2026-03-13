@@ -1,7 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-export const runtime = 'edge';
 
 export default function CookiePolicy() {
   return (

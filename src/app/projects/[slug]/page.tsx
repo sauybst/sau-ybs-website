@@ -10,7 +10,6 @@ import ProjectJsonLd from '@/components/projects/ProjectJsonLd'
 import { sanitizeHtml } from '@/lib/sanitize'
 import type { ProjectDetail } from '@/types/project'
 
-export const runtime = 'edge';
 export const dynamic = 'force-dynamic'
 
 /** Detay sayfasında kullanılan alanlar */

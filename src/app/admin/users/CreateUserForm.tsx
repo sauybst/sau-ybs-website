@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { UserPlus, Save, X, ShieldAlert, User, Mail, Key, ShieldCheck, CheckSquare, Square } from 'lucide-react'
 import { createUserByAdmin } from '@/actions/users'
 import { useToast } from '@/components/ToastProvider'
-export const runtime = 'edge';
 
 const AVAILABLE_MODULES = [
     { id: 'events', name: 'Etkinlikler' },

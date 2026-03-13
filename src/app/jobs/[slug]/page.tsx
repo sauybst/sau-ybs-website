@@ -18,7 +18,6 @@ import { sanitizeHtml } from '@/lib/sanitize'
 import { workModelLabels, workModelIcons, stripHtmlToPlainText } from '@/data/job-types'
 import type { JobDetail } from '@/types/job'
 
-export const runtime = 'edge';
 export const dynamic = 'force-dynamic'
 
 /** Detay sayfasında kullanılan alanlar */

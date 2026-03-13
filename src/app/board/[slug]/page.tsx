@@ -10,7 +10,6 @@ import PersonJsonLd from '@/components/board/PersonJsonLd'
 import { sanitizeHtml } from '@/lib/sanitize'
 import type { BoardMemberDetail } from '@/types/board-member'
 
-export const runtime = 'edge';
 export const dynamic = 'force-dynamic'
 
 /** Detay sayfasında kullanılan alanlar */

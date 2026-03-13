@@ -1,7 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import { notFound } from 'next/navigation'
 import EditBoardMemberForm from './EditBoardForm'
-export const runtime = 'edge';
 
 export default async function EditBoardMemberPage({ params }: { params: Promise<{ id: string }> }) {
     // 1. URL'den ID'yi al

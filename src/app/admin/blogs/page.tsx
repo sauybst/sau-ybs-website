@@ -3,7 +3,6 @@ import Link from 'next/link'
 import { FileText, Plus, Trash2, Clock, Eye, Edit, BookOpen, Megaphone } from 'lucide-react'
 import { deleteBlog } from '@/actions/blogs' // Bu fonksiyonu birazdan oluşturacağız
 import DeleteConfirmButton from '@/components/DeleteConfirmButton'
-export const runtime = 'edge';
 
 export default async function BlogsPage() {
     const supabase = await createClient()
