@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Plus, Eye, Edit, Code, User, Calendar, ExternalLink } from 'lucide-react'
 import { deleteProject } from '@/actions/projects' 
 import DeleteConfirmButton from '@/components/DeleteConfirmButton'
+export const runtime = 'edge';
 
 export default async function ProjectsPage() {
     const supabase = await createClient()

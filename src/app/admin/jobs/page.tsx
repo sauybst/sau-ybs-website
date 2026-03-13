@@ -4,6 +4,7 @@ import { Plus, Eye, Edit, Briefcase, Calendar } from 'lucide-react'
 import { deleteJobPosting } from '@/actions/jobs'
 import DeleteConfirmButton from '@/components/DeleteConfirmButton'
 import { workModelLabels, workModelIcons } from '@/data/job-types'
+export const runtime = 'edge';
 
 export default async function JobsAdminPage() {
     const supabase = await createClient()

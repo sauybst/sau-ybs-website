@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { ShieldCheck, UserCog, Eye, Save, CheckSquare, Square } from 'lucide-react'
 import { updateUserPermissions } from '@/actions/users'
 import { useToast } from '@/components/ToastProvider'
+export const runtime = 'edge';
 
 // Sistemdeki mevcut modüllerimiz
 const AVAILABLE_MODULES = [

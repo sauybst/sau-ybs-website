@@ -1,6 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { notFound } from 'next/navigation'
 import EditBlogForm from './EditBlogForm'
+export const runtime = 'edge';
 
 export default async function EditBlogPage({ params }: { params: Promise<{ id: string }> }) {
     // URL'den ID'yi alıyoruz

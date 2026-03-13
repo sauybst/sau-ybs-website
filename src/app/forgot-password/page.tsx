@@ -5,6 +5,7 @@ import { resetPassword } from '@/actions/auth'
 import type { ActionState } from '@/utils/schemas'
 import Link from 'next/link'
 import { ArrowLeft, KeyRound } from 'lucide-react'
+export const runtime = 'edge';
 
 type ForgotPasswordState = ActionState
 

@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/ToastProvider'
 import { ShieldCheck } from 'lucide-react'
 
+export const runtime = 'edge';
+
 const MIN_PASSWORD_LENGTH = 10
 
 function validatePassword(password: string): string | null {

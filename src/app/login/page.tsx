@@ -6,6 +6,8 @@ import { useFormStatus } from 'react-dom'
 import Image from 'next/image'
 import Link from 'next/link'
 
+export const runtime = 'edge';
+
 const initialState = {
     error: null as string | null,
 }

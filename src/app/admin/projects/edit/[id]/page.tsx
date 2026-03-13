@@ -1,6 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { notFound } from 'next/navigation'
 import EditProjectForm from './EditProjectForm'
+export const runtime = 'edge';
 
 export default async function EditProjectPage({ params }: { params: Promise<{ id: string }> }) {
     // 1. URL'den ID'yi al (Next.js 15 formatı)

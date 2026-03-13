@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { syncSabisData } from '@/actions/sabisSync'
+export const runtime = 'edge';
 
 /**
  * SABIS verilerini senkronize eden cron/API endpoint'i.

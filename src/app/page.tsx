@@ -11,6 +11,8 @@ import EmptyUpcomingEvents from '@/components/home/EmptyUpcomingEvents'
 import MetricCard from '@/components/home/MetricCard'
 import HomeJsonLd from '@/components/home/HomeJsonLd'
 
+export const runtime = 'edge';
+
 /* ── SEO: Sayfa-Özel Metadata ── */
 export const metadata: Metadata = {
   title: 'Ana Sayfa',

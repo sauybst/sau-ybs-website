@@ -4,6 +4,7 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { ToastProvider } from '@/components/ToastProvider';
 import NextTopLoader from 'nextjs-toploader'; 
+export const runtime = 'edge';
 
 export const metadata: Metadata = {
     title: 'YBS Yönetim Paneli',

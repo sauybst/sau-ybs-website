@@ -10,6 +10,7 @@ import EventJsonLd from '@/components/events/EventJsonLd'
 import { sanitizeHtml } from '@/lib/sanitize'
 import type { EventDetail } from '@/types/event'
 
+export const runtime = 'edge';
 export const dynamic = 'force-dynamic'
 
 /** Detay sayfasında kullanılan alanlar */

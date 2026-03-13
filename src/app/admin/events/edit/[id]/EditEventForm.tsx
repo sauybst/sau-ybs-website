@@ -9,6 +9,7 @@ import { Trash2, ImagePlus } from 'lucide-react';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false })
 import 'react-quill-new/dist/quill.snow.css' 
+export const runtime = 'edge';
 
 type EventEditData = {
     id: string

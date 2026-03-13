@@ -5,6 +5,7 @@ import FloatingTechBackground from '@/components/FloatingTechBackground'
 import MemberCard from '@/components/board/MemberCard'
 import type { BoardMemberListItem } from '@/types/board-member'
 import ArchiveViewer from '@/components/board/ArchiveViewer' 
+export const runtime = 'edge';
 
 export const metadata: Metadata = {
   title: 'Hakkımızda & Yönetim Kurulu',

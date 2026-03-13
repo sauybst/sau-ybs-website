@@ -10,6 +10,7 @@ import ImageUpload from '@/components/ImageUpload';
 // React Quill'i SSR hatası vermemesi için dinamik yüklüyoruz
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false })
 import 'react-quill-new/dist/quill.snow.css' 
+export const runtime = 'edge';
 
 export default function CreateJobPage() {
     const { showToast } = useToast();

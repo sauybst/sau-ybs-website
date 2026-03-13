@@ -3,6 +3,7 @@ import { Activity, Users, Calendar, FileText, Plus, ArrowRight, Briefcase, Shiel
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import type { LucideIcon } from 'lucide-react'
+export const runtime = 'edge';
 
 /** Dashboard aktivite akışı için tip tanımı */
 type DashboardActivity = {
