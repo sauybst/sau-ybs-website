@@ -210,7 +210,7 @@ export default async function JobDetailPage({ params }: Props) {
 
             {/* Açıklama — DOMPurify ile sanitize */}
             <div className="prose prose-slate md:prose-lg max-w-none font-montserrat prose-headings:font-heading prose-headings:font-bold prose-h2:text-2xl prose-a:text-brand-600 hover:prose-a:text-brand-700 prose-li:marker:text-brand-500 prose-p:leading-relaxed prose-p:text-slate-600">
-              <div dangerouslySetInnerHTML={{ __html: safeDescription }} />
+              <div dangerouslySetInnerHTML={{ __html: safeDescription.replace(/&nbsp;|\u00A0/g, ' ') }} />
             </div>
 
             {/* Başvuru Kutusu */}

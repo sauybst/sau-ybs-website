@@ -1,21 +1,44 @@
 import { createClient } from '@/utils/supabase/server'
 import Link from 'next/link'
-import { Plus, Eye, Edit, Users, User, Calendar, Shield } from 'lucide-react'
+import { Plus, Eye, Edit, Users, User, Calendar, Shield, Filter } from 'lucide-react'
 import { deleteBoardMember } from '@/actions/board_users'
 import DeleteConfirmButton from '@/components/DeleteConfirmButton'
 
-export default async function BoardAdminPage() {
-    const supabase = await createClient()
+export default async function BoardAdminPage(props: { searchParams: Promise<{ filter?: string }> }) {
+    const searchParams = await props.searchParams;
+    const currentFilter = searchParams.filter || 'all';
+    
+    let members: any[] | null = null;
 
-    // Üyeleri önce döneme, sonra seviyeye (başkandan aşağı doğru) sıralayarak çekiyoruz
-    const { data: members, error } = await supabase
-        .from('board_members')
-        .select('id, slug, full_name, board_role, board_level, term_year, is_active, image_url')
-        .order('term_year', { ascending: false })
-        .order('board_level', { ascending: true })
+    try {
+        const supabase = await createClient()
 
-    if (error) {
-        console.error('Error fetching board members:', error)
+        // 1. Temel sorguyu oluştur
+        let query = supabase
+            .from('board_members')
+            .select('id, slug, full_name, board_role, board_level, term_year, is_active, image_url')
+            .order('term_year', { ascending: false })
+            .order('board_level', { ascending: true })
+
+        // 2. Filtreye göre sorguyu daralt
+        if (currentFilter === 'active') {
+            query = query.eq('is_active', true)
+        } else if (currentFilter === 'past') {
+            query = query.eq('is_active', false)
+        }
+
+        // 3. Veriyi çek
+        const { data, error } = await query
+
+        // Supabase kaynaklı bir veritabanı hatası varsa fırlat
+        if (error) {
+            throw new Error(`Supabase Hatası: ${error.message}`);
+        }
+
+        members = data;
+
+    } catch (error) {
+        console.error('Yönetim kurulu üyeleri çekilirken kritik hata oluştu:', error);
     }
 
     return (
@@ -29,13 +52,36 @@ export default async function BoardAdminPage() {
                     </h2>
                     <p className="text-sm text-slate-500 mt-1">Aktif ve geçmiş dönem yönetim kurulu üyelerini görüntüleyin, düzenleyin veya silin.</p>
                 </div>
-                <Link
-                    href="/admin/board/create"
-                    className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl shadow-sm text-sm font-bold text-white bg-brand-600 hover:bg-brand-500 hover:-translate-y-0.5 transition-all duration-200"
-                >
-                    <Plus className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-                    Yeni Üye Ekle
-                </Link>
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                    <div className="flex bg-slate-100 p-1 rounded-xl w-full sm:w-auto overflow-hidden">
+                        <Link 
+                            href="?filter=all" 
+                            className={`flex-1 sm:flex-none text-center px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${currentFilter === 'all' ? 'bg-white shadow-sm text-brand-600' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Tümü
+                        </Link>
+                        <Link 
+                            href="?filter=active" 
+                            className={`flex-1 sm:flex-none text-center px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${currentFilter === 'active' ? 'bg-white shadow-sm text-brand-600' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Aktif Dönem
+                        </Link>
+                        <Link 
+                            href="?filter=past" 
+                            className={`flex-1 sm:flex-none text-center px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${currentFilter === 'past' ? 'bg-white shadow-sm text-brand-600' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Geçmiş Dönem
+                        </Link>
+                    </div>
+
+                    <Link
+                        href="/admin/board/create"
+                        className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 rounded-xl shadow-sm text-sm font-bold text-white bg-brand-600 hover:bg-brand-500 hover:-translate-y-0.5 transition-all duration-200 shrink-0"
+                    >
+                        <Plus className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+                        Yeni Üye Ekle
+                    </Link>
+                </div>
             </div>
 
             {/* Üye Kartları Listesi */}
@@ -124,19 +170,29 @@ export default async function BoardAdminPage() {
                 {(!members || members.length === 0) && (
                     <div className="flex flex-col items-center justify-center p-12 bg-white border-2 border-dashed border-slate-200 rounded-2xl">
                         <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-                            <Users className="w-8 h-8 text-slate-400" />
+                            {currentFilter !== 'all' ? (
+                                <Filter className="w-8 h-8 text-slate-400" />
+                            ) : (
+                                <Users className="w-8 h-8 text-slate-400" />
+                            )}
                         </div>
-                        <h3 className="text-lg font-bold text-slate-900 mb-1">Henüz Üye Yok</h3>
+                        <h3 className="text-lg font-bold text-slate-900 mb-1">
+                            {currentFilter === 'active' ? 'Aktif Üye Bulunamadı' : currentFilter === 'past' ? 'Geçmiş Dönem Üyesi Bulunamadı' : 'Henüz Üye Yok'}
+                        </h3>
                         <p className="text-slate-500 text-sm mb-6 text-center max-w-sm">
-                            Sistemde kayıtlı herhangi bir yönetim kurulu üyesi bulunamadı. Aktif ekibinizi ekleyerek hemen başlayabilirsiniz.
+                            {currentFilter !== 'all' 
+                                ? 'Bu filtreye uygun herhangi bir kayıt bulunamadı.' 
+                                : 'Sistemde kayıtlı herhangi bir yönetim kurulu üyesi bulunamadı. Aktif ekibinizi ekleyerek hemen başlayabilirsiniz.'}
                         </p>
-                        <Link
-                            href="/admin/board/create"
-                            className="inline-flex items-center justify-center px-4 py-2 text-sm font-bold text-brand-600 bg-brand-50 rounded-xl hover:bg-brand-100 transition-colors"
-                        >
-                            <Plus className="w-4 h-4 mr-1.5" />
-                            İlk Üyeyi Ekle
-                        </Link>
+                        {currentFilter === 'all' && (
+                            <Link
+                                href="/admin/board/create"
+                                className="inline-flex items-center justify-center px-4 py-2 text-sm font-bold text-brand-600 bg-brand-50 rounded-xl hover:bg-brand-100 transition-colors"
+                            >
+                                <Plus className="w-4 h-4 mr-1.5" />
+                                İlk Üyeyi Ekle
+                            </Link>
+                        )}
                     </div>
                 )}
             </div>

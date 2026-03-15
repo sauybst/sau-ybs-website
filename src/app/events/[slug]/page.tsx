@@ -187,7 +187,7 @@ export default async function EventDetailPage({ params }: Props) {
 
             {/* Açıklama — DOMPurify ile sanitize edilmiş HTML */}
             <div className="prose prose-slate prose-lg max-w-none font-montserrat prose-a:text-brand-600 hover:prose-a:text-brand-700">
-              <div dangerouslySetInnerHTML={{ __html: safeDescription }} />
+              <div dangerouslySetInnerHTML={{ __html: safeDescription.replace(/&nbsp;|\u00A0/g, ' ') }} />
             </div>
 
             {/* Kayıt Butonu */}

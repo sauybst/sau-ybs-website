@@ -207,7 +207,7 @@ export default async function BoardMemberDetailPage({ params }: Props) {
             {/* Açıklama — DOMPurify ile sanitize */}
             <div className="prose prose-slate prose-lg max-w-none font-montserrat prose-headings:font-heading prose-headings:font-bold prose-a:text-brand-600 hover:prose-a:text-brand-700">
               {safeDescription ? (
-                <div dangerouslySetInnerHTML={{ __html: safeDescription }} />
+                <div dangerouslySetInnerHTML={{ __html: safeDescription.replace(/&nbsp;|\u00A0/g, ' ') }} />
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 px-4 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                   <Info className="h-10 w-10 text-slate-400 mb-3" />

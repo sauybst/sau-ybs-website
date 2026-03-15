@@ -192,9 +192,11 @@ export default async function BlogReadingPage({ params }: Props) {
             </div>
 
             {/* Açıklama — DOMPurify ile sanitize edilmiş HTML */}
-            <div className="prose prose-slate prose-lg md:prose-xl max-w-none font-montserrat prose-headings:font-heading prose-headings:font-bold prose-a:text-brand-600 hover:prose-a:text-brand-700 prose-img:rounded-2xl prose-img:shadow-md">
-              <div dangerouslySetInnerHTML={{ __html: safeContent }} />
-            </div>
+            <div 
+            className="prose prose-slate prose-lg md:prose-xl max-w-none w-full font-montserrat prose-headings:font-heading prose-headings:font-bold prose-headings:text-balance prose-a:text-brand-600 hover:prose-a:text-brand-700 prose-img:rounded-2xl prose-img:shadow-md [&_p]:text-pretty [&_*]:max-w-full [&_*]:box-border"
+            >
+            <div dangerouslySetInnerHTML={{ __html: safeContent.replace(/&nbsp;|\u00A0/g, ' ') }} />
+          </div>
           </div>
         </article>
       </div>
