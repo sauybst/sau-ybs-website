@@ -6,6 +6,12 @@ import { useFormStatus } from 'react-dom'
 import Image from 'next/image'
 import Link from 'next/link'
 
+export const metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+}
 
 const initialState = {
     error: null as string | null,

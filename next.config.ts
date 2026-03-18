@@ -4,6 +4,8 @@ const nextConfig: NextConfig = {
 
   serverExternalPackages: ['jsdom'],
 
+  poweredByHeader: false,
+
   async headers() {
     return [
       {
@@ -38,12 +40,17 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              // Zararlı script çalıştırmayı önlemek için 'unsafe-inline' ve 'unsafe-eval' kaldırıldı
+              "script-src 'self'", 
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https://aefwkvvqyvmmfxcojkjm.supabase.co https://topluluk.sabis.sakarya.edu.tr https://s3-esentepe.sakarya.edu.tr",
               "connect-src 'self' https://aefwkvvqyvmmfxcojkjm.supabase.co https://topluluk.sabis.sakarya.edu.tr",
+              // Pentest raporunda istenen ek güvenlik sıkılaştırmaları:
+              "object-src 'none'",
+              "base-uri 'self'",
               "frame-ancestors 'none'",
+              "upgrade-insecure-requests"
             ].join('; '),
           },
         ],

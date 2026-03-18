@@ -8,6 +8,10 @@ import NextTopLoader from 'nextjs-toploader';
 export const metadata: Metadata = {
     title: 'YBS Yönetim Paneli',
     description: 'SAU YBS Yönetim Paneli',
+    robots: {
+    index: false,
+    follow: false,
+    },
 }
 
 export default async function AdminLayout({
