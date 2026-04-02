@@ -76,7 +76,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="tr" className={`scroll-smooth ${poppins.variable} ${lato.variable}`}>
+    <html lang="tr" data-scroll-behavior="smooth" className={`scroll-smooth ${poppins.variable} ${lato.variable}`}>
       <body className="font-sans antialiased bg-slate-50 text-slate-900 min-h-screen flex flex-col">
 
         <NextTopLoader

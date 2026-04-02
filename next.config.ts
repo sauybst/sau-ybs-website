@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+const isDev = process.env.NODE_ENV === 'development';
+
 const nextConfig: NextConfig = {
 
   serverExternalPackages: ['jsdom'],
@@ -7,9 +9,17 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
 
   async headers() {
+
+    const scriptSrc = isDev
+      ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' http://me.kis.v2.scr.kaspersky-labs.com ws://me.kis.v2.scr.kaspersky-labs.com"
+      : "script-src 'self'";
+
+    const connectSrc = isDev
+      ? "connect-src 'self' ws://localhost:* wss://localhost:* https://aefwkvvqyvmmfxcojkjm.supabase.co https://topluluk.sabis.sakarya.edu.tr http://me.kis.v2.scr.kaspersky-labs.com ws://me.kis.v2.scr.kaspersky-labs.com"
+      : "connect-src 'self' https://aefwkvvqyvmmfxcojkjm.supabase.co https://topluluk.sabis.sakarya.edu.tr";
+
     return [
       {
-        // Tüm sayfalara güvenlik başlıkları uygula
         source: '/(.*)',
         headers: [
           {
@@ -40,13 +50,11 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              // Zararlı script çalıştırmayı önlemek için 'unsafe-inline' ve 'unsafe-eval' kaldırıldı
-              "script-src 'self'", 
+              scriptSrc,
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https://aefwkvvqyvmmfxcojkjm.supabase.co https://topluluk.sabis.sakarya.edu.tr https://s3-esentepe.sakarya.edu.tr",
-              "connect-src 'self' https://aefwkvvqyvmmfxcojkjm.supabase.co https://topluluk.sabis.sakarya.edu.tr",
-              // Pentest raporunda istenen ek güvenlik sıkılaştırmaları:
+              connectSrc,
               "object-src 'none'",
               "base-uri 'self'",
               "frame-ancestors 'none'",
@@ -55,8 +63,9 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-    ]
+    ];
   },
+
   images: {
     remotePatterns: [
       {

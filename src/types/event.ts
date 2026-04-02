@@ -2,6 +2,9 @@
  * Veritabanındaki `events` tablosunun TypeScript karşılığı.
  * Tüm events sayfalarında ortak kullanılır.
  */
+
+export type EventType = 'TICKETED' | 'PASSPORT_CHECKIN' | 'TRIP' | 'STANDARD';
+
 export type Event = {
   id: string
   title: string
@@ -13,6 +16,9 @@ export type Event = {
   registration_url: string | null
   created_by: string | null
   created_at: string
+  event_type: EventType;
+  capacity?: number | null;
+  ticket_price?: number | null;
 }
 
 /** events/page.tsx listesi için yalnızca gerekli alanlar */
