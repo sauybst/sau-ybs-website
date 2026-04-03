@@ -2,18 +2,18 @@ import { createClient } from '@/utils/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { CalendarIcon, MapPin, Clock, ArrowLeft, ExternalLink } from 'lucide-react'
+import { CalendarIcon, MapPin, Clock, ArrowLeft, ExternalLink, Ticket, Users, AlertCircle } from 'lucide-react'
 import { Metadata } from 'next'
 
 import ShareButton from '@/components/ShareButton'
 import EventJsonLd from '@/components/events/EventJsonLd'
 import { sanitizeHtml } from '@/lib/sanitize'
 import type { EventDetail } from '@/types/event'
+import { TICKETING_MODE } from '@/types/event' 
 
 export const dynamic = 'force-dynamic'
 
-/** Detay sayfasında kullanılan alanlar */
-const EVENT_DETAIL_SELECT = 'id,slug,title,event_date,location,description,image_url,registration_url' as const
+const EVENT_DETAIL_SELECT = 'id,slug,title,event_date,location,description,image_url,registration_url,ticketing_mode,capacity,purchased_tickets' as const
 
 type Props = {
   params: Promise<{ slug: string }>
@@ -78,6 +78,11 @@ export default async function EventDetailPage({ params }: Props) {
   const eventDate = new Date(typedEvent.event_date)
   const isUpcoming = eventDate > new Date()
 
+  /* GÜNCELLENDİ: Biletleme Mantığı Artık Sayısal Sözlüğü Kullanıyor */
+  const isTicketed = typedEvent.ticketing_mode !== TICKETING_MODE.FREE
+  const hasCapacityLimit = typedEvent.capacity !== null && (typedEvent.capacity ?? 0) > 0
+  const isFull = hasCapacityLimit && typedEvent.purchased_tickets >= (typedEvent.capacity as number)
+
   /* XSS koruması: Veritabanından gelen HTML'i DOMPurify ile temizle */
   const safeDescription = typedEvent.description
     ? sanitizeHtml(typedEvent.description)
@@ -132,7 +137,7 @@ export default async function EventDetailPage({ params }: Props) {
             )}
 
             {/* Yaklaşan / Geçmiş Rozeti */}
-            <div className="absolute top-6 right-6 z-10">
+            <div className="absolute top-6 right-6 z-10 flex flex-col gap-2 items-end">
               <span
                 className={`inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wider shadow-lg backdrop-blur-md ${
                   isUpcoming
@@ -142,6 +147,13 @@ export default async function EventDetailPage({ params }: Props) {
               >
                 {isUpcoming ? 'Yaklaşan Etkinlik' : 'Geçmiş Etkinlik'}
               </span>
+              
+              {/* Kontenjan Dolu Rozeti (Sadece Yaklaşan ve Doluysa) */}
+              {isUpcoming && isTicketed && isFull && (
+                <span className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wider shadow-lg backdrop-blur-md bg-red-500 text-white">
+                  Kontenjan Doldu
+                </span>
+              )}
             </div>
           </div>
 
@@ -183,24 +195,70 @@ export default async function EventDetailPage({ params }: Props) {
                   {typedEvent.location}
                 </span>
               </a>
+
+              {/* Katılım Tipi Bilgisi */}
+              <div className="flex items-center text-slate-600">
+                {isTicketed ? (
+                  <>
+                    <Ticket className="w-5 h-5 mr-2 text-brand-500" />
+                    <span className="font-medium">Pasaport (QR Bilet) Zorunlu</span>
+                  </>
+                ) : (
+                  <>
+                    <Users className="w-5 h-5 mr-2 text-brand-500" />
+                    <span className="font-medium">Serbest Katılım</span>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Açıklama — DOMPurify ile sanitize edilmiş HTML */}
             <div className="prose prose-slate prose-lg max-w-none font-montserrat prose-a:text-brand-600 hover:prose-a:text-brand-700">
-              <div dangerouslySetInnerHTML={{ __html: safeDescription.replace(/&nbsp;|\u00A0/g, ' ') }} />
+              <div dangerouslySetInnerHTML={{ __html: safeDescription.replace(/ |\u00A0/g, ' ') }} />
             </div>
 
-            {/* Kayıt Butonu */}
-            {isUpcoming && typedEvent.registration_url && (
-              <div className="mt-12 pt-8 border-t border-slate-100 flex justify-center">
-                <a
-                  href={typedEvent.registration_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center px-8 py-4 text-lg font-bold rounded-2xl text-white bg-brand-600 hover:bg-brand-500 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all w-full sm:w-auto"
-                >
-                  Etkinliğe Kayıt Ol <ExternalLink className="ml-2 w-5 h-5" />
-                </a>
+            {/* DİNAMİK KAYIT VE BİLET ALANI */}
+            {isUpcoming && (
+              <div className="mt-12 pt-8 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-6 bg-slate-50 p-6 rounded-2xl border">
+                
+                <div className="flex-1 text-center sm:text-left">
+                  <h3 className="text-lg font-bold text-slate-900 mb-1">
+                    {isTicketed ? 'Bilet İşlemleri' : 'Katılım Bilgisi'}
+                  </h3>
+                  <p className="text-sm text-slate-500">
+                    {isTicketed 
+                      ? (isFull ? 'Maalesef bu etkinlik için tüm biletler tükenmiştir.' : 'Sisteme pasaportunuzla giriş yaparak biletinizi cüzdanınıza ekleyebilirsiniz.')
+                      : (typedEvent.registration_url ? 'Bu etkinlik için dış bağlantı üzerinden kayıt olmanız gerekmektedir.' : 'Bu etkinlik için ön kayıt gerekmez. Belirtilen saatte konumda olmanız yeterlidir.')}
+                  </p>
+                </div>
+
+                <div className="flex-shrink-0 w-full sm:w-auto">
+                  {/* SENARYO 1: QR Biletli Sistem */}
+                  {isTicketed && (
+                    isFull ? (
+                      <button disabled className="inline-flex items-center justify-center px-8 py-3.5 text-base font-bold rounded-xl text-slate-400 bg-slate-200 cursor-not-allowed w-full">
+                        <AlertCircle className="mr-2 w-5 h-5" /> Kontenjan Doldu
+                      </button>
+                    ) : (
+                      <Link href={`/portal/events/${typedEvent.id}`} className="inline-flex items-center justify-center px-8 py-3.5 text-base font-bold rounded-xl text-white bg-brand-600 hover:bg-brand-500 shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all w-full">
+                        <Ticket className="mr-2 w-5 h-5" /> Pasaport ile Bilet Al
+                      </Link>
+                    )
+                  )}
+
+                  {/* SENARYO 2: Serbest Katılım ama Dış Link Var */}
+                  {!isTicketed && typedEvent.registration_url && (
+                    <a
+                      href={typedEvent.registration_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center px-8 py-3.5 text-base font-bold rounded-xl text-brand-700 bg-brand-100 hover:bg-brand-200 transition-colors w-full"
+                    >
+                      Dış Kayıt Formuna Git <ExternalLink className="ml-2 w-4 h-4" />
+                    </a>
+                  )}
+                </div>
+
               </div>
             )}
           </div>

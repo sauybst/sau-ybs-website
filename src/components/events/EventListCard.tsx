@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { Calendar as CalendarIcon, MapPin, Clock, ExternalLink } from 'lucide-react'
+import { Calendar as CalendarIcon, MapPin, Clock, ExternalLink, Ticket, Users, AlertCircle } from 'lucide-react'
 import type { EventListItem } from '@/types/event'
+import { TICKETING_MODE } from '@/types/event' 
 
 type EventListCardProps = {
   event: EventListItem
@@ -11,10 +12,15 @@ type EventListCardProps = {
 export default function EventListCard({ event, isUpcoming }: EventListCardProps) {
   const eventDate = new Date(event.event_date)
 
+  // Biletleme Hesaplamaları
+  const isTicketed = event.ticketing_mode !== TICKETING_MODE.FREE
+  const hasCapacityLimit = event.capacity !== null && (event.capacity ?? 0) > 0
+  const isFull = hasCapacityLimit && event.purchased_tickets >= (event.capacity as number)
+
   return (
     <div className="relative bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-xl hover:-translate-y-2 transition-all duration-300 flex flex-col group">
       {/* Yaklaşan / Geçmiş Rozeti */}
-      <div className="absolute top-4 right-4 z-20">
+      <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 items-end">
         <span
           className={`inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-md backdrop-blur-md ${
             isUpcoming
@@ -24,6 +30,13 @@ export default function EventListCard({ event, isUpcoming }: EventListCardProps)
         >
           {isUpcoming ? 'Yaklaşan' : 'Geçmiş'}
         </span>
+
+        {/* YENİ: Kontenjan Dolu Rozeti (Sadece Yaklaşan ve Doluysa) */}
+        {isUpcoming && isTicketed && isFull && (
+           <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-md bg-red-500 text-white">
+             Kontenjan Doldu
+           </span>
+        )}
       </div>
 
       {/* Görsel Alanı */}
@@ -90,24 +103,36 @@ export default function EventListCard({ event, isUpcoming }: EventListCardProps)
 
         <div className="flex items-start text-slate-500 text-sm mb-6">
           <MapPin className="h-5 w-5 mr-2 flex-shrink-0 text-brand-400 mt-0.5" />
-          <span>{event.location}</span>
+          <span className="line-clamp-2">{event.location}</span>
         </div>
 
+        {/* YENİ: Akıllı Aksiyon ve Bilet Alanı */}
         <div className="mt-auto pt-6 border-t border-slate-100 flex items-center justify-between">
-          {event.registration_url && isUpcoming ? (
-            <a
-              href={event.registration_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="relative z-20 inline-flex items-center justify-center px-4 py-2.5 border border-transparent text-sm font-semibold rounded-xl text-white bg-brand-600 hover:bg-brand-500 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-all w-full group-hover:-translate-y-0.5"
-            >
-              Hemen Kayıt Ol <ExternalLink className="ml-2 -mr-1 h-4 w-4" />
-            </a>
-          ) : (
-            <span className="text-slate-400 text-sm italic font-medium">
-              {isUpcoming ? 'Kayıt linki yok' : 'Etkinlik sona erdi'}
-            </span>
-          )}
+            {!isUpcoming ? (
+              <span className="text-slate-400 text-sm italic font-medium">Etkinlik sona erdi</span>
+            ) : isTicketed ? (
+                // QR Biletli Etkinlik
+                isFull ? (
+                  <span className="inline-flex items-center text-sm font-semibold text-slate-400 bg-slate-100 px-4 py-2.5 rounded-xl w-full justify-center">
+                    <AlertCircle className="w-4 h-4 mr-2" /> Dolu
+                  </span>
+                ) : (
+                  <Link href={`/portal/events/${event.id}`} className="relative z-20 inline-flex items-center justify-center px-4 py-2.5 border border-transparent text-sm font-semibold rounded-xl text-white bg-brand-600 hover:bg-brand-500 shadow-md hover:shadow-lg focus:outline-none transition-all w-full group-hover:-translate-y-0.5">
+                     <Ticket className="w-4 h-4 mr-2" /> Bilet Al
+                  </Link>
+                )
+            ) : (
+                // Serbest Katılımlı Etkinlik
+                event.registration_url ? (
+                  <a href={event.registration_url} target="_blank" rel="noopener noreferrer" className="relative z-20 inline-flex items-center justify-center px-4 py-2.5 border border-brand-200 text-sm font-semibold rounded-xl text-brand-700 bg-brand-50 hover:bg-brand-100 transition-all w-full group-hover:-translate-y-0.5">
+                    Dış Kayıt <ExternalLink className="ml-2 w-4 h-4" />
+                  </a>
+                ) : (
+                   <span className="inline-flex items-center text-sm font-semibold text-slate-500 bg-slate-50 px-4 py-2.5 rounded-xl w-full justify-center border border-slate-100">
+                     <Users className="w-4 h-4 mr-2 text-brand-400" /> Serbest Katılım
+                   </span>
+                )
+            )}
         </div>
       </div>
     </div>

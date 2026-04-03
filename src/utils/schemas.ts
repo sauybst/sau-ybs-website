@@ -4,6 +4,7 @@
 // ============================================================
 
 import { z } from 'zod'
+import { TICKETING_MODE } from '@/types/event';
 
 // --- Blog ---
 
@@ -22,6 +23,14 @@ export const EventSchema = z.object({
     location: z.string().min(1, 'Konum zorunludur.').max(300),
     description: z.string().optional(),
     registration_url: z.string().url('Geçerli bir URL giriniz.').or(z.literal('')).optional(),
+    
+    ticketing_mode: z.union([
+        z.literal(TICKETING_MODE.FREE),
+        z.literal(TICKETING_MODE.STANDARD_QR),
+        z.literal(TICKETING_MODE.BUS_QR)
+    ]).default(TICKETING_MODE.FREE),
+    
+    capacity: z.number().int('Kontenjan tam sayı olmalıdır.').positive('Kontenjan 0\'dan büyük olmalıdır.').nullable().optional(),
 })
 
 // --- İş İlanı ---

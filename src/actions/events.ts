@@ -7,6 +7,7 @@ import { requireAuth } from '@/utils/auth-guard'
 import { uploadImage, deleteStorageFile, handleImageUpdate } from '@/utils/storage'
 import { EventSchema, UUIDSchema } from '@/utils/schemas'
 import { STORAGE_BUCKETS, STORAGE_FOLDERS, USER_ROLES } from '@/utils/constants'
+import { TICKETING_MODE } from '@/types/event' 
 
 const ALLOWED_ROLES = [USER_ROLES.SUPER_ADMIN, USER_ROLES.EDITOR] as const
 const MODULE_NAME = 'events'
@@ -36,6 +37,22 @@ export async function createEvent(formData: FormData) {
     }
     const { title, slug, event_date, location, description, registration_url } = validated.data
 
+    // — Yeni Biletleme Alanlarının İşlenmesi (Normalizasyon - Integer Mapping)
+    const ticketingModeRaw = formData.get('ticketing_mode')
+    // FormData'dan gelen metinsel '0', '1', '2' değerini matematiksel sayıya çeviriyoruz. Boşsa FREE (0) yapıyoruz.
+    const ticketing_mode = ticketingModeRaw !== null 
+        ? parseInt(ticketingModeRaw as string, 10) 
+        : TICKETING_MODE.FREE
+
+    const capacityRaw = formData.get('capacity')
+    let capacity = null
+    
+    // Eğer mod FREE (0) değilse ve kapasite girildiyse sayıya çevir
+    if (ticketing_mode !== TICKETING_MODE.FREE && capacityRaw) {
+        const parsed = parseInt(capacityRaw as string, 10)
+        if (!isNaN(parsed)) capacity = parsed
+    }
+
     // — Görsel yükleme
     const imageFile = formData.get('image') as File | null
     let image_url: string | null = null
@@ -58,6 +75,8 @@ export async function createEvent(formData: FormData) {
         registration_url: registration_url || null,
         image_url,
         created_by: auth.userId,
+        ticketing_mode, // Artık 0, 1 veya 2 olarak gidiyor
+        capacity,       
     })
 
     if (error) {
@@ -133,6 +152,20 @@ export async function updateEvent(formData: FormData) {
     }
     const { title, slug, event_date, location, description, registration_url } = validated.data
 
+    // — Yeni Biletleme Alanlarının İşlenmesi (Normalizasyon - Integer Mapping)
+    const ticketingModeRaw = formData.get('ticketing_mode')
+    const ticketing_mode = ticketingModeRaw !== null 
+        ? parseInt(ticketingModeRaw as string, 10) 
+        : TICKETING_MODE.FREE
+
+    const capacityRaw = formData.get('capacity')
+    let capacity = null
+    
+    if (ticketing_mode !== TICKETING_MODE.FREE && capacityRaw) {
+        const parsed = parseInt(capacityRaw as string, 10)
+        if (!isNaN(parsed)) capacity = parsed
+    }
+
     // — Görsel güncelleme
     const imageResult = await handleImageUpdate(supabase, STORAGE_BUCKETS.EVENTS, STORAGE_FOLDERS.EVENT_POSTERS, {
         newFile: formData.get('image_file') as File | null,
@@ -153,6 +186,8 @@ export async function updateEvent(formData: FormData) {
             registration_url: registration_url || null,
             description,
             image_url: imageResult.url,
+            ticketing_mode, // Artık 0, 1 veya 2 olarak gidiyor
+            capacity,       
         })
         .eq('id', id)
 

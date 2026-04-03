@@ -6,16 +6,24 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { useToast } from '@/components/ToastProvider';
 import ImageUpload from '@/components/ImageUpload'; 
+import { QrCode, Users, Bus, CheckCircle2 } from 'lucide-react'
+import { TICKETING_MODE, type TicketingMode } from '@/types/event' // YENİ: Sözlüğümüzü import ettik
 
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false })
 import 'react-quill-new/dist/quill.snow.css' 
 
 export default function CreateEventPage() {
     const { showToast } = useToast();
+    
+    // Temel Bilgiler
     const [title, setTitle] = useState('');
     const [slug, setSlug] = useState('');
     const [description, setDescription] = useState('');
     const [imageFile, setImageFile] = useState<File | null>(null); 
+    
+    // Biletleme ve Yoklama (GÜNCELLENDİ: Artık varsayılan değer 0 yani FREE)
+    const [ticketingMode, setTicketingMode] = useState<TicketingMode>(TICKETING_MODE.FREE);
+    const [capacity, setCapacity] = useState('');
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -43,6 +51,14 @@ export default function CreateEventPage() {
         setIsSubmitting(true);
 
         const formData = new FormData(e.currentTarget);
+        
+        // Yeni eklediğimiz state verilerini FormData'ya manuel ekliyoruz
+        // FormData sadece string kabul ettiği için sayıyı string'e çevirerek yolluyoruz ("0", "1", "2")
+        formData.append('ticketing_mode', ticketingMode.toString());
+        if (ticketingMode !== TICKETING_MODE.FREE && capacity) {
+            formData.append('capacity', capacity);
+        }
+
         await handleAction(formData);
     };
 
@@ -146,7 +162,7 @@ export default function CreateEventPage() {
 
                         <div className="sm:col-span-6">
                             <label htmlFor="registration_url" className="block text-sm font-medium leading-6 text-gray-900">
-                                Kayıt Linki <span className="text-gray-400 font-normal text-xs ml-1">(İsteğe bağlı)</span>
+                                Dış Kayıt Linki <span className="text-gray-400 font-normal text-xs ml-1">(İsteğe bağlı - Pasaport sistemi kullanılmayacaksa)</span>
                             </label>
                             <div className="mt-2">
                                 <input
@@ -159,7 +175,73 @@ export default function CreateEventPage() {
                             </div>
                         </div>
 
-                        {/* Eski URL inputu kaldırılarak yerine yeni görsel yükleme bileşeni eklendi */}
+                        {/* YENİ EKLENEN BÖLÜM: Biletleme ve Yoklama Modu (GÜNCELLENDİ) */}
+                        <div className="sm:col-span-6 border-t border-b border-gray-900/10 py-6 my-2">
+                            <label className="block text-base font-semibold leading-6 text-gray-900 mb-4">
+                                Biletleme ve Yoklama Modu
+                            </label>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setTicketingMode(TICKETING_MODE.FREE)}
+                                    className={`p-4 rounded-xl border-2 text-left transition-all ${ticketingMode === TICKETING_MODE.FREE ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-indigo-300'}`}
+                                >
+                                    <div className="flex justify-between items-start mb-2">
+                                        <Users className={`h-6 w-6 ${ticketingMode === TICKETING_MODE.FREE ? 'text-indigo-600' : 'text-gray-400'}`} />
+                                        {ticketingMode === TICKETING_MODE.FREE && <CheckCircle2 className="h-5 w-5 text-indigo-600" />}
+                                    </div>
+                                    <h3 className={`font-semibold text-sm ${ticketingMode === TICKETING_MODE.FREE ? 'text-indigo-900' : 'text-gray-700'}`}>Serbest Katılım</h3>
+                                    <p className="text-xs text-gray-500 mt-1">QR kod gerekmez. Herkese açık etkinlik.</p>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setTicketingMode(TICKETING_MODE.STANDARD_QR)}
+                                    className={`p-4 rounded-xl border-2 text-left transition-all ${ticketingMode === TICKETING_MODE.STANDARD_QR ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-indigo-300'}`}
+                                >
+                                    <div className="flex justify-between items-start mb-2">
+                                        <QrCode className={`h-6 w-6 ${ticketingMode === TICKETING_MODE.STANDARD_QR ? 'text-indigo-600' : 'text-gray-400'}`} />
+                                        {ticketingMode === TICKETING_MODE.STANDARD_QR && <CheckCircle2 className="h-5 w-5 text-indigo-600" />}
+                                    </div>
+                                    <h3 className={`font-semibold text-sm ${ticketingMode === TICKETING_MODE.STANDARD_QR ? 'text-indigo-900' : 'text-gray-700'}`}>Salon (QR Bilet)</h3>
+                                    <p className="text-xs text-gray-500 mt-1">Kapıda pasaport QR kod okutularak girilir.</p>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setTicketingMode(TICKETING_MODE.BUS_QR)}
+                                    className={`p-4 rounded-xl border-2 text-left transition-all ${ticketingMode === TICKETING_MODE.BUS_QR ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-indigo-300'}`}
+                                >
+                                    <div className="flex justify-between items-start mb-2">
+                                        <Bus className={`h-6 w-6 ${ticketingMode === TICKETING_MODE.BUS_QR ? 'text-indigo-600' : 'text-gray-400'}`} />
+                                        {ticketingMode === TICKETING_MODE.BUS_QR && <CheckCircle2 className="h-5 w-5 text-indigo-600" />}
+                                    </div>
+                                    <h3 className={`font-semibold text-sm ${ticketingMode === TICKETING_MODE.BUS_QR ? 'text-indigo-900' : 'text-gray-700'}`}>Otobüslü Gezi</h3>
+                                    <p className="text-xs text-gray-500 mt-1">Gelişmiş QR yoklaması (Gidiş/Dönüş).</p>
+                                </button>
+                            </div>
+
+                            {/* Dinamik Kontenjan Alanı */}
+                            {ticketingMode !== TICKETING_MODE.FREE && (
+                                <div className="animate-in fade-in slide-in-from-top-2 p-4 bg-gray-50 rounded-xl border border-gray-200 mt-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Maksimum Kontenjan (Kapasite)</label>
+                                    <div className="flex items-center gap-3">
+                                        <input 
+                                            type="number" 
+                                            required 
+                                            min="1" 
+                                            value={capacity} 
+                                            onChange={(e) => setCapacity(e.target.value)}
+                                            className="w-32 block rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                            placeholder="Örn: 150"
+                                        />
+                                        <span className="text-sm text-gray-500">Sınıra ulaşıldığında bilet satışları otomatik durdurulur.</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
                         <div className="sm:col-span-6">
                             <label className="block text-sm font-medium leading-6 text-gray-900 mb-2">
                                 Etkinlik Afişi
@@ -193,8 +275,8 @@ export default function CreateEventPage() {
                         disabled={isSubmitting}
                         className={`rounded-md px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors flex items-center justify-center gap-2
                             ${isSubmitting 
-                                ? 'bg-brand-400 cursor-not-allowed opacity-75' 
-                                : 'bg-brand-600 hover:bg-brand-500'
+                                ? 'bg-indigo-400 cursor-not-allowed opacity-75' 
+                                : 'bg-indigo-600 hover:bg-indigo-500'
                             }`}
                     >
                         {isSubmitting ? (

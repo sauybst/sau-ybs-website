@@ -11,8 +11,7 @@ export const metadata: Metadata = {
   alternates: { canonical: '/events' },
 }
 
-/** Liste sayfasında kullanılan alanlar (select('*') yerine) */
-const EVENT_LIST_SELECT = 'id,slug,title,event_date,location,image_url,registration_url' as const
+const EVENT_LIST_SELECT = 'id,slug,title,event_date,location,image_url,registration_url,ticketing_mode,capacity,purchased_tickets' as const
 
 type SearchParams = Promise<{ filter?: string }>
 

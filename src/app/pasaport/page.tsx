@@ -74,7 +74,7 @@ export default function PasaportPage() {
         if (res.error) {
             setError(res.error)
         } else {
-            router.push('/') // Başarılı girişte anasayfaya yönlendir
+            router.push('/portal') // Başarılı girişte anasayfaya yönlendir
             router.refresh() // Header'daki "Pasaportum" butonunun güncellenmesi için yenile
         }
         setLoading(false)

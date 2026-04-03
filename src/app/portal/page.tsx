@@ -1,40 +1,24 @@
-"use client"
-
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { LogOut, Ticket, CalendarX2, ShieldCheck } from 'lucide-react'
+import { redirect } from 'next/navigation'
+import { LogOut, Ticket, CalendarX2, ShieldCheck, ArrowRight } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
-import { logoutPassport, getCurrentPassport } from '@/actions/passports'
+import Link from 'next/link'
 
-export default function PortalPage() {
-    const router = useRouter()
-    const [passport, setPassport] = useState<any>(null)
-    const [loading, setLoading] = useState(true)
+import { getCurrentPassport } from '@/actions/passports'
+import { getUserTickets } from '@/actions/tickets'
+import { TICKET_STATUS, TICKET_STATUS_LABELS } from '@/types/tickets'
 
-    useEffect(() => {
-        const fetchUserData = async () => {
-            const data = await getCurrentPassport()
-            if (data) {
-                setPassport(data)
-            } else {
-                router.push('/pasaport') // Veri yoksa geri fırlat
-            }
-            setLoading(false)
-        }
-        fetchUserData()
-    }, [router])
+import LogoutButton from '@/components/portal/LogoutButton' 
 
-    const handleLogout = async () => {
-        await logoutPassport()
-        router.push('/')
-        router.refresh()
+export default async function PortalPage() {
+    // 1. Pasaportu Sunucuda Doğrula
+    const passport = await getCurrentPassport()
+    if (!passport) {
+        redirect('/pasaport')
     }
 
-    if (loading) {
-        return <div className="min-h-screen flex items-center justify-center bg-slate-50"><span className="animate-pulse text-brand-600 font-semibold">Cüzdanınız Yükleniyor...</span></div>
-    }
-
-    if (!passport) return null;
+    // 2. Biletleri Getir (Yeni yazdığımız Server Action)
+    const { tickets, error } = await getUserTickets(passport.pin_code, passport.keyword_hash)
+    const validTickets = tickets || []
 
     return (
         <div className="min-h-screen pt-28 pb-12 bg-slate-50 px-4 sm:px-6 lg:px-8">
@@ -47,28 +31,26 @@ export default function PortalPage() {
                             <ShieldCheck className="h-6 w-6" />
                         </div>
                         <div>
-                            <h1 className="text-xl font-bold text-slate-800">Hoş Geldin, {passport.name_mask}</h1>
+                            <h1 className="text-xl font-bold text-slate-800">
+                                Hoş Geldin, {passport.name_mask.replace(/\d/g, (match: string) => '*'.repeat(parseInt(match, 10)))}
+                            </h1>
                             <p className="text-sm text-slate-500">Anonim kimliğin güvende ve aktif.</p>
                         </div>
                     </div>
-                    <button 
-                        onClick={handleLogout}
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-red-600 hover:bg-red-50 hover:text-red-700 font-medium transition-colors border border-red-100"
-                    >
-                        <LogOut className="h-4 w-4" /> Çıkış Yap
-                    </button>
+                    {/* Logout butonunu Client Component yaptık */}
+                    <LogoutButton /> 
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {/* SOL KISIM: Dijital Pasaport Kartı */}
                     <div className="md:col-span-1">
-                        <div className="bg-gradient-to-br from-brand-600 to-brand-800 p-1 rounded-3xl shadow-lg relative overflow-hidden group">
+                        <div className="bg-gradient-to-br from-brand-600 to-brand-800 p-1 rounded-3xl shadow-lg relative overflow-hidden group h-full">
                             <div className="absolute top-0 right-0 p-4 opacity-10 transition-opacity group-hover:opacity-20">
                                 <Ticket className="h-32 w-32" />
                             </div>
                             
-                            <div className="bg-white rounded-[22px] p-6 text-center relative z-10">
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Tarama İçin Hazır</p>
+                            <div className="bg-white rounded-[22px] p-6 text-center relative z-10 h-full flex flex-col justify-center">
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Genel Tarama İçin Hazır</p>
                                 
                                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex justify-center mb-6">
                                     <QRCodeSVG 
@@ -90,23 +72,72 @@ export default function PortalPage() {
 
                     {/* SAĞ KISIM: Etkinlikler ve Biletler */}
                     <div className="md:col-span-2 space-y-6">
-                        <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 h-full">
+                        <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 min-h-[400px] flex flex-col">
                             <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
-                                <Ticket className="h-5 w-5 text-brand-500" /> Yaklaşan Etkinliklerim
+                                <Ticket className="h-5 w-5 text-brand-500" /> Biletlerim ve Etkinlikler
                             </h2>
                             
-                            {/* Boş Durum (Empty State) - İleride biletler buraya gelecek */}
-                            <div className="flex flex-col items-center justify-center text-center py-12 px-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                                <CalendarX2 className="h-12 w-12 text-slate-300 mb-4" />
-                                <h3 className="text-slate-700 font-semibold mb-1">Henüz Biletiniz Yok</h3>
-                                <p className="text-sm text-slate-500 max-w-sm">
-                                    Topluluğun düzenlediği etkinliklere katılarak biletlerinizi burada görüntüleyebilirsiniz. Kapı girişlerinde sadece soldaki QR kodu okutmanız yeterli olacaktır.
-                                </p>
+                            {/* BİLET LİSTESİ */}
+                            <div className="flex-1 flex flex-col gap-4">
+                                {validTickets.length === 0 ? (
+                                    <div className="flex-1 flex flex-col items-center justify-center text-center py-12 px-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                                        <CalendarX2 className="h-12 w-12 text-slate-300 mb-4" />
+                                        <h3 className="text-slate-700 font-semibold mb-1">Henüz Biletiniz Yok</h3>
+                                        <p className="text-sm text-slate-500 max-w-sm">
+                                            Topluluğun düzenlediği etkinliklere katılarak biletlerinizi burada görüntüleyebilirsiniz.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    validTickets.map((ticket: any) => {
+                                        const eventDate = new Date(ticket.events.event_date);
+                                        const isPast = eventDate < new Date();
+                                        const isActive = ticket.status === TICKET_STATUS.ACTIVE && !isPast;
+                                        
+                                        return (
+                                            <Link 
+                                                key={ticket.id} 
+                                                href={`/portal/ticket/${ticket.id}`}
+                                                className="group relative flex items-center justify-between p-4 rounded-2xl border border-slate-100 bg-white hover:border-brand-200 hover:shadow-md transition-all overflow-hidden"
+                                            >
+                                                {/* İptal Edilmişse veya Geçmişse Soluk Göster */}
+                                                {(ticket.status === TICKET_STATUS.CANCELLED || isPast) && (
+                                                    <div className="absolute inset-0 bg-slate-50/80 z-10"></div>
+                                                )}
+
+                                                <div className="relative z-20 flex-1">
+                                                    <div className="flex items-center gap-3 mb-1">
+                                                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide
+                                                            ${ticket.status === TICKET_STATUS.ACTIVE ? 'bg-green-100 text-green-700' : 
+                                                              ticket.status === TICKET_STATUS.SCANNED ? 'bg-blue-100 text-blue-700' : 
+                                                              'bg-red-100 text-red-700'}`}
+                                                        >
+                                                            {TICKET_STATUS_LABELS[ticket.status as number]}
+                                                        </span>
+                                                        {isPast && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-600 uppercase">Geçmiş Etkinlik</span>}
+                                                    </div>
+                                                    <h3 className="font-bold text-slate-800 line-clamp-1 group-hover:text-brand-600 transition-colors">
+                                                        {ticket.events.title}
+                                                    </h3>
+                                                    <p className="text-xs text-slate-500 flex items-center gap-2 mt-1">
+                                                        {eventDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                                        <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                                                        <span className="line-clamp-1">{ticket.events.location}</span>
+                                                    </p>
+                                                </div>
+
+                                                <div className="relative z-20 pl-4">
+                                                    <div className={`h-10 w-10 rounded-full flex items-center justify-center transition-colors ${isActive ? 'bg-brand-50 group-hover:bg-brand-100 text-brand-600' : 'bg-slate-100 text-slate-400'}`}>
+                                                        <ArrowRight className="h-5 w-5" />
+                                                    </div>
+                                                </div>
+                                            </Link>
+                                        )
+                                    })
+                                )}
                             </div>
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
     )
