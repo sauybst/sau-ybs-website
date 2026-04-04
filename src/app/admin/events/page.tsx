@@ -1,16 +1,17 @@
 import { createClient } from '@/utils/supabase/server'
 import Link from 'next/link'
-import { Calendar, Plus, Trash2, MapPin, Eye, Edit } from 'lucide-react'
+import { Calendar, Plus, Trash2, MapPin, Eye, Edit, ScanLine, BarChart2} from 'lucide-react'
 import { deleteEvent } from '@/actions/events'
 import DeleteConfirmButton from '@/components/DeleteConfirmButton'
+import { TICKETING_MODE } from '@/types/event'
 
 export default async function EventsPage() {
     const supabase = await createClient()
 
-    // Etkinlikleri tarihe göre en yeniden en eskiye sıralayarak çekiyoruz
+    // SİSTEM DÜZELTMESİ: ticketing_mode eklendi
     const { data: events, error } = await supabase
         .from('events')
-        .select('id, slug, title, event_date, location, image_url')
+        .select('id, slug, title, event_date, location, image_url, ticketing_mode')
         .order('event_date', { ascending: false })
 
     if (error) {
@@ -20,7 +21,6 @@ export default async function EventsPage() {
     return (
         <div className="max-w-7xl mx-auto space-y-6 pb-12">
             
-            {/* Üst Header ve Aksiyon Bölümü */}
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
                 <div>
                     <h2 className="text-2xl font-heading font-extrabold text-slate-900 tracking-tight">
@@ -37,18 +37,16 @@ export default async function EventsPage() {
                 </Link>
             </div>
 
-            {/* Etkinlik Kartları Listesi */}
             <div className="flex flex-col gap-4">
                 {events?.map((event) => {
-                    // Etkinliğin geçmiş mi yoksa gelecek mi olduğunu hesaplıyoruz
                     const isUpcoming = new Date(event.event_date) > new Date();
+                    // SİSTEM DÜZELTMESİ: Etkinlik biletli mi kontrolü
+                    const hasTicketing = event.ticketing_mode !== TICKETING_MODE.FREE;
 
                     return (
                         <div key={event.id} className="bg-white rounded-2xl shadow-sm hover:shadow-md border border-slate-100 transition-all duration-300 p-4 sm:p-5 flex flex-col sm:flex-row gap-5 sm:items-center justify-between group">
                             
-                            {/* SOL KISIM: Görsel ve Bilgiler */}
                             <div className="flex items-center gap-4 sm:gap-6 min-w-0">
-                                {/* Thumbnail (Küçük Görsel) */}
                                 <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-slate-50 border border-slate-100 flex-shrink-0 flex items-center justify-center overflow-hidden relative">
                                     {event.image_url ? (
                                         <img src={event.image_url} alt={event.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
@@ -57,10 +55,8 @@ export default async function EventsPage() {
                                     )}
                                 </div>
 
-                                {/* Metin İçeriği */}
                                 <div className="flex flex-col min-w-0">
                                     <div className="flex items-center gap-3 mb-1.5">
-                                        {/* Dinamik Durum Rozeti */}
                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${isUpcoming ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
                                             {isUpcoming ? 'Yaklaşan' : 'Geçmiş'}
                                         </span>
@@ -84,9 +80,30 @@ export default async function EventsPage() {
                                 </div>
                             </div>
 
-                            {/* SAĞ KISIM: Aksiyon Butonları */}
                             <div className="flex items-center gap-2 mt-4 sm:mt-0 pt-4 sm:pt-0 border-t sm:border-t-0 border-slate-100">
-                                {/* Görüntüle Butonu (Canlı Siteye Gider) */}
+                                
+                                {/* SİSTEM DÜZELTMESİ: İstatistik butonu sadece biletli etkinliklerde görünür */}
+                                {hasTicketing && (
+                                    <Link 
+                                        href={`/admin/events/${event.id}`} 
+                                        className="p-2.5 text-slate-400 bg-slate-50 hover:bg-brand-50 hover:text-brand-600 rounded-xl transition-colors tooltip-trigger"
+                                        title="Etkinlik İstatistikleri"
+                                    >
+                                        <BarChart2 className="w-5 h-5" />
+                                    </Link>
+                                )}
+                                
+                                {/* SİSTEM DÜZELTMESİ: Scanner butonu sadece biletli ve yaklaşan etkinliklerde görünür */}
+                                {hasTicketing && isUpcoming && (
+                                    <Link 
+                                        href={`/admin/events/${event.id}/scanner`}
+                                        className="p-2.5 text-slate-400 bg-slate-50 hover:bg-emerald-50 hover:text-emerald-600 rounded-xl transition-colors tooltip-trigger"
+                                        title="Kamera ile Yoklama Al"
+                                    >
+                                        <ScanLine className="w-5 h-5" />
+                                    </Link>
+                                )}
+
                                 <Link 
                                     href={`/events/${event.slug}`} 
                                     target="_blank"
@@ -96,7 +113,6 @@ export default async function EventsPage() {
                                     <Eye className="w-5 h-5" />
                                 </Link>
 
-                                {/* Düzenle Butonu (İleride yapacağımız sayfa için hazırlık) */}
                                 <Link 
                                     href={`/admin/events/edit/${event.id}`} 
                                     className="p-2.5 text-slate-400 bg-slate-50 hover:bg-amber-50 hover:text-amber-600 rounded-xl transition-colors"
@@ -105,7 +121,6 @@ export default async function EventsPage() {
                                     <Edit className="w-5 h-5" />
                                 </Link>
 
-                                {/* Silme Formu ve Butonu */}
                                 <DeleteConfirmButton
                                     id={event.id}
                                     onDelete={deleteEvent}
@@ -117,7 +132,6 @@ export default async function EventsPage() {
                     )
                 })}
 
-                {/* Boş Durum (Empty State) Görünümü */}
                 {(!events || events.length === 0) && (
                     <div className="flex flex-col items-center justify-center p-12 bg-white border-2 border-dashed border-slate-200 rounded-2xl">
                         <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">

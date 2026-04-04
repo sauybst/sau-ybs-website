@@ -8,6 +8,8 @@ import { uploadImage, deleteStorageFile, handleImageUpdate } from '@/utils/stora
 import { EventSchema, UUIDSchema } from '@/utils/schemas'
 import { STORAGE_BUCKETS, STORAGE_FOLDERS, USER_ROLES } from '@/utils/constants'
 import { TICKETING_MODE } from '@/types/event' 
+import { TICKET_STATUS } from '@/types/tickets'
+import { supabaseAdmin } from '@/utils/supabase/admin'
 
 const ALLOWED_ROLES = [USER_ROLES.SUPER_ADMIN, USER_ROLES.EDITOR] as const
 const MODULE_NAME = 'events'
@@ -196,7 +198,117 @@ export async function updateEvent(formData: FormData) {
         return { error: 'Etkinlik güncellenirken bir hata oluştu.' }
     }
 
+    if (ticketing_mode === TICKETING_MODE.FREE) {
+        const { error: deleteTicketsError } = await supabase
+            .from('tickets')
+            .delete()
+            .eq('event_id', id)
+
+        if (deleteTicketsError) {
+            console.error('Yetim biletleri temizleme hatası:', deleteTicketsError)
+            // Sadece logluyoruz, etkinliğin kendisi güncellendiği için kullanıcıya hata döndürmüyoruz
+        }
+    }
+
     revalidatePath('/admin/events')
     revalidatePath(`/events/${slug}`)
     redirect('/admin/events')
+}
+
+export async function getEventDashboardData(eventId: string) {
+    const supabase = await createClient()
+
+    const auth = await requireAuth(supabase, {
+        allowedRoles: [...ALLOWED_ROLES],
+        requiredModule: MODULE_NAME,
+    })
+    
+    if (!auth.authorized) return { error: 'Bu paneli görüntülemek için yetkiniz bulunmuyor.' }
+
+    const { data: event, error: eventError } = await supabase
+        .from('events')
+        .select('*')
+        .eq('id', eventId)
+        .single()
+
+    if (eventError || !event) return { error: 'Etkinlik bulunamadı veya silinmiş.' }
+
+    const { data: tickets, error: ticketsError } = await supabase
+        .from('tickets')
+        .select('*')
+        .eq('event_id', eventId)
+        .order('updated_at', { ascending: false })
+
+    if (ticketsError) return { error: 'Bilet verileri çekilirken bir hata oluştu.' }
+
+    // Yoklama kayıtlarını admin client ile çekiyoruz (RLS kaynaklı görünmeme riskini engeller).
+    // Önce yeni şema (scanned_at), olmazsa geriye dönük uyumluluk için created_at denenir.
+    let attendances: any[] = []
+
+    const attendancePrimary = await supabaseAdmin
+        .from('attendances')
+        .select('id, passport_pin, session_name, scanned_at')
+        .eq('event_id', eventId)
+        .order('scanned_at', { ascending: true })
+
+    if (attendancePrimary.error) {
+        const attendanceFallback = await supabaseAdmin
+            .from('attendances')
+            .select('id, passport_pin, session_name, created_at')
+            .eq('event_id', eventId)
+            .order('created_at', { ascending: true })
+
+        if (attendanceFallback.error) {
+            console.error('Yoklama verisi çekme hatası:', {
+                primary: attendancePrimary.error.message,
+                fallback: attendanceFallback.error.message,
+            })
+            return { error: 'Yoklama verileri çekilirken bir hata oluştu.' }
+        }
+
+        attendances = attendanceFallback.data || []
+    } else {
+        attendances = attendancePrimary.data || []
+    }
+
+    const stats = {
+        capacity: event.capacity || 0,
+        active: 0,      
+        scanned: 0,     
+        cancelled: 0,   
+        totalValid: 0   
+    }
+
+    tickets?.forEach(ticket => {
+        if (ticket.status === TICKET_STATUS.ACTIVE) stats.active++
+        else if (ticket.status === TICKET_STATUS.SCANNED) stats.scanned++
+        else if (ticket.status === TICKET_STATUS.CANCELLED) stats.cancelled++
+    })
+
+    stats.totalValid = stats.active + stats.scanned
+
+    return {
+        success: true,
+        event,
+        tickets: tickets || [],
+        attendances,
+        stats
+    }
+}
+
+export async function updateTicketStatus(ticketId: string, newStatus: number) {
+    const supabase = await createClient()
+    
+    const { error } = await supabase
+        .from('tickets')
+        .update({ 
+            status: newStatus,
+            updated_at: new Date().toISOString() 
+        })
+        .eq('id', ticketId)
+
+    if (error) return { error: 'Güncelleme başarısız oldu.' }
+    
+    // Eğer bilet okutuldu durumuna getiriliyorsa attendance tablosuna da ekleyebiliriz
+    return { success: true }
 }
