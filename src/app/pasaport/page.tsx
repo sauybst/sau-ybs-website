@@ -31,6 +31,17 @@ export default function PasaportPage() {
     // Başarı Durumunda Saklanacak Pasaport Bilgileri
     const [createdPassport, setCreatedPassport] = useState<{ pinCode: string; nameMask: string; recoveryKey: string } | null>(null)
 
+    const switchMode = (newMode: Mode) => {
+        setMode(newMode)
+        setError('')
+        setStep(1)
+        setEmail('')
+        setFullName('')
+        setOtp('')
+        setKeyword('')
+        setPinCode('')
+    }
+
     // --- AKSİYONLAR ---
 
     // 1. Adım: OTP Gönderimi
@@ -39,11 +50,11 @@ export default function PasaportPage() {
         setError('')
         setLoading(true)
 
-        const res = await requestPassportCreation(email, fullName)
+        const res = await requestPassportCreation(email.trim(), fullName.trim())
         if (res.error) {
             setError(res.error)
         } else {
-            setStep(2) // Başarılıysa 2. adıma (OTP doğrulama) geç
+            setStep(2)
         }
         setLoading(false)
     }
@@ -54,12 +65,12 @@ export default function PasaportPage() {
         setError('')
         setLoading(true)
 
-        const res = await verifyAndCreatePassport(email, otp, keyword, fullName)
+        const res = await verifyAndCreatePassport(email.trim(), otp.trim(), keyword, fullName.trim())
         if (res.error) {
             setError(res.error)
         } else if (res.passport) {
             setCreatedPassport(res.passport)
-            setStep(3) // Başarılıysa 3. adıma (Teslimat Ekranı) geç
+            setStep(3)
         }
         setLoading(false)
     }
@@ -70,12 +81,14 @@ export default function PasaportPage() {
         setError('')
         setLoading(true)
 
-        const res = await loginPassport(pinCode, keyword)
+        const cleanPin = pinCode.trim().toUpperCase()
+        const res = await loginPassport(cleanPin, keyword)
+        
         if (res.error) {
             setError(res.error)
         } else {
-            router.push('/portal') // Başarılı girişte anasayfaya yönlendir
-            router.refresh() // Header'daki "Pasaportum" butonunun güncellenmesi için yenile
+            router.push('/portal')
+            router.refresh()
         }
         setLoading(false)
     }
@@ -102,13 +115,13 @@ export default function PasaportPage() {
                 {step === 1 && (
                     <div className="flex border-b border-slate-100">
                         <button
-                            onClick={() => { setMode('register'); setError('') }}
+                            onClick={() => switchMode('register')}
                             className={`flex-1 py-4 text-sm font-bold tracking-wide transition-colors ${mode === 'register' ? 'text-brand-600 border-b-2 border-brand-600 bg-brand-50/50' : 'text-slate-400 hover:text-slate-600'}`}
                         >
                             YENİ PASAPORT
                         </button>
                         <button
-                            onClick={() => { setMode('login'); setError('') }}
+                            onClick={() => switchMode('login')}
                             className={`flex-1 py-4 text-sm font-bold tracking-wide transition-colors ${mode === 'login' ? 'text-brand-600 border-b-2 border-brand-600 bg-brand-50/50' : 'text-slate-400 hover:text-slate-600'}`}
                         >
                             GİRİŞ YAP

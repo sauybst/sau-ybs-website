@@ -1,6 +1,6 @@
 import { getEventDashboardData } from '@/actions/events'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { 
     ArrowLeft, 
     Users, 
@@ -20,34 +20,53 @@ import ParticipantDetailSheet from '@/components/events/ParticipantDetailSheet'
 import RaffleModule from '@/components/events/RaffleModule'
 import ScannerSessionStarter from '@/components/events/ScannerSessionStarter'
 
+// --- TİP TANIMLAMALARI (Clean Code: Type Safety) ---
 interface Props {
     params: Promise<{ id: string }>
+}
+
+interface AttendanceRecord {
+    id: string;
+    passport_pin?: string;
+    pin_code?: string;
+    session_name: string;
+    scanned_at?: string;
+    created_at?: string;
+}
+
+const normalizePin = (pin?: string | null) => (pin || '').trim().toUpperCase()
+
+function buildAttendanceMap(attendances: AttendanceRecord[] = []) {
+    return attendances.reduce((acc: Record<string, AttendanceRecord[]>, attendance) => {
+        const pin = normalizePin(attendance.passport_pin ?? attendance.pin_code)
+        if (!pin) return acc
+
+        if (!acc[pin]) acc[pin] = []
+        acc[pin].push(attendance)
+        return acc
+    }, {})
 }
 
 export default async function EventDashboardPage({ params }: Props) {
     const { id } = await params
     const data = await getEventDashboardData(id)
 
+    // Siber Güvenlik / UX Yaması: Eğer hata yetki kaynaklıysa ana sayfaya atıyoruz, veri yoksa 404 veriyoruz.
+    if (data.error?.includes('yetki')) {
+        redirect('/admin')
+    }
+    
     if (data.error || !data.event || !data.stats) {
         return notFound()
     }
 
     const { event, tickets, attendances, stats } = data
     
-    // SİSTEM KONTROLÜ: Etkinlik Otobüslü Gezi mi?
     const isBusMode = event.ticketing_mode === TICKETING_MODE.BUS_QR
-
-    const normalizePin = (pin?: string | null) => (pin || '').trim().toUpperCase()
-    const attendanceMap = (attendances || []).reduce((acc: Record<string, any[]>, attendance: any) => {
-        const normalizedPin = normalizePin(attendance?.passport_pin ?? attendance?.pin_code)
-        if (!normalizedPin) return acc
-
-        if (!acc[normalizedPin]) acc[normalizedPin] = []
-        acc[normalizedPin].push(attendance)
-        return acc
-    }, {})
-
     const occupancyRate = event.capacity ? Math.round((stats.totalValid / event.capacity) * 100) : 0
+    
+    // Temizlenmiş veri haritası
+    const attendanceMap = buildAttendanceMap(attendances)
 
     return (
         <div className="max-w-7xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
@@ -140,12 +159,13 @@ export default async function EventDashboardPage({ params }: Props) {
                         <RaffleModule eventId={id} />
                         <ExportTicketsButton tickets={tickets} eventTitle={event.title} />
                     
-                    <div className="relative w-full sm:w-64">
+                    <div className="relative w-full sm:w-64 opacity-50 cursor-not-allowed" title="Aktif etmek için Client Component'e çevrilmeli">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                         <input 
                             type="text" 
-                            placeholder="PIN Kodu Ara..."
-                            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
+                            disabled
+                            placeholder="PIN Kodu Ara... (Yapım Aşamasında)"
+                            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all cursor-not-allowed"
                         />
                         </div>
                     </div>
@@ -171,7 +191,6 @@ export default async function EventDashboardPage({ params }: Props) {
                         </thead>
                         <tbody className="divide-y divide-slate-50">
                             {tickets.map((ticket) => {
-                                // PIN karşılaştırmasını normalize ederek olası format farklarını önlüyoruz.
                                 const userAttendances = attendanceMap[normalizePin(ticket.pin_code)] || []
 
                                 return (
@@ -201,7 +220,7 @@ export default async function EventDashboardPage({ params }: Props) {
                                     {isBusMode ? (
                                         <td className="px-6 py-4">
                                             <div className="flex flex-wrap gap-1.5">
-                                                {userAttendances.map((att: any) => (
+                                                {userAttendances.map((att) => (
                                                     <span key={att.id} className="inline-flex items-center px-2 py-1 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-md text-[9px] font-bold uppercase tracking-widest shadow-sm">
                                                         {att.session_name}
                                                     </span>

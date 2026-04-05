@@ -10,6 +10,17 @@ import { TICKET_STATUS, TICKET_STATUS_LABELS } from '@/types/tickets'
 
 import LogoutButton from '@/components/portal/LogoutButton' 
 
+// --- TİP TANIMLAMALARI (Clean Code: Type Safety) ---
+interface PortalTicket {
+    id: string;
+    status: number;
+    events: {
+        title: string;
+        event_date: string;
+        location: string;
+    } | null; // Etkinliğin silinmiş olma ihtimaline karşı null eklendi
+}
+
 export default async function PortalPage() {
     // 1. Pasaportu Sunucuda Doğrula
     const passport = await getCurrentPassport()
@@ -17,12 +28,21 @@ export default async function PortalPage() {
         redirect('/pasaport')
     }
 
-    // 2. Biletleri Getir (Yeni yazdığımız Server Action)
+    // 2. Biletleri Getir
     const { tickets, error } = await getUserTickets(passport.pin_code, passport.keyword_hash)
-    const validTickets = tickets || []
+    
+    // Güvenli Hata Yönetimi (Silent failure engellemesi)
+    if (error) {
+        console.error(`[Portal Error] ${passport.pin_code} için biletler çekilemedi:`, error)
+    }
+    
+    const validTickets = (tickets || []) as PortalTicket[]
 
     // 3. Sertifika Hakkı Kontrolü (En az 1 tane SCANNED bilet var mı?)
-    const hasAttendedEvent = validTickets.some((ticket: any) => ticket.status === TICKET_STATUS.SCANNED)
+    const hasAttendedEvent = validTickets.some(ticket => ticket.status === TICKET_STATUS.SCANNED)
+
+    // İsim maskesini güvenli bir şekilde oluşturma
+    const maskedName = passport.name_mask?.replace(/\d/g, (match: string) => '*'.repeat(parseInt(match, 10))) || 'Anonim'
 
     return (
         <div className="min-h-screen pt-28 pb-12 bg-slate-50 px-4 sm:px-6 lg:px-8">
@@ -36,7 +56,7 @@ export default async function PortalPage() {
                         </div>
                         <div>
                             <h1 className="text-xl font-bold text-slate-800">
-                                Hoş Geldin, {passport.name_mask.replace(/\d/g, (match: string) => '*'.repeat(parseInt(match, 10)))}
+                                Hoş Geldin, {maskedName}
                             </h1>
                             <p className="text-sm text-slate-500">Anonim kimliğin güvende ve aktif.</p>
                         </div>
@@ -92,7 +112,10 @@ export default async function PortalPage() {
                                         </p>
                                     </div>
                                 ) : (
-                                    validTickets.map((ticket: any) => {
+                                    validTickets.map((ticket) => {
+                                        // 🚨 Null Safety: Eğer veritabanı hatasıyla yetim bir bilet kalmışsa (events null ise) crash olmasını engelle
+                                        if (!ticket.events) return null;
+
                                         const eventDate = new Date(ticket.events.event_date);
                                         const isPast = eventDate < new Date();
                                         const isActive = ticket.status === TICKET_STATUS.ACTIVE && !isPast;
@@ -115,7 +138,7 @@ export default async function PortalPage() {
                                                               ticket.status === TICKET_STATUS.SCANNED ? 'bg-blue-100 text-blue-700' : 
                                                               'bg-red-100 text-red-700'}`}
                                                         >
-                                                            {TICKET_STATUS_LABELS[ticket.status as number]}
+                                                            {TICKET_STATUS_LABELS[ticket.status]}
                                                         </span>
                                                         {isPast && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-600 uppercase">Geçmiş Etkinlik</span>}
                                                     </div>

@@ -38,7 +38,11 @@ export default async function PublicEventsPage({
     query = query.lt('event_date', now)
   }
 
-  const { data: events } = await query
+  const { data: events, error } = await query
+
+  if (error) {
+    console.error('[Public Events Error]: Veriler çekilirken hata oluştu:', error.message)
+  }
 
   const typedEvents = (events ?? []) as EventListItem[]
   const isUpcoming = currentFilter === 'upcoming'

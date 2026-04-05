@@ -3,7 +3,6 @@ import { updateSession } from '@/utils/supabase/middleware'
 
 export async function middleware(request: NextRequest) {
     // 1. KATMAN: Supabase'in varsayılan oturum (auth) ve çerez güncellemelerini çalıştırıyoruz.
-    // Bu işlem bize header'ları ayarlanmış hazır bir response nesnesi döndürür.
     const supabaseResponse = await updateSession(request)
 
     // 2. KATMAN: zaferOPS Özel Pasaport (Portal) Kontrolleri
@@ -11,7 +10,6 @@ export async function middleware(request: NextRequest) {
     const isProtectedRoute = path.startsWith('/portal')
     const isAuthRoute = path === '/pasaport'
     
-    // Bizim kendi ürettiğimiz anonim bilet çerezi
     const zaferOpsSession = request.cookies.get('zaferops_session')?.value
 
     // Senaryo A: Çerezi olmayan biri zorla portala girmeye çalışırsa pasaporta yönlendir

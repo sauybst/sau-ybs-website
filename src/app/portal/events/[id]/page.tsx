@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { CalendarIcon, MapPin, Clock, ArrowLeft, Ticket, AlertCircle, CheckCircle2, Users } from 'lucide-react'
+import { z } from 'zod'
 
 import { getCurrentPassport } from '@/actions/passports'
 import { TICKETING_MODE } from '@/types/event'
@@ -13,18 +14,34 @@ type Props = {
     params: Promise<{ id: string }>
 }
 
+const UUIDSchema = z.string().uuid()
+
 export default async function EventTicketConfirmationPage({ params }: Props) {
     const { id } = await params
-    const supabase = await createClient()
     const passport = await getCurrentPassport()
 
     if (!passport) redirect('/pasaport')
 
     // 1. Etkinlik Bilgilerini Çek
+    const idCheck = UUIDSchema.safeParse(id)
+    if (!idCheck.success) {
+        return (
+            <div className="flex flex-col items-center justify-center py-24 px-4 text-center">
+                <AlertCircle className="w-16 h-16 text-red-400 mb-4" />
+                <h2 className="text-2xl font-bold text-slate-800 mb-2">Geçersiz Bağlantı</h2>
+                <p className="text-slate-500 mb-6">Etkinlik bağlantısı hatalı veya bozuk.</p>
+                <Link href="/events" className="text-brand-600 font-semibold hover:underline">Vitrine Geri Dön</Link>
+            </div>
+        )
+    }
+
+    const supabase = await createClient()
+
+    // 1. Etkinlik Bilgilerini Çek
     const { data: event, error: eventError } = await supabase
         .from('events')
         .select('*')
-        .eq('id', id)
+        .eq('id', idCheck.data) // id yerine idCheck.data kullanıldı
         .single()
 
     if (eventError || !event) {
@@ -57,7 +74,7 @@ export default async function EventTicketConfirmationPage({ params }: Props) {
         .eq('event_id', id)
         .eq('pin_code', passport.pin_code)
         .eq('status', TICKET_STATUS.ACTIVE)
-        .single()
+        .maybeSingle()
 
     const hasTicket = !!existingTicket
     const isFull = event.capacity !== null && event.purchased_tickets >= event.capacity

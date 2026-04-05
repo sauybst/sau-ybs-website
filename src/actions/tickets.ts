@@ -3,16 +3,40 @@
 import { createClient } from '@/utils/supabase/server';
 import { revalidatePath } from 'next/cache';
 import crypto from 'crypto';
+import { z } from 'zod';
 import { TICKET_STATUS } from '@/types/tickets';
+import { UUIDSchema } from '@/utils/schemas';
+import { getCurrentPassport } from '@/actions/passports'; // 🚨 GÜVENLİK YAMASI: Oturum kontrolü için eklendi
+
+// --- GİRDİ DOĞRULAMA ŞEMALARI ---
+const PinCodeSchema = z.string().length(8, 'PIN kodu 8 haneli olmalıdır.');
+const HashSchema = z.string().min(10, 'Geçersiz Hash formatı.');
 
 // 1. BİLET ÜRET (Öğrenci "Bilet Al" dediğinde tetiklenir)
-export async function acquireTicket(eventId: string, pinCode: string, keywordHash: string) {
-    const supabase = await createClient();
+export async function acquireTicket(eventIdRaw: string, pinCodeRaw: string, keywordHashRaw: string) {
+    // 1. Girdi Doğrulama
+    const eventIdCheck = UUIDSchema.safeParse(eventIdRaw);
+    const pinCheck = PinCodeSchema.safeParse(pinCodeRaw);
+    const hashCheck = HashSchema.safeParse(keywordHashRaw);
 
-    // Benzersiz QR Şifresi (Karekodun içine gizlenecek data)
+    if (!eventIdCheck.success || !pinCheck.success || !hashCheck.success) {
+        return { error: 'Geçersiz veri formatı.' };
+    }
+
+    const { data: eventId } = eventIdCheck;
+    const { data: pinCode } = pinCheck;
+    const { data: keywordHash } = hashCheck;
+
+    // Sadece giriş yapmış kullanıcı kendi PIN koduyla bilet alabilir!
+    const currentUser = await getCurrentPassport();
+    if (!currentUser || currentUser.pin_code !== pinCode) {
+        return { error: 'Yetkisiz işlem: Sadece kendi adınıza bilet alabilirsiniz.' };
+    }
+
+    const supabase = await createClient();
     const qrHashRaw = crypto.randomUUID();
 
-    // Veritabanındaki "Race Condition" korumalı fonksiyona işi yıkıyoruz
+    // Veritabanındaki "Race Condition" korumalı fonksiyona işi yıkıyoruz (Harika mimari!)
     const { data, error } = await supabase.rpc('purchase_ticket', {
         p_event_id: eventId,
         p_pin_code: pinCode,
@@ -20,19 +44,15 @@ export async function acquireTicket(eventId: string, pinCode: string, keywordHas
         p_qr_hash: qrHashRaw
     });
 
-    // Durum A: Supabase bağlantı hatası (Database kapalı, tablo yok vb.)
     if (error) {
-        console.error('Supabase RPC Hatası:', error);
+        console.error('[Ticket Action Error] Bilet Alım RPC Hatası:', error.message);
         return { error: 'Veritabanı bağlantısında bir sorun oluştu.' };
     }
 
-    // Durum B: RPC çalıştı ama mantıksal bir itiraz döndü (Zaten bilet var, kontenjan dolu vb.)
-    // data.success burada false ise, RPC içindeki mesajı (data.message) döndürüyoruz.
     if (data && data.success === false) {
-        return { error: data.message }; // İşte o "Zaten bu bilet..." mesajı burası
+        return { error: data.message };
     }
 
-    // Durum C: Her şey yolunda
     revalidatePath(`/events/${eventId}`);
     revalidatePath('/portal');
     
@@ -40,10 +60,19 @@ export async function acquireTicket(eventId: string, pinCode: string, keywordHas
 }
 
 // 2. CÜZDAN: ÖĞRENCİNİN BİLETLERİNİ GETİR
-export async function getUserTickets(pinCode: string, keywordHash: string) {
+export async function getUserTickets(pinCodeRaw: string, keywordHashRaw: string) {
+    const pinCheck = PinCodeSchema.safeParse(pinCodeRaw);
+    if (!pinCheck.success) return { error: 'Geçersiz PIN formatı.' };
+    
+    const pinCode = pinCheck.data;
+
+    const currentUser = await getCurrentPassport();
+    if (!currentUser || currentUser.pin_code !== pinCode) {
+        return { error: 'Yetkisiz işlem: Başkasının cüzdanına erişemezsiniz.' };
+    }
+
     const supabase = await createClient();
 
-    // Öğrenciye ait tüm biletleri, etkinlik bilgileriyle (JOIN) birlikte getiriyoruz
     const { data: tickets, error } = await supabase
         .from('tickets')
         .select(`
@@ -51,16 +80,34 @@ export async function getUserTickets(pinCode: string, keywordHash: string) {
             events ( title, slug, event_date, location, image_url )
         `)
         .eq('pin_code', pinCode)
-        .eq('keyword_hash', keywordHash)
+        .eq('keyword_hash', keywordHashRaw)
         .order('created_at', { ascending: false });
 
-    if (error) return { error: 'Biletleriniz yüklenirken bir hata oluştu.' };
+    if (error) {
+        console.error('[Ticket Action Error] Cüzdan Çekme Hatası:', error.message);
+        return { error: 'Biletleriniz yüklenirken bir hata oluştu.' };
+    }
 
     return { success: true, tickets };
 }
 
 // 3. CANLI BİLET DETAYI VE QR KOD (Sadece geçerliyse QR kod döner)
-export async function getTicketForDisplay(ticketId: string, pinCode: string, keywordHash: string) {
+export async function getTicketForDisplay(ticketIdRaw: string, pinCodeRaw: string, keywordHashRaw: string) {
+    const ticketIdCheck = UUIDSchema.safeParse(ticketIdRaw);
+    const pinCheck = PinCodeSchema.safeParse(pinCodeRaw);
+
+    if (!ticketIdCheck.success || !pinCheck.success) {
+        return { error: 'Geçersiz bilet bilgileri.' };
+    }
+
+    const ticketId = ticketIdCheck.data;
+    const pinCode = pinCheck.data;
+
+    const currentUser = await getCurrentPassport();
+    if (!currentUser || currentUser.pin_code !== pinCode) {
+        return { error: 'Yetkisiz işlem.' };
+    }
+
     const supabase = await createClient();
 
     const { data: ticket, error } = await supabase
@@ -71,7 +118,7 @@ export async function getTicketForDisplay(ticketId: string, pinCode: string, key
         `)
         .eq('id', ticketId)
         .eq('pin_code', pinCode)
-        .eq('keyword_hash', keywordHash)
+        .eq('keyword_hash', keywordHashRaw)
         .single();
 
     if (error || !ticket) return { error: 'Bilet bulunamadı veya yetkisiz erişim.' };
@@ -84,17 +131,31 @@ export async function getTicketForDisplay(ticketId: string, pinCode: string, key
 }
 
 // 4. BİLETİ İPTAL ET (Kontenjanı geri verir)
-export async function cancelMyTicket(ticketId: string, pinCode: string) {
+export async function cancelMyTicket(ticketIdRaw: string, pinCodeRaw: string) {
+    const ticketIdCheck = UUIDSchema.safeParse(ticketIdRaw);
+    const pinCheck = PinCodeSchema.safeParse(pinCodeRaw);
+
+    if (!ticketIdCheck.success || !pinCheck.success) {
+        return { error: 'Geçersiz parametre formatı.' };
+    }
+
+    const ticketId = ticketIdCheck.data;
+    const pinCode = pinCheck.data;
+
+    const currentUser = await getCurrentPassport();
+    if (!currentUser || currentUser.pin_code !== pinCode) {
+        return { error: 'Yetkisiz işlem: Sadece kendi biletinizi iptal edebilirsiniz.' };
+    }
+
     const supabase = await createClient();
 
-    // Veritabanındaki iptal robotunu çağırıyoruz
     const { data, error } = await supabase.rpc('cancel_ticket', {
         p_ticket_id: ticketId,
         p_pin_code: pinCode
     });
 
     if (error) {
-        console.error('İptal RPC Hatası:', error);
+        console.error('[Ticket Action Error] İptal RPC Hatası:', error.message);
         return { error: 'İptal işlemi sırasında bir hata oluştu.' };
     }
 
@@ -102,8 +163,7 @@ export async function cancelMyTicket(ticketId: string, pinCode: string) {
         return { error: data.message };
     }
 
-    // Cüzdanı ve etkinlik sayfasını güncelle (kontenjan 1 arttı çünkü)
-    revalidatePath('/portal/wallet');
+    revalidatePath('/portal');
     revalidatePath(`/portal/ticket/${ticketId}`);
     
     return { success: true, message: data.message };

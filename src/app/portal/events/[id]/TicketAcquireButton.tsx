@@ -27,17 +27,12 @@ export default function TicketAcquireButton({ eventId, pinCode, keywordHash }: P
             if (result.error) {
                 showToast(result.error, 'error')
                 setIsSubmitting(false)
-                return
             } else {
                 showToast('Biletiniz başarıyla oluşturuldu! Cüzdanınıza yönlendiriliyorsunuz.', 'success')
-                // Başarılıysa cüzdana yönlendir
+                // Backend'de revalidatePath olduğu için refresh'e gerek yok, doğrudan push yapıyoruz.
                 router.push('/portal')
-                router.refresh()
             }
-        } catch (error: any) {
-
-            if (error.message === 'NEXT_REDIRECT') return;
-
+        } catch (error) {
             console.error("Bilet alma hatası:", error)
             showToast('Beklenmeyen bir hata oluştu.', 'error')
             setIsSubmitting(false)

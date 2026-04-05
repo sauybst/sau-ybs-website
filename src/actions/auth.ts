@@ -60,7 +60,6 @@ export async function login(prevState: LoginState, formData: FormData) {
     })
 
     if (error) {
-        // Güvenlik: Hata detaylarını kullanıcıya sızdırmıyoruz
         console.error('Login hatası:', error.message)
         return { error: 'Kullanıcı adı veya şifre yanlış.' }
     }
@@ -101,7 +100,6 @@ export async function resetPassword(_prevState: ResetPasswordState, formData: Fo
 
     const supabase = await createClient()
 
-    // Supabase'den şifre sıfırlama maili göndermesini istiyoruz
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo,
     })

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { 
     X, 
     Clock, 
@@ -30,6 +30,27 @@ export default function ParticipantDetailSheet({ ticket }: Props) {
     const [isPending, startTransition] = useTransition()
     const { showToast } = useToast()
     const router = useRouter()
+
+    // --- UX & A11y: Scroll Kilitleme ve ESC Tuşu ile Kapatma ---
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && isOpen && !isPending) {
+                setIsOpen(false)
+            }
+        }
+
+        if (isOpen) {
+            document.body.style.overflow = 'hidden'
+            document.addEventListener('keydown', handleKeyDown)
+        } else {
+            document.body.style.overflow = 'unset'
+        }
+        
+        return () => {
+            document.body.style.overflow = 'unset'
+            document.removeEventListener('keydown', handleKeyDown)
+        }
+    }, [isOpen, isPending])
 
     const handleStatusUpdate = (newStatus: number) => {
         startTransition(async () => {
@@ -65,18 +86,25 @@ export default function ParticipantDetailSheet({ ticket }: Props) {
                 <div 
                     className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] animate-in fade-in duration-200" 
                     onClick={() => !isPending && setIsOpen(false)} 
+                    aria-hidden="true"
                 />
             )}
 
             {/* Panel */}
-            <div className={`fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-[101] transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+            <div 
+                role="dialog" 
+                aria-modal="true" 
+                aria-labelledby="sheet-title"
+                className={`fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-[101] transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+            >
                 <div className="flex flex-col h-full">
                     
                     <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                        <h2 className="text-xl font-bold text-slate-900">Katılımcı Detayları</h2>
+                        <h2 id="sheet-title" className="text-xl font-bold text-slate-900">Katılımcı Detayları</h2>
                         <button 
                             onClick={() => setIsOpen(false)} 
                             disabled={isPending}
+                            aria-label="Paneli kapat"
                             className="p-2 hover:bg-slate-200 rounded-full transition-colors disabled:opacity-50"
                         >
                             <X className="h-5 w-5 text-slate-500" />

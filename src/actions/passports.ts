@@ -1,6 +1,7 @@
 'use server'
 
 import * as jwt from 'jsonwebtoken';
+import { z } from 'zod';
 import { sendOTPEmail } from '@/utils/mail';
 import { supabaseAdmin } from '@/utils/supabase/admin';
 import { checkRateLimit } from '@/utils/rate-limit';
@@ -9,26 +10,49 @@ import { hashData, verifyData, generateOTP, generatePassportPin, generateRecover
 import { signPassportToken } from '@/utils/jwt';
 import { cookies } from 'next/headers';
 
+const ALLOWED_EMAIL_DOMAIN = '@ogr.sakarya.edu.tr';
+const OTP_EXPIRE_MINUTES = 10;
+const SESSION_COOKIE_NAME = 'zaferops_session';
+const SESSION_MAX_AGE_SEC = 30 * 24 * 60 * 60; 
+
+const RATE_LIMITS = {
+    OTP_REQUEST: { attempts: 3, windowMs: 15 * 60 * 1000 },
+    OTP_VERIFY: { attempts: 5, windowMs: 10 * 60 * 1000 },
+    LOGIN: { attempts: 5, windowMs: 30 * 60 * 1000 }
+};
+
+// --- GİRDİ DOĞRULAMA ŞEMALARI (Siber Güvenlik) ---
+const EmailSchema = z.string().email().endsWith(ALLOWED_EMAIL_DOMAIN, `Sadece ${ALLOWED_EMAIL_DOMAIN} uzantılı mailler kabul edilmektedir.`);
+const OtpSchema = z.string().min(6).max(8); 
+const KeywordSchema = z.string().min(3).max(50);
+const PinSchema = z.string().length(8); 
+
 // 1. OTP Gönderme İsteği
 export async function requestPassportCreation(email: string, fullName: string) {
-    if (!email.endsWith('@ogr.sakarya.edu.tr')) {
-        return { error: 'Sadece @ogr.sakarya.edu.tr uzantılı öğrenci mailleri kabul edilmektedir.' };
+    const emailValidation = EmailSchema.safeParse(email);
+    if (!emailValidation.success) {
+        return { error: emailValidation.error.issues[0].message };
     }
 
-    const rateLimit = checkRateLimit(`otp:${email}`, { maxAttempts: 3, windowMs: 15 * 60 * 1000 });
+    const cleanEmail = emailValidation.data;
+    
+    const rateLimit = checkRateLimit(`otp_req:${cleanEmail}`, { 
+        maxAttempts: RATE_LIMITS.OTP_REQUEST.attempts, 
+        windowMs: RATE_LIMITS.OTP_REQUEST.windowMs 
+    });
+    
     if (!rateLimit.allowed) {
         return { error: 'Çok fazla deneme yaptınız. Lütfen 15 dakika bekleyin.' };
     }
 
+    // Temizlik işlemi
     await supabaseAdmin.from('email_verifications').delete().lt('expires_at', new Date().toISOString());
 
     const otp = generateOTP();
     const otpHash = await hashData(otp);
-    
-    // ARAMA YAPABİLMEK İÇİN SHA-256 KULLANILIYOR
-    const emailHash = hashEmailForLookup(email); 
+    const emailHash = hashEmailForLookup(cleanEmail); 
 
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    const expiresAt = new Date(Date.now() + OTP_EXPIRE_MINUTES * 60 * 1000).toISOString();
     const { error } = await supabaseAdmin.from('email_verifications').insert({
         email_hash: emailHash,
         otp_hash: otpHash,
@@ -36,17 +60,13 @@ export async function requestPassportCreation(email: string, fullName: string) {
     });
 
     if (error) {
-        console.error("🔴 SUPABASE OTP KAYIT HATASI:", error);
+        console.error("[Passport Error] OTP Kayıt:", error.message);
         return { error: 'Geçici doğrulama kodu oluşturulamadı.' };
     }
 
-    await supabaseAdmin.from('email_verifications').delete().lt('expires_at', new Date().toISOString());
-
-    // GERÇEK E-POSTA GÖNDERİMİ
-    const mailResult = await sendOTPEmail(email, otp);
+    const mailResult = await sendOTPEmail(cleanEmail, otp);
     
     if (mailResult.error) {
-        // Mail atılamadıysa (şifre yanlışsa vs.), veritabanına attığımız kodu geri silip hata döndürüyoruz.
         await supabaseAdmin.from('email_verifications').delete().eq('email_hash', emailHash);
         return { error: 'Doğrulama e-postası gönderilemedi. Lütfen daha sonra tekrar deneyin.' };
     }
@@ -56,8 +76,22 @@ export async function requestPassportCreation(email: string, fullName: string) {
 
 // 2. OTP Doğrulama ve Pasaport Üretimi
 export async function verifyAndCreatePassport(email: string, otp: string, keyword: string, fullName: string) {
-    // EŞLEŞTİRME YAPABİLMEK İÇİN SHA-256 KULLANILIYOR
     const emailHash = hashEmailForLookup(email); 
+    const rateLimit = checkRateLimit(`otp_verify:${emailHash}`, { 
+        maxAttempts: RATE_LIMITS.OTP_VERIFY.attempts, 
+        windowMs: RATE_LIMITS.OTP_VERIFY.windowMs 
+    });
+
+    if (!rateLimit.allowed) {
+        return { error: 'Çok fazla hatalı kod girdiniz. Lütfen daha sonra tekrar OTP isteyin.' };
+    }
+
+    const otpValidation = OtpSchema.safeParse(otp);
+    const keywordValidation = KeywordSchema.safeParse(keyword);
+
+    if (!otpValidation.success || !keywordValidation.success) {
+        return { error: 'Geçersiz veri formatı.' };
+    }
 
     const { data: verificationData, error: fetchError } = await supabaseAdmin
         .from('email_verifications')
@@ -72,12 +106,12 @@ export async function verifyAndCreatePassport(email: string, otp: string, keywor
         return { error: 'Doğrulama kodu bulunamadı veya süresi dolmuş.' };
     }
 
-    const isOtpValid = await verifyData(otp, verificationData.otp_hash);
+    const isOtpValid = await verifyData(otpValidation.data, verificationData.otp_hash);
     if (!isOtpValid) return { error: 'Hatalı doğrulama kodu.' };
 
     const pinCode = generatePassportPin();
     const recoveryKey = generateRecoveryKey();
-    const keywordHash = await hashData(keyword);
+    const keywordHash = await hashData(keywordValidation.data);
     const recoveryHash = await hashData(recoveryKey);
     const nameMask = maskName(fullName);
 
@@ -89,19 +123,22 @@ export async function verifyAndCreatePassport(email: string, otp: string, keywor
     });
 
     if (insertError) {
-        console.error("🔴 PASAPORT OLUŞTURMA HATASI:", insertError);
+        console.error("[Passport Error] Pasaport Oluşturma:", insertError.message);
         return { error: 'Pasaport oluşturulurken sistemsel bir hata oluştu.' };
     }
 
     await supabaseAdmin.from('email_verifications').delete().eq('id', verificationData.id);
 
-    console.log(`[TEST ORTAMI] Kurtarma Kodu (KAYBETMEYİN): ${recoveryKey}`);
+    // Geliştirme ortamında kurtarma kodunu logla, production'da gizle
+    if (process.env.NODE_ENV !== 'production') {
+        console.log(`[TEST ORTAMI] Kurtarma Kodu (KAYBETMEYİN): ${recoveryKey}`);
+    }
 
     const token = signPassportToken({ pin_code: pinCode });
-    (await cookies()).set('zaferops_session', token, {
+    (await cookies()).set(SESSION_COOKIE_NAME, token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        maxAge: 30 * 24 * 60 * 60,
+        maxAge: SESSION_MAX_AGE_SEC,
         path: '/'
     });
 
@@ -113,13 +150,20 @@ export async function verifyAndCreatePassport(email: string, otp: string, keywor
 
 // 3. Mevcut Pasaporta Giriş (Login)
 export async function loginPassport(pinCode: string, keyword: string) {
-    const rateLimit = checkRateLimit(`login:${pinCode}`, { maxAttempts: 5, windowMs: 30 * 60 * 1000 });
+    const rateLimit = checkRateLimit(`login:${pinCode}`, { 
+        maxAttempts: RATE_LIMITS.LOGIN.attempts, 
+        windowMs: RATE_LIMITS.LOGIN.windowMs 
+    });
+    
     if (!rateLimit.allowed) return { error: 'Çok fazla hatalı giriş. 30 dakika bekleyin.' };
+
+    const pinValidation = PinSchema.safeParse(pinCode.toUpperCase());
+    if (!pinValidation.success) return { error: 'Geçersiz pasaport formatı.' };
 
     const { data: passport } = await supabaseAdmin
         .from('passports')
         .select('*')
-        .eq('pin_code', pinCode.toUpperCase())
+        .eq('pin_code', pinValidation.data)
         .single();
 
     if (!passport) return { error: 'Pasaport bulunamadı veya anahtar kelime hatalı.' };
@@ -127,13 +171,13 @@ export async function loginPassport(pinCode: string, keyword: string) {
     const isValid = await verifyData(keyword, passport.keyword_hash);
     if (!isValid) return { error: 'Pasaport bulunamadı veya anahtar kelime hatalı.' };
 
-    await supabaseAdmin.from('passports').update({ last_active_at: new Date().toISOString() }).eq('pin_code', pinCode);
+    await supabaseAdmin.from('passports').update({ last_active_at: new Date().toISOString() }).eq('pin_code', pinValidation.data);
 
     const token = signPassportToken({ pin_code: passport.pin_code });
-    (await cookies()).set('zaferops_session', token, {
+    (await cookies()).set(SESSION_COOKIE_NAME, token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        maxAge: 30 * 24 * 60 * 60,
+        maxAge: SESSION_MAX_AGE_SEC,
         path: '/'
     });
 
@@ -141,30 +185,34 @@ export async function loginPassport(pinCode: string, keyword: string) {
 }
 
 export async function logoutPassport() {
-    (await cookies()).delete('zaferops_session');
+    (await cookies()).delete(SESSION_COOKIE_NAME);
     return { success: true };
 }
 
 // 5. Portaldaki Öğrenci Verisini Getir (Oturum Kontrolü)
 export async function getCurrentPassport() {
-    const token = (await cookies()).get('zaferops_session')?.value;
+    const token = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
     if (!token) return null;
 
+    const secret = process.env.JWT_SECRET; 
+    if (!secret) {
+        console.error("[CRITICAL SECURITY ERROR] JWT_SECRET is not defined in environment variables!");
+        return null; 
+    }
+
     try {
-        // JWT'yi çözümlüyoruz (Secret key senin sistemine göre değişebilir, JWT_SECRET genelde kullanılır)
-        const secret = process.env.JWT_SECRET || 'zaferops-gizli-anahtar'; 
         const decoded = jwt.verify(token, secret) as { pin_code: string };
         
-        // Pin kodu ile veritabanından en güncel bilgiyi çekiyoruz
-        const { data: passport } = await supabaseAdmin
+        const { data: passport, error } = await supabaseAdmin
             .from('passports')
             .select('*')
             .eq('pin_code', decoded.pin_code)
             .single();
             
+        if (error || !passport) return null;
+
         return passport;
     } catch (error) {
-        console.error("Geçersiz veya süresi dolmuş oturum.");
         return null;
     }
 }

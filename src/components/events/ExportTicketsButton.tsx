@@ -3,8 +3,16 @@
 import { Download } from 'lucide-react'
 import { TICKET_STATUS } from '@/types/tickets'
 
+// --- TİP TANIMLAMALARI (Type Safety) ---
+interface TicketData {
+    pin_code: string;
+    status: number;
+    created_at: string;
+    updated_at: string;
+}
+
 interface ExportProps {
-    tickets: any[]
+    tickets: TicketData[]
     eventTitle: string
 }
 
@@ -14,17 +22,23 @@ export default function ExportTicketsButton({ tickets, eventTitle }: ExportProps
         // 1. Excel için Başlıklar (Header)
         const headers = ["Pasaport PIN", "Durum", "Bilet Alma Tarihi", "Giriş Saati"]
         
+        const sanitize = (val: string) => {
+            let str = String(val || '').replace(/"/g, '""'); 
+            if (/^[=+\-@]/.test(str)) str = "'" + str; 
+            return `"${str}"`; 
+        };
+        
         // 2. Verileri Satırlara Dönüştür
         const rows = tickets.map(ticket => [
-            ticket.pin_code,
-            ticket.status === TICKET_STATUS.SCANNED ? "Giriş Yaptı" : 
-            ticket.status === TICKET_STATUS.CANCELLED ? "İptal" : "Bekliyor",
-            new Date(ticket.created_at).toLocaleString('tr-TR'),
-            ticket.status === TICKET_STATUS.SCANNED ? new Date(ticket.updated_at).toLocaleTimeString('tr-TR') : "-"
+            sanitize(ticket.pin_code),
+            sanitize(ticket.status === TICKET_STATUS.SCANNED ? "Giriş Yaptı" : 
+                     ticket.status === TICKET_STATUS.CANCELLED ? "İptal" : "Bekliyor"),
+            sanitize(new Date(ticket.created_at).toLocaleString('tr-TR')),
+            sanitize(ticket.status === TICKET_STATUS.SCANNED ? new Date(ticket.updated_at).toLocaleTimeString('tr-TR') : "-")
         ])
 
         // 3. CSV İçeriğini Oluştur (Excel uyumu için BOM ve noktalı virgül kullanımı)
-        const csvContent = "\uFEFF" // Türkçe karakter desteği (BOM)
+        const csvContent = "\uFEFF" 
             + headers.join(";") + "\n" 
             + rows.map(e => e.join(";")).join("\n")
 

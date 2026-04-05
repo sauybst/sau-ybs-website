@@ -18,20 +18,20 @@ export default async function LiveTicketPage({ params }: Props) {
 
     if (!passport) redirect('/pasaport')
 
-    // Bileti veritabanından getir (Yetki kontrolü action içinde yapılıyor)
+    // Bileti veritabanından getir
     const { ticket, error } = await getTicketForDisplay(id, passport.pin_code, passport.keyword_hash)
 
-    if (!ticket) {
+    if (!ticket || !ticket.events) {
         return (
             <div className="flex flex-col items-center justify-center py-24 px-4 text-center">
                 <AlertCircle className="w-16 h-16 text-red-400 mb-4" />
-                <h2 className="text-2xl font-bold text-slate-800 mb-2">Bilet Bulunamadı</h2>
-                <p className="text-slate-500 mb-6">{error || 'Bu bilet sistemde mevcut değil veya size ait değil.'}</p>
+                <h2 className="text-2xl font-bold text-slate-800 mb-2">Bilet veya Etkinlik Bulunamadı</h2>
+                <p className="text-slate-500 mb-6">{error || 'Bu bilet sistemde mevcut değil, etkinlik silinmiş veya size ait değil.'}</p>
                 <Link href="/portal" className="text-brand-600 font-semibold hover:underline">Cüzdana Dön</Link>
             </div>
         )
     }
-
+    
     // Durum Kontrolleri
     const isCancelled = ticket.status === TICKET_STATUS.CANCELLED
     const isScanned = ticket.status === TICKET_STATUS.SCANNED
@@ -56,7 +56,6 @@ export default async function LiveTicketPage({ params }: Props) {
                 ${isCancelled ? 'border-red-200' : 'border-slate-100'}
             `}>
                 
-                {/* Soluklaştırma katmanı (Geçmiş veya İptal ise) */}
                 {(isCancelled || isPast) && (
                     <div className="absolute inset-0 bg-slate-50/70 z-30 backdrop-blur-[1px] pointer-events-none flex items-center justify-center">
                         <div className="bg-white/90 px-6 py-3 rounded-2xl shadow-lg border border-slate-200 transform -rotate-12 flex items-center gap-3">
@@ -70,7 +69,6 @@ export default async function LiveTicketPage({ params }: Props) {
 
                 {/* Üst Kısım: Etkinlik Özeti */}
                 <div className="bg-slate-900 p-8 text-white relative overflow-hidden">
-                    {/* Bilet statüsü etiketi */}
                     <div className="absolute top-4 right-4">
                         <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest
                             ${ticket.status === TICKET_STATUS.ACTIVE ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 

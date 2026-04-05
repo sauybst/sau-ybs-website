@@ -14,17 +14,11 @@ import { supabaseAdmin } from '@/utils/supabase/admin'
 const ALLOWED_ROLES = [USER_ROLES.SUPER_ADMIN, USER_ROLES.EDITOR] as const
 const MODULE_NAME = 'events'
 
-export async function createEvent(formData: FormData) {
-    const supabase = await createClient()
+/**
+ * FormData içerisindeki veriyi alır, doğrular ve iş mantığına uygun tiplere dönüştürür.
+ */
 
-    // — Yetki kontrolü
-    const auth = await requireAuth(supabase, {
-        allowedRoles: [...ALLOWED_ROLES],
-        requiredModule: MODULE_NAME,
-    })
-    if (!auth.authorized) return { error: auth.error }
-
-    // — Girdi doğrulama
+function extractAndValidateEventData(formData: FormData) {
     const raw = {
         title: formData.get('title') as string,
         slug: formData.get('slug') as string,
@@ -33,56 +27,77 @@ export async function createEvent(formData: FormData) {
         description: formData.get('description') as string,
         registration_url: formData.get('registration_url') as string,
     }
+
     const validated = EventSchema.safeParse(raw)
     if (!validated.success) {
-        return { error: validated.error.issues[0].message }
+        return { error: validated.error.issues[0].message, data: null }
     }
-    const { title, slug, event_date, location, description, registration_url } = validated.data
 
-    // — Yeni Biletleme Alanlarının İşlenmesi (Normalizasyon - Integer Mapping)
     const ticketingModeRaw = formData.get('ticketing_mode')
-    // FormData'dan gelen metinsel '0', '1', '2' değerini matematiksel sayıya çeviriyoruz. Boşsa FREE (0) yapıyoruz.
     const ticketing_mode = ticketingModeRaw !== null 
         ? parseInt(ticketingModeRaw as string, 10) 
         : TICKETING_MODE.FREE
 
     const capacityRaw = formData.get('capacity')
-    let capacity = null
+    let capacity: number | null = null
     
-    // Eğer mod FREE (0) değilse ve kapasite girildiyse sayıya çevir
     if (ticketing_mode !== TICKETING_MODE.FREE && capacityRaw) {
         const parsed = parseInt(capacityRaw as string, 10)
         if (!isNaN(parsed)) capacity = parsed
     }
 
-    // — Görsel yükleme
+    return { 
+        error: null, 
+        data: { ...validated.data, ticketing_mode, capacity } 
+    }
+}
+
+type AttendanceRecord = {
+    id: string;
+    passport_pin: string;
+    session_name: string;
+    scanned_at?: string;
+    created_at?: string;
+}
+
+
+export async function createEvent(formData: FormData) {
+    const supabase = await createClient()
+
+    // 1. Yetki Kontrolü
+    const auth = await requireAuth(supabase, {
+        allowedRoles: [...ALLOWED_ROLES],
+        requiredModule: MODULE_NAME,
+    })
+    if (!auth.authorized) return { error: auth.error }
+
+    // 2. Girdi Doğrulama ve Normalizasyon
+    const { error: validationError, data: eventData } = extractAndValidateEventData(formData)
+    if (validationError || !eventData) return { error: validationError }
+
+    // 3. Görsel Yükleme
     const imageFile = formData.get('image') as File | null
     let image_url: string | null = null
 
     if (imageFile && imageFile.size > 0) {
         const result = await uploadImage(
-            supabase, STORAGE_BUCKETS.EVENTS, STORAGE_FOLDERS.EVENT_POSTERS, imageFile, slug,
+            supabase, STORAGE_BUCKETS.EVENTS, STORAGE_FOLDERS.EVENT_POSTERS, imageFile, eventData.slug,
         )
         if (result.error) return { error: result.error }
         image_url = result.url
     }
 
-    // — Veritabanına kayıt
+    // 4. Veritabanı İşlemi
     const { error } = await supabase.from('events').insert({
-        title,
-        slug,
-        event_date: new Date(event_date).toISOString(),
-        location,
-        description,
-        registration_url: registration_url || null,
+        ...eventData,
+        event_date: new Date(eventData.event_date).toISOString(),
+        registration_url: eventData.registration_url || null,
         image_url,
-        created_by: auth.userId,
-        ticketing_mode, // Artık 0, 1 veya 2 olarak gidiyor
-        capacity,       
+        created_by: auth.userId,      
     })
 
     if (error) {
-        console.error('Etkinlik oluşturma hatası:', error)
+        console.error('Etkinlik oluşturma hatası:', error.message)
         return { error: 'Etkinlik oluşturulurken bir hata oluştu.' }
     }
 
@@ -96,14 +111,12 @@ export async function deleteEvent(id: string) {
 
     const supabase = await createClient()
 
-    // — Yetki kontrolü
     const auth = await requireAuth(supabase, {
         allowedRoles: [...ALLOWED_ROLES],
         requiredModule: MODULE_NAME,
     })
     if (!auth.authorized) return { error: auth.error }
 
-    // — Görseli Storage'dan sil
     const { data: event } = await supabase
         .from('events')
         .select('image_url')
@@ -114,11 +127,10 @@ export async function deleteEvent(id: string) {
         await deleteStorageFile(supabase, STORAGE_BUCKETS.EVENTS, event.image_url)
     }
 
-    // — Veritabanından sil
     const { error } = await supabase.from('events').delete().eq('id', id)
 
     if (error) {
-        console.error('Etkinlik silme hatası:', error)
+        console.error('Etkinlik silme hatası:', error.message)
         return { error: 'Etkinlik silinirken bir hata oluştu.' }
     }
 
@@ -128,7 +140,7 @@ export async function deleteEvent(id: string) {
 export async function updateEvent(formData: FormData) {
     const supabase = await createClient()
 
-    // — Yetki kontrolü
+    // 1. Yetki ve ID Kontrolü
     const auth = await requireAuth(supabase, {
         allowedRoles: [...ALLOWED_ROLES],
         requiredModule: MODULE_NAME,
@@ -139,90 +151,62 @@ export async function updateEvent(formData: FormData) {
     const idCheck = UUIDSchema.safeParse(id)
     if (!idCheck.success) return { error: 'Geçersiz kayıt kimliği.' }
 
-    // — Girdi doğrulama
-    const raw = {
-        title: formData.get('title') as string,
-        slug: formData.get('slug') as string,
-        event_date: formData.get('event_date') as string,
-        location: formData.get('location') as string,
-        description: formData.get('description') as string,
-        registration_url: formData.get('registration_url') as string,
-    }
-    const validated = EventSchema.safeParse(raw)
-    if (!validated.success) {
-        return { error: validated.error.issues[0].message }
-    }
-    const { title, slug, event_date, location, description, registration_url } = validated.data
+    // 2. Girdi Doğrulama ve Normalizasyon
+    const { error: validationError, data: eventData } = extractAndValidateEventData(formData)
+    if (validationError || !eventData) return { error: validationError }
 
-    // — Yeni Biletleme Alanlarının İşlenmesi (Normalizasyon - Integer Mapping)
-    const ticketingModeRaw = formData.get('ticketing_mode')
-    const ticketing_mode = ticketingModeRaw !== null 
-        ? parseInt(ticketingModeRaw as string, 10) 
-        : TICKETING_MODE.FREE
-
-    const capacityRaw = formData.get('capacity')
-    let capacity = null
-    
-    if (ticketing_mode !== TICKETING_MODE.FREE && capacityRaw) {
-        const parsed = parseInt(capacityRaw as string, 10)
-        if (!isNaN(parsed)) capacity = parsed
-    }
-
-    // — Görsel güncelleme
+    // 3. Görsel Güncelleme
     const imageResult = await handleImageUpdate(supabase, STORAGE_BUCKETS.EVENTS, STORAGE_FOLDERS.EVENT_POSTERS, {
         newFile: formData.get('image_file') as File | null,
         removeImage: formData.get('remove_image') === 'true',
         oldImageUrl: formData.get('old_image_url') as string,
-        fileNameSlug: slug,
+        fileNameSlug: eventData.slug,
     })
     if (imageResult.error) return { error: imageResult.error }
 
-    // — Veritabanını güncelle
+    // 4. Veritabanı İşlemi
     const { error } = await supabase
         .from('events')
         .update({
-            title,
-            slug,
-            event_date: new Date(event_date).toISOString(),
-            location,
-            registration_url: registration_url || null,
-            description,
+            ...eventData,
+            event_date: new Date(eventData.event_date).toISOString(),
+            registration_url: eventData.registration_url || null,
             image_url: imageResult.url,
-            ticketing_mode, // Artık 0, 1 veya 2 olarak gidiyor
-            capacity,       
         })
         .eq('id', id)
 
     if (error) {
-        console.error('Etkinlik güncelleme hatası:', error)
+        console.error('Etkinlik güncelleme hatası:', error.message)
         return { error: 'Etkinlik güncellenirken bir hata oluştu.' }
     }
 
-    if (ticketing_mode === TICKETING_MODE.FREE) {
+    // Etkinlik tipi ücretsiz yapıldıysa, eski biletleri temizleme mantığı
+    if (eventData.ticketing_mode === TICKETING_MODE.FREE) {
         const { error: deleteTicketsError } = await supabase
             .from('tickets')
             .delete()
             .eq('event_id', id)
 
         if (deleteTicketsError) {
-            console.error('Yetim biletleri temizleme hatası:', deleteTicketsError)
-            // Sadece logluyoruz, etkinliğin kendisi güncellendiği için kullanıcıya hata döndürmüyoruz
+            console.error('Yetim biletleri temizleme hatası:', deleteTicketsError.message)
         }
     }
 
     revalidatePath('/admin/events')
-    revalidatePath(`/events/${slug}`)
+    revalidatePath(`/events/${eventData.slug}`)
     redirect('/admin/events')
 }
 
 export async function getEventDashboardData(eventId: string) {
+    const idCheck = UUIDSchema.safeParse(eventId)
+    if (!idCheck.success) return { error: 'Geçersiz etkinlik kimliği.' }
+
     const supabase = await createClient()
 
     const auth = await requireAuth(supabase, {
         allowedRoles: [...ALLOWED_ROLES],
         requiredModule: MODULE_NAME,
     })
-    
     if (!auth.authorized) return { error: 'Bu paneli görüntülemek için yetkiniz bulunmuyor.' }
 
     const { data: event, error: eventError } = await supabase
@@ -241,9 +225,7 @@ export async function getEventDashboardData(eventId: string) {
 
     if (ticketsError) return { error: 'Bilet verileri çekilirken bir hata oluştu.' }
 
-    // Yoklama kayıtlarını admin client ile çekiyoruz (RLS kaynaklı görünmeme riskini engeller).
-    // Önce yeni şema (scanned_at), olmazsa geriye dönük uyumluluk için created_at denenir.
-    let attendances: any[] = []
+    let attendances: AttendanceRecord[] = []
 
     const attendancePrimary = await supabaseAdmin
         .from('attendances')
@@ -297,8 +279,17 @@ export async function getEventDashboardData(eventId: string) {
 }
 
 export async function updateTicketStatus(ticketId: string, newStatus: number) {
+    const idCheck = UUIDSchema.safeParse(ticketId)
+    if (!idCheck.success) return { error: 'Geçersiz bilet kimliği.' }
+
     const supabase = await createClient()
     
+    const auth = await requireAuth(supabase, {
+        allowedRoles: [...ALLOWED_ROLES],
+        requiredModule: MODULE_NAME,
+    })
+    if (!auth.authorized) return { error: 'Bu işlemi gerçekleştirmek için yetkiniz yok.' }
+
     const { error } = await supabase
         .from('tickets')
         .update({ 
@@ -307,8 +298,10 @@ export async function updateTicketStatus(ticketId: string, newStatus: number) {
         })
         .eq('id', ticketId)
 
-    if (error) return { error: 'Güncelleme başarısız oldu.' }
+    if (error) {
+        console.error('Bilet güncelleme hatası:', error.message)
+        return { error: 'Güncelleme başarısız oldu.' }
+    }
     
-    // Eğer bilet okutuldu durumuna getiriliyorsa attendance tablosuna da ekleyebiliriz
     return { success: true }
 }

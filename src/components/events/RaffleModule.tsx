@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect, useRef } from 'react'
 import { Trophy, Play, X } from 'lucide-react'
 import { getRafflePool } from '@/actions/raffle'
 import confetti from 'canvas-confetti'
-import { useToast } from '@/components/ToastProvider' // Toast kancasını içe aktar
+import { useToast } from '@/components/ToastProvider'
 
 export default function RaffleModule({ eventId }: { eventId: string }) {
     const [isOpen, setIsOpen] = useState(false)
@@ -13,22 +13,59 @@ export default function RaffleModule({ eventId }: { eventId: string }) {
     const [winner, setWinner] = useState<string | null>(null)
     const [displayPin, setDisplayPin] = useState('????')
     
-    // Geçiş durumu ve toast bildirimleri
     const [isPending, startTransition] = useTransition()
     const { showToast } = useToast()
+
+    const spinIntervalRef = useRef<NodeJS.Timeout | null>(null)
+    const confettiIntervalRef = useRef<NodeJS.Timeout | null>(null)
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && isOpen) {
+                closeModal()
+            }
+        }
+
+        if (isOpen) {
+            document.body.style.overflow = 'hidden'
+            document.addEventListener('keydown', handleKeyDown)
+        } else {
+            document.body.style.overflow = 'unset'
+        }
+        
+        return () => {
+            document.body.style.overflow = 'unset'
+            document.removeEventListener('keydown', handleKeyDown)
+            // Component unmount olursa zamanlayıcıları temizle
+            clearAllIntervals()
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen])
+
+    const clearAllIntervals = () => {
+        if (spinIntervalRef.current) clearInterval(spinIntervalRef.current)
+        if (confettiIntervalRef.current) clearInterval(confettiIntervalRef.current)
+    }
+
+    const closeModal = () => {
+        setIsOpen(false)
+        setIsSpinning(false)
+        clearAllIntervals() // Modal kapanırken animasyonları durdur
+    }
 
     const triggerConfetti = () => {
         const duration = 3 * 1000;
         const animationEnd = Date.now() + duration;
-        const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+        const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 300 }; // zIndex yükseltildi (modalın üstünde patlasın)
 
         const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
 
-        const interval: any = setInterval(function() {
+        confettiIntervalRef.current = setInterval(function() {
             const timeLeft = animationEnd - Date.now();
 
             if (timeLeft <= 0) {
-                return clearInterval(interval);
+                if (confettiIntervalRef.current) clearInterval(confettiIntervalRef.current);
+                return;
             }
 
             const particleCount = 50 * (timeLeft / duration);
@@ -39,7 +76,6 @@ export default function RaffleModule({ eventId }: { eventId: string }) {
     }
 
     const startRaffle = () => {
-        // Sunucu isteğini bir geçiş (transition) içinde başlat
         startTransition(async () => {
             try {
                 const res = await getRafflePool(eventId);
@@ -50,7 +86,6 @@ export default function RaffleModule({ eventId }: { eventId: string }) {
                     setWinner(null);
                     setDisplayPin('????');
                 } else {
-                    // alert yerine Toast kullanımı
                     showToast(res.error || "İçeride henüz onaylı katılımcı yok!", "info");
                 }
             } catch (error) {
@@ -63,15 +98,16 @@ export default function RaffleModule({ eventId }: { eventId: string }) {
         if (pool.length === 0) return
         setIsSpinning(true)
         setWinner(null)
+        clearAllIntervals() // Yeni çekiliş başlarken eskileri temizle
 
         let counter = 0
-        const interval = setInterval(() => {
+        spinIntervalRef.current = setInterval(() => {
             const randomIndex = Math.floor(Math.random() * pool.length)
             setDisplayPin(pool[randomIndex])
             counter++
 
             if (counter > 30) {
-                clearInterval(interval)
+                if (spinIntervalRef.current) clearInterval(spinIntervalRef.current)
                 const finalWinner = pool[Math.floor(Math.random() * pool.length)]
                 setWinner(finalWinner)
                 setDisplayPin(finalWinner)
@@ -85,7 +121,7 @@ export default function RaffleModule({ eventId }: { eventId: string }) {
         <>
             <button 
                 onClick={startRaffle}
-                disabled={isPending} // İstek sürerken butonu devre dışı bırak
+                disabled={isPending}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 text-white font-bold hover:bg-amber-600 transition-all shadow-lg shadow-amber-200 disabled:opacity-50"
             >
                 <Trophy className={`h-4 w-4 ${isPending ? 'animate-pulse' : ''}`} />
@@ -93,14 +129,26 @@ export default function RaffleModule({ eventId }: { eventId: string }) {
             </button>
 
             {isOpen && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/95 backdrop-blur-xl animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[40px] w-full max-w-lg p-12 text-center relative overflow-hidden shadow-2xl border border-slate-100">
-                        
-                        <button onClick={() => setIsOpen(false)} className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 z-50">
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                    {/* Arka plan karartması */}
+                    <div 
+                        className="absolute inset-0 bg-slate-900/95 backdrop-blur-xl animate-in fade-in duration-300"
+                        onClick={closeModal}
+                        aria-hidden="true"
+                    />
+
+                    {/* Erişilebilir Modal */}
+                    <div 
+                        role="dialog" 
+                        aria-modal="true" 
+                        aria-labelledby="raffle-title"
+                        className="bg-white rounded-[40px] w-full max-w-lg p-12 text-center relative overflow-hidden shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-300 z-10"
+                    >
+                        <button onClick={closeModal} aria-label="Kapat" className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 z-50 bg-slate-50 p-2 rounded-full">
                             <X className="h-6 w-6" />
                         </button>
 
-                        <div className="space-y-8">
+                        <div className="space-y-8 relative z-20">
                             <div className="flex justify-center">
                                 <div className="p-4 bg-amber-50 rounded-3xl animate-bounce">
                                     <Trophy className="h-12 w-12 text-amber-500" />
@@ -108,7 +156,7 @@ export default function RaffleModule({ eventId }: { eventId: string }) {
                             </div>
 
                             <div className="space-y-2">
-                                <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">Şanslı Kişiyi Seç</h2>
+                                <h2 id="raffle-title" className="text-2xl font-black text-slate-900 uppercase tracking-tighter">Şanslı Kişiyi Seç</h2>
                                 <p className="text-slate-500 font-medium">Toplam {pool.length} bilet arasından...</p>
                             </div>
 

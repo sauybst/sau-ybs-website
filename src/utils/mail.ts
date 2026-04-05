@@ -1,5 +1,9 @@
 import nodemailer from 'nodemailer';
 
+if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    throw new Error('FATAL ERROR: EMAIL_USER veya EMAIL_PASS ortam değişkenleri (.env) bulunamadı!');
+}
+
 // Nodemailer taşıyıcısını (Transporter) oluşturuyoruz
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -18,7 +22,7 @@ export async function sendOTPEmail(toEmail: string, otpCode: string) {
         to: toEmail,
         subject: 'Pasaport Doğrulama Kodunuz 🎫',
         html: `
-            <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-w-md; margin: 0 auto; padding: 20px; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+            <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 450px; margin: 0 auto; padding: 20px; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
                 <div style="text-align: center; margin-bottom: 20px;">
                     <h2 style="color: #0f172a; margin-bottom: 5px;">zaferOPS Pasaport İşlemleri</h2>
                     <p style="color: #64748b; font-size: 14px; margin-top: 0;">Anonim kimliğinizi oluşturmak için son bir adım.</p>

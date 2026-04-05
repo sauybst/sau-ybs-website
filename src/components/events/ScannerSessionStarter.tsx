@@ -1,19 +1,48 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ScanLine, Bus, Play, X } from 'lucide-react'
 import { TICKETING_MODE } from '@/types/event'
+import { useToast } from '@/components/ToastProvider' // 🚀 Toast eklendi
 
 export default function ScannerSessionStarter({ eventId, ticketingMode }: { eventId: string, ticketingMode: number }) {
     const router = useRouter()
+    const { showToast } = useToast()
+    
     const [isOpen, setIsOpen] = useState(false)
     const [sessionName, setSessionName] = useState('Gidiş Yoklaması')
     const [customSession, setCustomSession] = useState('')
 
+    // --- UX & A11y: Scroll Kilitleme ve ESC Tuşu ile Kapatma ---
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && isOpen) {
+                setIsOpen(false)
+            }
+        }
+
+        if (isOpen) {
+            document.body.style.overflow = 'hidden'
+            document.addEventListener('keydown', handleKeyDown)
+        } else {
+            document.body.style.overflow = 'unset'
+        }
+        
+        return () => {
+            document.body.style.overflow = 'unset'
+            document.removeEventListener('keydown', handleKeyDown)
+        }
+    }, [isOpen])
+
     const handleStart = () => {
-        const finalSession = sessionName === 'Diğer' ? customSession : sessionName
-        if (!finalSession.trim()) return alert("Oturum adı boş olamaz!")
+        // Girdi temizliği (trim) burada yapılarak değişkene atanıyor
+        const finalSession = sessionName === 'Diğer' ? customSession.trim() : sessionName
+        
+        if (!finalSession) {
+            // alert() yerine sisteme entegre modern bildirim kullanıldı
+            return showToast("Oturum adı boş olamaz!", "error")
+        }
         
         // Seçilen oturum adını URL parametresi (query) olarak Scanner'a gönderiyoruz
         router.push(`/admin/events/${eventId}/scanner?session=${encodeURIComponent(finalSession)}`)
@@ -44,11 +73,28 @@ export default function ScannerSessionStarter({ eventId, ticketingMode }: { even
             </button>
 
             {isOpen && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                    {/* Arka plan karartması (tıklanınca kapanır) */}
+                    <div 
+                        className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200"
+                        onClick={() => setIsOpen(false)}
+                        aria-hidden="true"
+                    />
+                    
+                    {/* Erişilebilir Modal Kutusu */}
+                    <div 
+                        role="dialog" 
+                        aria-modal="true" 
+                        aria-labelledby="scanner-modal-title"
+                        className="relative bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl animate-in zoom-in-95 duration-200 z-10"
+                    >
                         <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-bold text-slate-900">Yoklama Oturumu</h3>
-                            <button onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-slate-600 bg-slate-100 rounded-full p-1.5">
+                            <h3 id="scanner-modal-title" className="text-xl font-bold text-slate-900">Yoklama Oturumu</h3>
+                            <button 
+                                onClick={() => setIsOpen(false)} 
+                                aria-label="Kapat"
+                                className="text-slate-400 hover:text-slate-600 bg-slate-100 rounded-full p-1.5 transition-colors"
+                            >
                                 <X className="h-5 w-5" />
                             </button>
                         </div>
@@ -75,7 +121,7 @@ export default function ScannerSessionStarter({ eventId, ticketingMode }: { even
                                         placeholder="Örn: Müze Girişi"
                                         value={customSession}
                                         onChange={(e) => setCustomSession(e.target.value)}
-                                        className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none font-medium text-slate-700"
+                                        className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none font-medium text-slate-700 transition-all"
                                     />
                                 </div>
                             )}

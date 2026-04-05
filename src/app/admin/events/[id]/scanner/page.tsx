@@ -1,11 +1,18 @@
 "use client"
 
 import { useSearchParams, useParams, useRouter } from 'next/navigation'
-import { useState, useRef, useEffect, Suspense } from 'react'
-import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
+import { useState, useRef, useEffect, Suspense, useCallback } from 'react'
+import { Html5Qrcode } from 'html5-qrcode'
 import { ArrowLeft, CheckCircle2, XCircle, ScanLine, Ticket, Keyboard } from 'lucide-react'
 
 import { scanTicket, scanTicketByPin } from '@/actions/scanner'
+
+interface ScanResponse {
+    error?: string;
+    success?: boolean;
+    message?: string;
+    pinCode?: string;
+}
 
 // 1. ADIM: Asıl Scanner İçeriğini Suspense için ayrı bir bileşene ayırıyoruz
 function ScannerContent() {
@@ -13,7 +20,6 @@ function ScannerContent() {
     const router = useRouter()
     const eventId = params.id as string
 
-    // Oturum bilgisini URL'den çek (Örn: ?session=Gidiş Yoklaması)
     const searchParams = useSearchParams()
     const sessionName = searchParams.get('session') || 'Giriş'
       
@@ -23,37 +29,10 @@ function ScannerContent() {
     const [manualPin, setManualPin] = useState('')
 
     const isProcessing = useRef(false)
+    const scannerRef = useRef<Html5Qrcode | null>(null)
 
-    // DIŞA BAĞIMLI OLMAYAN, SAF JS KAMERA MOTORU
-    useEffect(() => {
-        const html5QrCode = new Html5Qrcode("qr-reader")
-        let isStarting = true
-
-        html5QrCode.start(
-            { facingMode: "environment" },
-            { 
-                fps: 10,
-                qrbox: { width: 250, height: 250 },
-                disableFlip: false 
-            },
-            (decodedText) => handleScan(decodedText, 'qr'),
-            () => {} // Kamera saniyede 10 kez tarayıp kod bulamayınca buraya düşer, sessizce geçiyoruz
-        ).then(() => {
-            isStarting = false
-        }).catch((err) => {
-            isStarting = false
-            console.error("Kamera Hatası:", err)
-        })
-
-        return () => {
-            if (!isStarting && html5QrCode.isScanning) {
-                html5QrCode.stop().catch(console.error)
-            }
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
-
-    const processResult = (result: any) => {
+    // --- İŞ MANTIĞI ---
+    const processResult = useCallback((result: ScanResponse) => {
         if (result.error) {
             setStatus('error')
             setMessage(result.error)
@@ -70,15 +49,13 @@ function ScannerContent() {
             setManualPin('')
             isProcessing.current = false
         }, 2500)
-    }
+    }, [])
 
-    // YANLIŞ YERE YAZILAN KOD BURAYA TAŞINDI
-    const handleScan = async (data: string, mode: 'qr' | 'manual') => {
+    const handleScan = useCallback(async (data: string, mode: 'qr' | 'manual') => {
         if (isProcessing.current || !data) return
         isProcessing.current = true
 
         try {
-            // Backend'e sessionName parametresini yolluyoruz
             const result = mode === 'qr' 
                 ? await scanTicket(eventId, data, sessionName) 
                 : await scanTicketByPin(eventId, data, sessionName)
@@ -90,8 +67,55 @@ function ScannerContent() {
             setMessage('Sunucu ile bağlantı kurulamadı.')
             processResult({ error: 'Bağlantı hatası' })
         }
-    }
+    }, [eventId, sessionName, processResult])
 
+    const handleScanRef = useRef<typeof handleScan | null>(null);
+
+    useEffect(() => {
+        handleScanRef.current = handleScan;
+    }, [handleScan]);
+
+    // --- DONANIM VE YAŞAM DÖNGÜSÜ YÖNETİMİ ---
+    useEffect(() => {
+        const html5QrCode = new Html5Qrcode("qr-reader")
+        
+        let scannerStarted = false;
+        let isUnmounted = false;    
+
+        html5QrCode.start(
+            { facingMode: "environment" },
+            { 
+                fps: 10,
+                qrbox: { width: 250, height: 250 },
+                disableFlip: false 
+            },
+            (decodedText) => handleScan(decodedText, 'qr'),
+            () => {} 
+        ).then(() => {
+            scannerStarted = true;
+            
+            if (isUnmounted) {
+                html5QrCode.stop().then(() => {
+                    html5QrCode.clear();
+                }).catch(console.error);
+            }
+        }).catch((err) => {
+            console.error("Kamera Hatası:", err)
+        })
+
+
+        return () => {
+            isUnmounted = true;
+            
+            if (scannerStarted) {
+                html5QrCode.stop().then(() => {
+                    html5QrCode.clear();
+                }).catch(console.error);
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+    
     const handleManualSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         if (manualPin.trim().length > 3) {
@@ -116,7 +140,6 @@ function ScannerContent() {
                         <ScanLine className="w-4 h-4 sm:w-5 sm:h-5" />
                         <span className="truncate">zaferOPS SCANNER</span>
                     </div>
-                    {/* Sahada görevlinin hangi oturumda olduğunu görmesi için */}
                     <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">
                         {sessionName}
                     </span>
@@ -125,7 +148,6 @@ function ScannerContent() {
 
             {/* Kamera Alanı */}
             <div className="flex-1 min-h-0 relative flex flex-col overflow-hidden bg-black">
-                
                 <div className="absolute inset-0 z-0 flex items-center justify-center overflow-hidden">
                     <div id="qr-reader" className="w-full h-full opacity-80" />
                 </div>

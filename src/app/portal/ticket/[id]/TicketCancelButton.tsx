@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Trash2, Loader2, AlertTriangle, X } from 'lucide-react'
 import { useToast } from '@/components/ToastProvider'
@@ -17,6 +17,20 @@ export default function TicketCancelButton({ ticketId, pinCode }: Props) {
     
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [isCancelling, setIsCancelling] = useState(false)
+
+    // --- UX: Modal açıkken arka planın kaymasını engelle (Scroll Lock) ---
+    useEffect(() => {
+        if (isModalOpen) {
+            document.body.style.overflow = 'hidden'
+        } else {
+            document.body.style.overflow = 'unset'
+        }
+        
+        // Component aniden unmount olursa kilidi kaldır (Cleanup)
+        return () => {
+            document.body.style.overflow = 'unset'
+        }
+    }, [isModalOpen])
 
     // Sadece Modalı açar
     const handleOpenModal = () => {
@@ -77,11 +91,18 @@ export default function TicketCancelButton({ ticketId, pinCode }: Props) {
                         aria-hidden="true"
                     />
                     
-                    {/* Modal Kutusu */}
-                    <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                    {/* Modal Kutusu (A11y standartları uygulandı) */}
+                    <div 
+                        role="dialog" 
+                        aria-modal="true" 
+                        aria-labelledby="modal-title" 
+                        aria-describedby="modal-desc"
+                        className="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+                    >
                         {/* Kapatma İkonu */}
                         <button 
                             onClick={handleCloseModal}
+                            aria-label="Modalı kapat"
                             className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 bg-slate-50 hover:bg-slate-100 p-2 rounded-full transition-colors"
                         >
                             <X className="w-4 h-4" />
@@ -92,8 +113,8 @@ export default function TicketCancelButton({ ticketId, pinCode }: Props) {
                                 <AlertTriangle className="w-8 h-8" />
                             </div>
                             
-                            <h3 className="text-xl font-bold text-slate-900 mb-2">Bileti İptal Et</h3>
-                            <p className="text-sm text-slate-500 mb-8">
+                            <h3 id="modal-title" className="text-xl font-bold text-slate-900 mb-2">Bileti İptal Et</h3>
+                            <p id="modal-desc" className="text-sm text-slate-500 mb-8">
                                 Bu işlemi onaylarsanız biletiniz geçersiz sayılacak ve ayırdığınız kontenjan anında başka bir öğrenciye devredilecektir. Emin misiniz?
                             </p>
 
