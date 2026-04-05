@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation'
-import { LogOut, Ticket, CalendarX2, ShieldCheck, ArrowRight } from 'lucide-react'
+import { Ticket, CalendarX2, ShieldCheck, ArrowRight, Award } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import Link from 'next/link'
+import CertificateGenerator from '@/components/portal/CertificateGenerator'
 
 import { getCurrentPassport } from '@/actions/passports'
 import { getUserTickets } from '@/actions/tickets'
@@ -19,6 +20,9 @@ export default async function PortalPage() {
     // 2. Biletleri Getir (Yeni yazdığımız Server Action)
     const { tickets, error } = await getUserTickets(passport.pin_code, passport.keyword_hash)
     const validTickets = tickets || []
+
+    // 3. Sertifika Hakkı Kontrolü (En az 1 tane SCANNED bilet var mı?)
+    const hasAttendedEvent = validTickets.some((ticket: any) => ticket.status === TICKET_STATUS.SCANNED)
 
     return (
         <div className="min-h-screen pt-28 pb-12 bg-slate-50 px-4 sm:px-6 lg:px-8">
@@ -138,6 +142,36 @@ export default async function PortalPage() {
                         </div>
                     </div>
                 </div>
+
+                {/* ALT KISIM: KAZANIMLARIM VE SERTİFİKALAR */}
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                    <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+                        <Award className="h-5 w-5 text-amber-500" /> Kazanımlarım ve Sertifikalar
+                    </h2>
+                    
+                    {hasAttendedEvent ? (
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-6 bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-6 border border-amber-100/50">
+                            <div className="flex-1 text-center sm:text-left">
+                                <h3 className="font-bold text-amber-900 mb-1">Katılım Sertifikanız Hazır!</h3>
+                                <p className="text-sm text-amber-700 max-w-md">
+                                    Etkinliklerimize gösterdiğiniz değerli katılım için teşekkür ederiz. Sistem tarafından doğrulanabilir dijital sertifikanızı hemen üretebilirsiniz.
+                                </p>
+                            </div>
+                            <div className="shrink-0">
+                                <CertificateGenerator pinCode={passport.pin_code} />
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center text-center py-8 px-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                            <Award className="h-10 w-10 text-slate-300 mb-3" />
+                            <h3 className="text-slate-700 font-semibold mb-1">Henüz Sertifika Hakkınız Yok</h3>
+                            <p className="text-sm text-slate-500 max-w-sm">
+                                Sertifika üretebilmek için en az bir etkinliğimize katılım sağlamanız (yoklamanızın alınmış olması) gerekmektedir.
+                            </p>
+                        </div>
+                    )}
+                </div>
+
             </div>
         </div>
     )
