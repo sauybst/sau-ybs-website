@@ -216,3 +216,62 @@ export async function getCurrentPassport() {
         return null;
     }
 }
+
+// 6. Kurtarma Anahtarı ile Şifre Sıfırlama
+export async function recoverPassportKeyword(pinCode: string, recoveryKey: string, newKeyword: string) {
+    const rateLimit = checkRateLimit(`recover:${pinCode}`, { 
+        maxAttempts: 3, 
+        windowMs: 60 * 60 * 1000 
+    });
+    
+    if (!rateLimit.allowed) {
+        return { error: 'Çok fazla hatalı deneme. Güvenlik gereği 1 saat bekleyiniz.' };
+    }
+
+    const pinValidation = PinSchema.safeParse(pinCode.toUpperCase());
+    const keywordValidation = KeywordSchema.safeParse(newKeyword);
+
+    if (!pinValidation.success) return { error: 'Geçersiz pasaport formatı.' };
+    if (!keywordValidation.success) return { error: 'Yeni şifre en az 3 karakter olmalıdır.' };
+    if (!recoveryKey || recoveryKey.trim() === '') return { error: 'Kurtarma kodu boş bırakılamaz.' };
+
+    // 1. Pasaportu PIN ile bul
+    const { data: passport } = await supabaseAdmin
+        .from('passports')
+        .select('*')
+        .eq('pin_code', pinValidation.data)
+        .single();
+
+    if (!passport) return { error: 'Pasaport bulunamadı veya kurtarma anahtarı hatalı.' };
+
+    // 2. Kurtarma Anahtarını Doğrula (Hash karşılaştırması)
+    const isValidRecovery = await verifyData(recoveryKey.trim(), passport.recovery_hash);
+    if (!isValidRecovery) return { error: 'Pasaport bulunamadı veya kurtarma anahtarı hatalı.' };
+
+    // 3. Yeni Şifreyi (Anahtar Kelime) Hashle ve Kaydet
+    const newKeywordHash = await hashData(keywordValidation.data);
+    
+    const { error: updateError } = await supabaseAdmin
+        .from('passports')
+        .update({ 
+            keyword_hash: newKeywordHash, 
+            last_active_at: new Date().toISOString() 
+        })
+        .eq('pin_code', pinValidation.data);
+
+    if (updateError) {
+        console.error("[Passport Error] Şifre Sıfırlama:", updateError.message);
+        return { error: 'Şifre güncellenirken sistemsel bir hata oluştu.' };
+    }
+
+    // 4. İşlem başarılıysa kullanıcıyı otomatik olarak içeri al (Oturum aç)
+    const token = signPassportToken({ pin_code: passport.pin_code });
+    (await cookies()).set(SESSION_COOKIE_NAME, token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: SESSION_MAX_AGE_SEC,
+        path: '/'
+    });
+
+    return { success: true, nameMask: passport.name_mask };
+}

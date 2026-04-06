@@ -1,27 +1,23 @@
-# SAU YBS Topluluğu Dijital Vitrini ve Operasyon Merkezi
+# SAU YBS Topluluğu Dijital Vitrini ve zaferOPS Operasyon Merkezi
 
-Sakarya Üniversitesi Yönetim Bilişim Sistemleri (SAU YBS) topluluğunun vizyonunu, etkinliklerini, öğrenci projelerini ve geçmiş yönetim kurulları gibi kurumsal hafızasını profesyonelce sergileyen dinamik web platformu. Aynı zamanda teknik olmayan üyelerin içerik yönetebileceği bir operasyon merkezidir.
+Sakarya Üniversitesi Yönetim Bilişim Sistemleri (SAU YBS) topluluğunun vizyonunu, etkinliklerini, öğrenci projelerini ve geçmiş yönetim kurulları gibi kurumsal hafızasını profesyonelce sergileyen kapsamlı web platformu. Başlangıçta bir dijital vitrin olarak tasarlanan bu proje, entegre edilen "zaferOPS" e-yoklama ve dijital pasaport altyapısı ile öğrencilerin etkinlik biletlerini yönetebileceği, QR kod ile yoklama verebileceği ve sertifikalarını üretebileceği gelişmiş bir operasyon merkezine dönüşmüştür.
 
-Bu proje, yüksek performans ve sıfır maliyet odaklı modern web teknolojileri kullanılarak inşa edilmiş olup, gelecekte entegre edilecek otomasyon sistemleri (zaferOPS) için de ilişkisel ve sağlam bir veritabanı temeli sunar.
+# Temel Özellikler ve Modüller
 
-## 🚀 Teknolojik Altyapı
+Sistem, içerik yönetimi ve operasyonel süreçleri kapsayan entegre modüllerden oluşmaktadır:
 
-Proje, güncel frontend ekosistemi ve kurumsal standartlarda bir backend mimarisi ile geliştirilmiştir:
+- Dijital Pasaport ve Cüzdan (zaferOPS): K-Anonimlik prensibiyle çalışan, öğrencilerin kişisel verilerini gizleyerek (SAU-XXXX PIN formatı ve Kurtarma Anahtarı) etkinliklere güvenle katılmasını sağlayan e-posta OTP tabanlı anonim kimlik sistemi.
 
-- **Framework:** Next.js 16 (App Router) & React 19
-- **Stil & Tasarım:** Tailwind CSS v4
-- **Veritabanı & Auth:** Supabase (PostgreSQL)
-- **İçerik Editörü:** React Quill New (Zengin metin blog/duyuru yönetimi)
-- **Optimizasyon:** İstemci tarafı (client-side) görsel sıkıştırma 
-- **Hosting:** Vercel
+- Etkinlik ve Biletleme Yönetimi: Serbest katılımlı veya belirli kontenjana sahip etkinliklerin yönetimi, iptal edilebilir bilet altyapısı ve öğrencilere özel dijital QR kod üretimi.
 
-## ✨ Temel Özellikler ve Modüller
+- Gelişmiş Yoklama Tarayıcısı (Scanner): Otobüs etkinlikleri gibi çok aşamalı organizasyonlar için özelleştirilebilir oturumlu (Gidiş, Dönüş, Mola vb.) QR kod tarama ve katılım doğrulama modülü.
 
-Sistem 6 temel ilişkisel modülden oluşmaktadır:
+- Oyunlaştırma ve Sertifikasyon: Etkinlikte yoklaması alınan onaylı katılımcılar arasında dinamik çekiliş yapabilme modülü ve etkinlik sonu doğrulanabilir dijital sertifika üretimi.
 
-- 📅 **Etkinlik Yönetimi:** İdeathon, eğitim ve anma programları gibi etkinliklerin detayları, afişleri ve kayıt linklerinin yönetimi.
-- 📝 **Blog ve Duyurular:** Topluluk üyeleri tarafından yazılan makalelerin zengin metin (rich-text) formatında yayınlanması.
-- 💼 **Staj ve Kariyer İlanları:** Kurumsal partnerlerin sunduğu staj ve iş fırsatlarının son başvuru tarihleriyle birlikte dinamik listelenmesi.
-- 🚀 **Öğrenci Projeleri (Proje Vitrini):** Bölüm öğrencilerinin geliştirdiği sistem analizi, donanım veya TÜBİTAK projelerinin sergilendiği portfolyo.
-- 🏛 **Kurumsal Hafıza (Yönetim Kurulu Arşivi):** Her akademik yıl sonunda "Devir İşlemi" ile eski kurulların silinmeden arşivlenmesi ve topluluğun tarihi kimliğinin korunması.
+- Blog ve Duyurular: Topluluk üyeleri tarafından yazılan makalelerin zengin metin formatında yayınlanması.
 
+- Staj ve Kariyer İlanları: Kurumsal partnerlerin sunduğu staj ve iş fırsatlarının son başvuru tarihleriyle birlikte dinamik listelenmesi.
+
+- Öğrenci Projeleri (Proje Vitrini): Bölüm öğrencilerinin geliştirdiği yazılım, donanım veya TÜBİTAK projelerinin sergilendiği portfolyo.
+
+- Kurumsal Hafıza (Yönetim Kurulu Arşivi): Her akademik yıl sonunda devir işlemi ile eski yönetim kurullarının silinmeden arşivlenmesi ve topluluğun tarihi kimliğinin korunması.

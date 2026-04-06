@@ -1,14 +1,15 @@
 "use client"
 
-import { useState, useRef } from 'react'
+import Link from 'next/link'
+import { useState, useRef, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { toPng } from 'html-to-image'
 
-import { Ticket, Mail, Lock, User, Key, Download, AlertCircle, ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react'
-import { requestPassportCreation, verifyAndCreatePassport, loginPassport } from '@/actions/passports'
+import { Ticket, Mail, Lock, User, Key, Download, AlertCircle, ArrowRight, ArrowLeft, CheckCircle2, ShieldAlert } from 'lucide-react'
+import { requestPassportCreation, verifyAndCreatePassport, loginPassport, recoverPassportKeyword } from '@/actions/passports'
 
-type Mode = 'login' | 'register'
+type Mode = 'login' | 'register' | 'forgot'
 type Step = 1 | 2 | 3
 
 export default function PasaportPage() {
@@ -27,6 +28,8 @@ export default function PasaportPage() {
     const [otp, setOtp] = useState('')
     const [keyword, setKeyword] = useState('')
     const [pinCode, setPinCode] = useState('')
+    const [termsAccepted, setTermsAccepted] = useState(false)
+    const [recoveryKey, setRecoveryKey] = useState('')
 
     // Başarı Durumunda Saklanacak Pasaport Bilgileri
     const [createdPassport, setCreatedPassport] = useState<{ pinCode: string; nameMask: string; recoveryKey: string } | null>(null)
@@ -40,12 +43,14 @@ export default function PasaportPage() {
         setOtp('')
         setKeyword('')
         setPinCode('')
+        setTermsAccepted(false)
+        setRecoveryKey('')
     }
 
     // --- AKSİYONLAR ---
 
     // 1. Adım: OTP Gönderimi
-    const handleRequestOTP = async (e: React.FormEvent) => {
+    const handleRequestOTP = async (e: FormEvent) => {
         e.preventDefault()
         setError('')
         setLoading(true)
@@ -60,7 +65,7 @@ export default function PasaportPage() {
     }
 
     // 2. Adım: OTP Doğrulama ve Pasaport Üretimi
-    const handleVerifyAndCreate = async (e: React.FormEvent) => {
+    const handleVerifyAndCreate = async (e: FormEvent) => {
         e.preventDefault()
         setError('')
         setLoading(true)
@@ -76,7 +81,7 @@ export default function PasaportPage() {
     }
 
     // Pasaporta Giriş Yap
-    const handleLogin = async (e: React.FormEvent) => {
+    const handleLogin = async (e: FormEvent) => {
         e.preventDefault()
         setError('')
         setLoading(true)
@@ -84,6 +89,24 @@ export default function PasaportPage() {
         const cleanPin = pinCode.trim().toUpperCase()
         const res = await loginPassport(cleanPin, keyword)
         
+        if (res.error) {
+            setError(res.error)
+        } else {
+            router.push('/portal')
+            router.refresh()
+        }
+        setLoading(false)
+    }
+
+    // Şifre Sıfırlama (Kurtarma İşlemi)
+    const handleRecover = async (e: FormEvent) => {
+        e.preventDefault()
+        setError('')
+        setLoading(true)
+
+        const cleanPin = pinCode.trim().toUpperCase()
+        const res = await recoverPassportKeyword(cleanPin, recoveryKey.trim(), keyword)
+
         if (res.error) {
             setError(res.error)
         } else {
@@ -112,15 +135,17 @@ export default function PasaportPage() {
             <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden transition-all duration-500">
                 
                 {/* SEKMELER (Sadece Adım 1'de ve Teslimat ekranında değilse göster) */}
-                {step === 1 && (
+                {step === 1 && mode !== 'forgot' && (
                     <div className="flex border-b border-slate-100">
                         <button
+                            type="button"
                             onClick={() => switchMode('register')}
                             className={`flex-1 py-4 text-sm font-bold tracking-wide transition-colors ${mode === 'register' ? 'text-brand-600 border-b-2 border-brand-600 bg-brand-50/50' : 'text-slate-400 hover:text-slate-600'}`}
                         >
                             YENİ PASAPORT
                         </button>
                         <button
+                            type="button"
                             onClick={() => switchMode('login')}
                             className={`flex-1 py-4 text-sm font-bold tracking-wide transition-colors ${mode === 'login' ? 'text-brand-600 border-b-2 border-brand-600 bg-brand-50/50' : 'text-slate-400 hover:text-slate-600'}`}
                         >
@@ -179,6 +204,22 @@ export default function PasaportPage() {
                                                 placeholder="ornek@ogr.sakarya.edu.tr"
                                             />
                                         </div>
+                                    </div>
+
+                                    <div className="flex items-start gap-3 mt-2 mb-2">
+                                        <input
+                                            type="checkbox"
+                                            id="terms"
+                                            required
+                                            checked={termsAccepted}
+                                            onChange={(e) => setTermsAccepted(e.target.checked)}
+                                            className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer"
+                                        />
+                                        <label htmlFor="terms" className="text-sm text-slate-600 cursor-pointer">
+                                            <Link href="/terms" target="_blank" className="text-brand-600 font-semibold hover:underline">
+                                                Kullanıcı Sözleşmesini
+                                            </Link> okudum ve onaylıyorum.
+                                        </label>
                                     </div>
 
                                     <button
@@ -352,6 +393,9 @@ export default function PasaportPage() {
                                         placeholder="Belirlediğiniz şifre"
                                     />
                                 </div>
+                                <div className="text-right mt-2">
+                                    <button type="button" onClick={() => switchMode('forgot')} className="text-xs text-brand-600 hover:underline font-semibold transition-all">Şifremi Unuttum</button>
+                                </div>
                             </div>
 
                             <button
@@ -361,6 +405,81 @@ export default function PasaportPage() {
                             >
                                 {loading ? 'Giriş Yapılıyor...' : 'Giriş Yap'}
                             </button>
+                        </form>
+                    )}
+
+                    {/* --- ŞİFRE SIFIRLAMA (FORGOT) AKIŞI --- */}
+                    {mode === 'forgot' && (
+                        <form onSubmit={handleRecover} className="space-y-5 animate-in fade-in zoom-in-95">
+                            <div className="text-center mb-8">
+                                <div className="mx-auto h-12 w-12 bg-red-50 text-red-600 rounded-full flex items-center justify-center mb-4">
+                                    <ShieldAlert className="h-6 w-6" />
+                                </div>
+                                <h2 className="text-2xl font-bold text-slate-800">Şifre Sıfırlama</h2>
+                                <p className="text-sm text-slate-500 mt-2">Cihazınızdaki kartta yer alan <b>Kurtarma Kodu</b> ile yeni şifrenizi belirleyin.</p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1.5">Pasaport PIN</label>
+                                <div className="relative">
+                                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                                    <input
+                                        type="text"
+                                        required
+                                        value={pinCode}
+                                        onChange={(e) => setPinCode(e.target.value)}
+                                        className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 font-mono uppercase bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand-500 transition-colors"
+                                        placeholder="SAU-XXXX"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1.5">Kurtarma Kodu</label>
+                                <div className="relative">
+                                    <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                                    <input
+                                        type="text"
+                                        required
+                                        value={recoveryKey}
+                                        onChange={(e) => setRecoveryKey(e.target.value)}
+                                        className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 font-mono bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand-500 transition-colors"
+                                        placeholder="Kartınızdaki gizli kod"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1.5">Yeni Anahtar Kelime</label>
+                                <div className="relative">
+                                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                                    <input
+                                        type="password"
+                                        required
+                                        value={keyword}
+                                        onChange={(e) => setKeyword(e.target.value)}
+                                        className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand-500 transition-colors"
+                                        placeholder="Yeni şifrenizi belirleyin"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3 mt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => switchMode('login')}
+                                    className="px-4 py-3.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-medium transition-colors"
+                                >
+                                    <ArrowLeft className="h-5 w-5" />
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="flex-1 bg-red-600 text-white py-3.5 rounded-xl font-semibold hover:bg-red-700 focus:ring-4 focus:ring-red-100 transition-all disabled:opacity-70"
+                                >
+                                    {loading ? 'Sıfırlanıyor...' : 'Şifreyi Yenile'}
+                                </button>
+                            </div>
                         </form>
                     )}
                 </div>

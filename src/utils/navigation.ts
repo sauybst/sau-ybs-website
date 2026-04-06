@@ -22,6 +22,7 @@ export const NAV_ITEMS: NavItem[] = [
 export const LEGAL_LINKS: NavItem[] = [
     { name: 'Aydınlatma Metni', href: '/privacyPolicy' },
     { name: 'Çerez Politikası', href: '/cookiePolicy' },
+    { name: 'Kullanıcı Sözleşmesi', href: '/terms' }
 ]
 
 /** Sosyal medya linkleri */
