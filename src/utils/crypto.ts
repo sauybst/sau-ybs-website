@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
-const SALT_ROUNDS = 10;
+const SALT_ROUNDS = 12;
 
 /**
  * Veriyi (Şifre, Kurtarma Kodu vs.) tek yönlü özetler (Hash).
@@ -18,12 +18,12 @@ export async function verifyData(data: string, hashedData: string): Promise<bool
 }
 
 /**
- * Öğrenciye gösterilecek 12 haneli kurtarma anahtarını üretir. (Örn: SAU-REC-9A8B-C7D6)
+ * Öğrenciye gösterilecek 12 haneli kurtarma anahtarını üretir. 
  * Kriptografik olarak güvenli rastgele byte'lar kullanır.
  */
 export function generateRecoveryKey(): string {
-    const part1 = crypto.randomBytes(2).toString('hex').toUpperCase();
-    const part2 = crypto.randomBytes(2).toString('hex').toUpperCase();
+    const part1 = crypto.randomBytes(4).toString('hex').toUpperCase();
+    const part2 = crypto.randomBytes(4).toString('hex').toUpperCase();
     return `SAU-REC-${part1}-${part2}`;
 }
 
@@ -36,18 +36,18 @@ export function generateOTP(): string {
 }
 
 /**
- * Sistemin kalbi olan anonim Pasaport PIN'ini üretir. (Örn: SAU-99X2)
+ * Sistemin kalbi olan anonim Pasaport PIN'ini üretir. 
  */
 export function generatePassportPin(): string {
-    const randomPart = crypto.randomBytes(2).toString('hex').toUpperCase();
+    const randomPart = crypto.randomBytes(4).toString('hex').toUpperCase();
     return `SAU-${randomPart}`;
 }
 
 /**
- * Biletlerin içine gömülecek tahmin edilemez 8 haneli bilet PIN'ini üretir. (Örn: YBS-4X9A)
+ * Biletlerin içine gömülecek tahmin edilemez 8 haneli bilet PIN'ini üretir. 
  */
 export function generateTicketPin(): string {
-    const randomPart = crypto.randomBytes(2).toString('hex').toUpperCase();
+    const randomPart = crypto.randomBytes(4).toString('hex').toUpperCase();
     return `YBS-${randomPart}`;
 }
 
@@ -56,5 +56,11 @@ export function generateTicketPin(): string {
  * her zaman aynı sonucu veren (Deterministic) SHA-256 algoritmasıyla özetler.
  */
 export function hashEmailForLookup(email: string): string {
-    return crypto.createHash('sha256').update(email.trim().toLowerCase()).digest('hex');
+    const pepper = process.env.EMAIL_LOOKUP_PEPPER;
+    if (!pepper) throw new Error("FATAL: EMAIL_LOOKUP_PEPPER .env dosyasında eksik!");
+    
+    return crypto
+        .createHmac('sha256', pepper) // Hash yerine HMAC kullanıyoruz
+        .update(email.trim().toLowerCase())
+        .digest('hex');
 }

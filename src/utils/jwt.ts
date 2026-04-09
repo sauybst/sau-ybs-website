@@ -18,7 +18,7 @@ export interface PassportJwtPayload {
  */
 export function signPassportToken(payload: PassportJwtPayload): string {
     return jwt.sign(payload, JWT_SECRET_VERIFIED, {
-        expiresIn: '30d', // Öğrenciyi 30 gün boyunca hatırla
+        expiresIn: '1d', 
     });
 }
 

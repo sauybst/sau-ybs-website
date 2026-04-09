@@ -9,6 +9,7 @@ import { maskName } from '@/utils/masking';
 import { hashData, verifyData, generateOTP, generatePassportPin, generateRecoveryKey, hashEmailForLookup } from '@/utils/crypto';
 import { signPassportToken } from '@/utils/jwt';
 import { cookies } from 'next/headers';
+import { headers } from 'next/headers'
 
 const ALLOWED_EMAIL_DOMAIN = '@ogr.sakarya.edu.tr';
 const OTP_EXPIRE_MINUTES = 10;
@@ -30,21 +31,28 @@ const PinSchema = z.string().length(8);
 // 1. OTP Gönderme İsteği
 export async function requestPassportCreation(email: string, fullName: string) {
     const emailValidation = EmailSchema.safeParse(email);
-    if (!emailValidation.success) {
-        return { error: emailValidation.error.issues[0].message };
-    }
+        if (!emailValidation.success) {
+            return { error: emailValidation.error.issues[0].message };
+        }
 
     const cleanEmail = emailValidation.data;
     
-    const rateLimit = checkRateLimit(`otp_req:${cleanEmail}`, { 
+    // 1. İsteği yapanın IP adresini yakala
+    const headersList = await headers()
+    const ip = headersList.get('x-forwarded-for') || '127.0.0.1'
+    
+    // 2. Anahtarı IP + Email kombinasyonu yap
+    const rateLimitKey = `otp_req:${ip}:${cleanEmail}`
+
+    // 3. Güncellenmiş anahtar ile kontrol et
+    const rateLimit = checkRateLimit(rateLimitKey, { 
         maxAttempts: RATE_LIMITS.OTP_REQUEST.attempts, 
         windowMs: RATE_LIMITS.OTP_REQUEST.windowMs 
     });
-    
-    if (!rateLimit.allowed) {
-        return { error: 'Çok fazla deneme yaptınız. Lütfen 15 dakika bekleyin.' };
-    }
 
+    if (!rateLimit.allowed) {
+        return { error: 'Çok fazla kod talep ettiniz. Lütfen biraz bekleyin.' }
+    }
     // Temizlik işlemi
     await supabaseAdmin.from('email_verifications').delete().lt('expires_at', new Date().toISOString());
 
@@ -77,7 +85,11 @@ export async function requestPassportCreation(email: string, fullName: string) {
 // 2. OTP Doğrulama ve Pasaport Üretimi
 export async function verifyAndCreatePassport(email: string, otp: string, keyword: string, fullName: string) {
     const emailHash = hashEmailForLookup(email); 
-    const rateLimit = checkRateLimit(`otp_verify:${emailHash}`, { 
+
+    const headersList = await headers();
+    const ip = headersList.get('x-forwarded-for') || '127.0.0.1';
+    
+    const rateLimit = checkRateLimit(`otp_verify:${ip}:${emailHash}`, { 
         maxAttempts: RATE_LIMITS.OTP_VERIFY.attempts, 
         windowMs: RATE_LIMITS.OTP_VERIFY.windowMs 
     });
@@ -129,15 +141,11 @@ export async function verifyAndCreatePassport(email: string, otp: string, keywor
 
     await supabaseAdmin.from('email_verifications').delete().eq('id', verificationData.id);
 
-    // Geliştirme ortamında kurtarma kodunu logla, production'da gizle
-    if (process.env.NODE_ENV !== 'production') {
-        console.log(`[TEST ORTAMI] Kurtarma Kodu (KAYBETMEYİN): ${recoveryKey}`);
-    }
-
     const token = signPassportToken({ pin_code: pinCode });
     (await cookies()).set(SESSION_COOKIE_NAME, token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
         maxAge: SESSION_MAX_AGE_SEC,
         path: '/'
     });
@@ -150,7 +158,13 @@ export async function verifyAndCreatePassport(email: string, otp: string, keywor
 
 // 3. Mevcut Pasaporta Giriş (Login)
 export async function loginPassport(pinCode: string, keyword: string) {
-    const rateLimit = checkRateLimit(`login:${pinCode}`, { 
+
+    const normalizedPin = pinCode.trim().toUpperCase();
+
+    const headersList = await headers();
+    const ip = headersList.get('x-forwarded-for') || '127.0.0.1';
+
+    const rateLimit = checkRateLimit(`login:${ip}:${normalizedPin}`, { 
         maxAttempts: RATE_LIMITS.LOGIN.attempts, 
         windowMs: RATE_LIMITS.LOGIN.windowMs 
     });
@@ -177,6 +191,7 @@ export async function loginPassport(pinCode: string, keyword: string) {
     (await cookies()).set(SESSION_COOKIE_NAME, token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
         maxAge: SESSION_MAX_AGE_SEC,
         path: '/'
     });
@@ -219,7 +234,13 @@ export async function getCurrentPassport() {
 
 // 6. Kurtarma Anahtarı ile Şifre Sıfırlama
 export async function recoverPassportKeyword(pinCode: string, recoveryKey: string, newKeyword: string) {
-    const rateLimit = checkRateLimit(`recover:${pinCode}`, { 
+
+    const normalizedPin = pinCode.trim().toUpperCase();
+
+    const headersList = await headers();
+    const ip = headersList.get('x-forwarded-for') || '127.0.0.1';
+
+    const rateLimit = checkRateLimit(`recover:${ip}:${normalizedPin}`, { 
         maxAttempts: 3, 
         windowMs: 60 * 60 * 1000 
     });

@@ -4,6 +4,7 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import type { ActionState } from '@/utils/schemas'
 import { checkRateLimit } from '@/utils/rate-limit'
+import { headers } from 'next/headers'
 
 type LoginState = {
     error: string | null
@@ -44,8 +45,13 @@ export async function login(prevState: LoginState, formData: FormData) {
         return { error: 'E-posta ve şifre alanları zorunludur.' }
     }
 
-    // — Rate limit kontrolü (e-posta bazlı)
-    const rateLimitKey = `login:${email.toLowerCase().trim()}`
+    // İstek yapanın IP adresini yakala
+    const headersList = await headers()
+    const ip = headersList.get('x-forwarded-for') || 'bilinmeyen-ip'
+
+    // Rate limit anahtarını IP + Email olarak ayarla
+    const rateLimitKey = `login:${ip}:${email.toLowerCase().trim()}`
+
     const rateCheck = checkRateLimit(rateLimitKey, LOGIN_RATE_LIMIT)
     if (!rateCheck.allowed) {
         const retryMinutes = Math.ceil(rateCheck.retryAfterMs / 60000)
@@ -85,7 +91,13 @@ export async function resetPassword(_prevState: ResetPasswordState, formData: Fo
         return { error: 'Lütfen geçerli bir e-posta adresi girin.', success: false }
     }
 
-    const rateLimitKey = `reset-password:${email}`
+    // --- GÜVENLİK YAMASI ---
+    const headersList = await headers()
+    const ip = headersList.get('x-forwarded-for') || '127.0.0.1'
+
+    const rateLimitKey = `reset-password:${ip}:${email}`
+    // -----------------------
+
     const rateCheck = checkRateLimit(rateLimitKey, RESET_PASSWORD_RATE_LIMIT)
     if (!rateCheck.allowed) {
         const retryMinutes = Math.ceil(rateCheck.retryAfterMs / 60000)

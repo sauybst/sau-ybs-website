@@ -9,15 +9,16 @@ import { syncSabisData } from '@/actions/sabisSync'
  * Güvenlik: CRON_SECRET header kontrolü ile yetkisiz erişim engellenir.
  * Kullanım: GET /api/cron/sabis-sync (Header: Authorization: Bearer <CRON_SECRET>)
  */
+
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
   const cronSecret = process.env.CRON_SECRET
 
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json(
-      { error: 'Yetkisiz erişim.' },
-      { status: 401 }
-    )
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+      return NextResponse.json(
+        { error: 'Yetkisiz erişim veya CRON_SECRET sunucuda eksik.' },
+        { status: 401 }
+      )
   }
 
   try {

@@ -3,6 +3,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { z } from 'zod'
 import { checkRateLimit } from '@/utils/rate-limit' 
+import { headers } from 'next/headers'
 
 // --- TİP TANIMLAMALARI (Type Safety) ---
 type CertificateRecord = {
@@ -20,11 +21,18 @@ const HashSchema = z.string()
 
 export async function verifyCertificate(hash: string) {
 
-    const rateLimit = await checkRateLimit('verify_certificate', { maxAttempts: 5, windowMs: 15 * 60 * 1000 })
+    const headersList = await headers()
+    const ip = headersList.get('x-forwarded-for') || '127.0.0.1'
+
+    // 2. Anahtarı IP bazlı hale getir
+    const rateLimitKey = `verify_certificate:${ip}`
+
+    // 3. Güncellenmiş anahtar ile kontrol et
+    const rateLimit = await checkRateLimit(rateLimitKey, { maxAttempts: 5, windowMs: 15 * 60 * 1000 })
+    
     if (!rateLimit.allowed) {
         return { error: 'Çok fazla istekte bulundunuz. Lütfen daha sonra tekrar deneyin.' }
     }
-
 
     // 2. Girdi Doğrulama (Zod ile güvenlik filtresi)
     const validation = HashSchema.safeParse(hash.trim())

@@ -8,40 +8,63 @@ import path from 'path'
 import crypto from 'crypto'
 import QRCode from 'qrcode' 
 import { TICKET_STATUS } from '@/types/tickets'
+import { verifyPassportToken } from '@/utils/jwt'
+import { cookies } from 'next/headers'
+
+function maskPII(text: string) {
+    if (!text) return '***';
+    if (text.length <= 3) return text[0] + '***';
+    return text.substring(0, 2) + '***' + text.substring(text.length - 1);
+}
 
 export async function POST(request: Request) {
     try {
-        const { pinCode, requestedName } = await request.json()
+        const cookieStore = await cookies()
+        const token = cookieStore.get('zaferops_session')?.value
 
-        if (!pinCode || !requestedName) {
-            return NextResponse.json({ error: 'PIN kodu ve isim gereklidir.' }, { status: 400 })
+        if (!token) {
+            return NextResponse.json({ error: 'Sertifika üretmek için oturum açmalısınız.' }, { status: 401 })
         }
 
+        const payload = verifyPassportToken(token)
+        if (!payload || !payload.pin_code) {
+             return NextResponse.json({ error: 'Geçersiz veya süresi dolmuş oturum.' }, { status: 403 })
+        }
+
+        // PIN kodunu tarayıcıdan değil, GÜVENLİ oturumdan alıyoruz
+        const pinCode = payload.pin_code; 
+        const normalizedPin = pinCode.trim().toUpperCase()
+
+        // Tarayıcıdan sadece ismi alıyoruz
+        const { requestedName } = await request.json()
+
+        if (!requestedName) {
+            return NextResponse.json({ error: 'İsim alanı gereklidir.' }, { status: 400 })
+        }
+        
         const supabase = await createClient()
+
+        const generatedMask = maskName(requestedName)
 
         // 1. GÜVENLİK KATMAMI
         const { data: passport, error: passportError } = await supabase
             .from('passports')
             .select('name_mask') 
-            .eq('pin_code', pinCode)
+            .eq('pin_code', normalizedPin)
             .single()
 
-        if (passportError || !passport) {
-            return NextResponse.json({ error: 'Geçersiz pasaport PIN kodu.' }, { status: 404 })
-        }
-
-        const generatedMask = maskName(requestedName)
-        if (generatedMask !== passport.name_mask) {
+        if (passportError || !passport || generatedMask !== passport?.name_mask) {
+            console.warn(`[Sertifika Yetkisiz Erişim Denemesi] PIN: ${maskPII(normalizedPin)}, İsim: ${maskPII(requestedName)}`)
             return NextResponse.json({ 
-                error: `Güvenlik İhlali: Girdiğiniz isim sisteme uymuyor. (${generatedMask})` 
-            }, { status: 403 })
+                error: 'Geçersiz pasaport PIN kodu veya yetkisiz erişim. Lütfen bilgilerinizi kontrol ediniz.' 
+            }, { status: 401 })
         }
 
         // 2. VERİ KATMAMI (Etkinlik Sayısı)
         const { data: tickets } = await supabase
             .from('tickets')
             .select('event_id')
-            .eq('pin_code', pinCode)
+            .eq('pin_code', normalizedPin)
             .eq('status', TICKET_STATUS.SCANNED)
         
         const uniqueEvents = new Set(tickets?.map(t => t.event_id))
@@ -185,7 +208,7 @@ export async function POST(request: Request) {
         })
 
     } catch (error) {
-        console.error('[Sertifika Üretim Hatası]:', error)
+        console.error('[Sertifika Üretim Hatası]: İsim veya PIN bilgisi hatası (Maskelenmiş)', error)
         return NextResponse.json({ error: 'Sunucuda sertifika üretilirken bir hata oluştu.' }, { status: 500 })
     }
 }
