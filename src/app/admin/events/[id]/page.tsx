@@ -19,6 +19,7 @@ import ExportTicketsButton from '@/components/events/ExportTicketsButton'
 import ParticipantDetailSheet from '@/components/events/ParticipantDetailSheet'
 import RaffleModule from '@/components/events/RaffleModule'
 import ScannerSessionStarter from '@/components/events/ScannerSessionStarter'
+import PinSearch from '@/components/events/PinSearch'
 
 // --- TİP TANIMLAMALARI (Clean Code: Type Safety) ---
 interface Props {
@@ -51,7 +52,6 @@ export default async function EventDashboardPage({ params }: Props) {
     const { id } = await params
     const data = await getEventDashboardData(id)
 
-    // Siber Güvenlik / UX Yaması: Eğer hata yetki kaynaklıysa ana sayfaya atıyoruz, veri yoksa 404 veriyoruz.
     if (data.error?.includes('yetki')) {
         redirect('/admin')
     }
@@ -149,26 +149,15 @@ export default async function EventDashboardPage({ params }: Props) {
             </div>
 
             {/* KATILIMCI LİSTESİ TABLOSU */}
-            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-                <div className="p-6 border-b border-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                        <h2 className="text-xl font-bold text-slate-900">Katılımcı Listesi</h2>
-                        <p className="text-sm text-slate-500">Tüm bilet hareketlerini ve giriş zamanlarını takip edin.</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <RaffleModule eventId={id} />
-                        <ExportTicketsButton tickets={tickets} eventTitle={event.title} />
-                    
-                    <div className="relative w-full sm:w-64 opacity-50 cursor-not-allowed" title="Aktif etmek için Client Component'e çevrilmeli">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                        <input 
-                            type="text" 
-                            disabled
-                            placeholder="PIN Kodu Ara... (Yapım Aşamasında)"
-                            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all cursor-not-allowed"
-                        />
-                        </div>
-                    </div>
+            <div className="p-6 border-b border-slate-50 flex flex-col gap-4">
+                <div>
+                    <h2 className="text-xl font-bold text-slate-900">Katılımcı Listesi</h2>
+                    <p className="text-sm text-slate-500">Tüm bilet hareketlerini ve giriş zamanlarını takip edin.</p>
+                </div>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+                    <RaffleModule eventId={id} />
+                    <ExportTicketsButton tickets={tickets} eventTitle={event.title} />
+                    <PinSearch />
                 </div>
 
                 <div className="overflow-x-auto">

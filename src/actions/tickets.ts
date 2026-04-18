@@ -9,7 +9,7 @@ import { UUIDSchema } from '@/utils/schemas';
 import { getCurrentPassport } from '@/actions/passports'; // 🚨 GÜVENLİK YAMASI: Oturum kontrolü için eklendi
 
 // --- GİRDİ DOĞRULAMA ŞEMALARI ---
-const PinCodeSchema = z.string().length(8, 'PIN kodu 8 haneli olmalıdır.');
+const PinCodeSchema = z.string().length(12, 'PIN kodu 12 haneli olmalıdır.');
 const HashSchema = z.string().min(10, 'Geçersiz Hash formatı.');
 
 // 1. BİLET ÜRET (Öğrenci "Bilet Al" dediğinde tetiklenir)

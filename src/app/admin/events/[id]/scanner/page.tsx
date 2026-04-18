@@ -27,6 +27,7 @@ function ScannerContent() {
     const [message, setMessage] = useState('')
     const [scannedPin, setScannedPin] = useState('')
     const [manualPin, setManualPin] = useState('')
+    const [isLoading, setIsLoading] = useState(false)
 
     const isProcessing = useRef(false)
     const scannerRef = useRef<Html5Qrcode | null>(null)
@@ -54,6 +55,7 @@ function ScannerContent() {
     const handleScan = useCallback(async (data: string, mode: 'qr' | 'manual') => {
         if (isProcessing.current || !data) return
         isProcessing.current = true
+        setIsLoading(true)
 
         try {
             const result = mode === 'qr' 
@@ -66,6 +68,8 @@ function ScannerContent() {
             setStatus('error')
             setMessage('Sunucu ile bağlantı kurulamadı.')
             processResult({ error: 'Bağlantı hatası' })
+        } finally {
+            setIsLoading(false)
         }
     }, [eventId, sessionName, processResult])
 
@@ -189,10 +193,20 @@ function ScannerContent() {
                     />
                     <button
                         type="submit"
-                        disabled={!manualPin || status !== 'idle'}
-                        className="bg-brand-600 hover:bg-brand-500 text-white px-4 sm:px-6 py-2 rounded-lg font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 text-sm sm:text-base"
+                        disabled={!manualPin || isLoading || status !== 'idle'}
+                        className="bg-brand-600 hover:bg-brand-500 text-white px-4 sm:px-6 py-2 rounded-lg font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 text-sm sm:text-base flex items-center justify-center gap-2"
                     >
-                        Onayla
+                        {isLoading ? (
+                            <>
+                                <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                İşleniyor...
+                            </>
+                        ) : (
+                            'Onayla'
+                        )}
                     </button>
                 </form>
             </div>

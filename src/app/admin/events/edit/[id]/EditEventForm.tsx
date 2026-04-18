@@ -20,7 +20,6 @@ type EventEditData = {
     description: string | null
     image_url: string | null
     registration_url: string | null
-    // GÜNCELLENDİ: Artık Tip tanımından gelen sayısal değerleri bekliyor
     ticketing_mode?: TicketingMode 
     capacity?: number | null
 }
@@ -32,10 +31,12 @@ export default function EditEventForm({ event }: { event: EventEditData }) {
     const [slug, setSlug] = useState(event.slug || '');
     const [description, setDescription] = useState(event.description || '');
 
-    // GÜNCELLENDİ: Biletleme State'leri veritabanından gelen sayılarla başlar (veya 0 olur)
     const [ticketingMode, setTicketingMode] = useState<TicketingMode>(
-        event.ticketing_mode ?? TICKETING_MODE.FREE
+        event.ticketing_mode != null 
+            ? (Number(event.ticketing_mode) as TicketingMode) 
+            : TICKETING_MODE.FREE
     );
+
     const [capacity, setCapacity] = useState(event.capacity ? String(event.capacity) : '');
 
     const [imagePreview, setImagePreview] = useState(event.image_url || '');
@@ -83,7 +84,6 @@ export default function EditEventForm({ event }: { event: EventEditData }) {
 
         const formData = new FormData(e.currentTarget);    
         
-        // GÜNCELLENDİ: FormData string kabul eder, sayıyı string'e çeviriyoruz
         formData.append('ticketing_mode', ticketingMode.toString());
         if (ticketingMode !== TICKETING_MODE.FREE && capacity) {
             formData.append('capacity', capacity);

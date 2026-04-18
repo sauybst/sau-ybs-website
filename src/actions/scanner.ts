@@ -22,7 +22,7 @@ type TicketData = {
 // --- GİRDİ DOĞRULAMA ŞEMALARI ---
 const SessionNameSchema = z.string().min(1, 'Oturum adı boş olamaz.').max(50, 'Oturum adı çok uzun.');
 const QrHashSchema = z.string().min(10, 'Geçersiz QR kodu formatı.');
-const PinCodeSchema = z.string().length(8, 'PIN kodu 8 haneli olmalıdır.');
+const PinCodeSchema = z.string().length(12, 'PIN kodu 12 haneli olmalıdır.');
 
 // --- ÇEKİRDEK İŞ MANTIĞI  ---
 async function processAttendance(

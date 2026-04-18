@@ -22,11 +22,11 @@ const RATE_LIMITS = {
     LOGIN: { attempts: 5, windowMs: 30 * 60 * 1000 }
 };
 
-// --- GİRDİ DOĞRULAMA ŞEMALARI (Siber Güvenlik) ---
+// --- GİRDİ DOĞRULAMA ŞEMALARI ---
 const EmailSchema = z.string().email().endsWith(ALLOWED_EMAIL_DOMAIN, `Sadece ${ALLOWED_EMAIL_DOMAIN} uzantılı mailler kabul edilmektedir.`);
 const OtpSchema = z.string().min(6).max(8); 
 const KeywordSchema = z.string().min(3).max(50);
-const PinSchema = z.string().length(8); 
+const PinSchema = z.string().length(12); 
 
 // 1. OTP Gönderme İsteği
 export async function requestPassportCreation(email: string, fullName: string) {
