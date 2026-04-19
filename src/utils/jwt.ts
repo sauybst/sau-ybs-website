@@ -30,7 +30,6 @@ export function verifyPassportToken(token: string): PassportJwtPayload | null {
         const decoded = jwt.verify(token, JWT_SECRET_VERIFIED) as PassportJwtPayload;
         return decoded;
     } catch (error) {
-        // Token süresi dolmuş, imza yanlış veya manipüle edilmiş
         return null; 
     }
 }

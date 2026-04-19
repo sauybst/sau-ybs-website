@@ -6,26 +6,24 @@ import crypto from 'crypto';
 import { z } from 'zod';
 import { TICKET_STATUS } from '@/types/tickets';
 import { UUIDSchema } from '@/utils/schemas';
-import { getCurrentPassport } from '@/actions/passports'; // 🚨 GÜVENLİK YAMASI: Oturum kontrolü için eklendi
+import { getCurrentPassport } from '@/actions/passports';
 
 // --- GİRDİ DOĞRULAMA ŞEMALARI ---
 const PinCodeSchema = z.string().length(12, 'PIN kodu 12 haneli olmalıdır.');
 const HashSchema = z.string().min(10, 'Geçersiz Hash formatı.');
 
 // 1. BİLET ÜRET (Öğrenci "Bilet Al" dediğinde tetiklenir)
-export async function acquireTicket(eventIdRaw: string, pinCodeRaw: string, keywordHashRaw: string) {
+export async function acquireTicket(eventIdRaw: string, pinCodeRaw: string) {
     // 1. Girdi Doğrulama
     const eventIdCheck = UUIDSchema.safeParse(eventIdRaw);
     const pinCheck = PinCodeSchema.safeParse(pinCodeRaw);
-    const hashCheck = HashSchema.safeParse(keywordHashRaw);
 
-    if (!eventIdCheck.success || !pinCheck.success || !hashCheck.success) {
+    if (!eventIdCheck.success || !pinCheck.success) {
         return { error: 'Geçersiz veri formatı.' };
     }
 
     const { data: eventId } = eventIdCheck;
     const { data: pinCode } = pinCheck;
-    const { data: keywordHash } = hashCheck;
 
     // Sadece giriş yapmış kullanıcı kendi PIN koduyla bilet alabilir!
     const currentUser = await getCurrentPassport();
@@ -36,11 +34,10 @@ export async function acquireTicket(eventIdRaw: string, pinCodeRaw: string, keyw
     const supabase = await createClient();
     const qrHashRaw = crypto.randomUUID();
 
-    // Veritabanındaki "Race Condition" korumalı fonksiyona işi yıkıyoruz (Harika mimari!)
     const { data, error } = await supabase.rpc('purchase_ticket', {
         p_event_id: eventId,
         p_pin_code: pinCode,
-        p_keyword_hash: keywordHash,
+        p_keyword_hash: currentUser.keyword_hash,
         p_qr_hash: qrHashRaw
     });
 
@@ -60,7 +57,7 @@ export async function acquireTicket(eventIdRaw: string, pinCodeRaw: string, keyw
 }
 
 // 2. CÜZDAN: ÖĞRENCİNİN BİLETLERİNİ GETİR
-export async function getUserTickets(pinCodeRaw: string, keywordHashRaw: string) {
+export async function getUserTickets(pinCodeRaw: string) {
     const pinCheck = PinCodeSchema.safeParse(pinCodeRaw);
     if (!pinCheck.success) return { error: 'Geçersiz PIN formatı.' };
     
@@ -80,7 +77,7 @@ export async function getUserTickets(pinCodeRaw: string, keywordHashRaw: string)
             events ( title, slug, event_date, location, image_url )
         `)
         .eq('pin_code', pinCode)
-        .eq('keyword_hash', keywordHashRaw)
+        .eq('keyword_hash', currentUser.keyword_hash)
         .order('created_at', { ascending: false });
 
     if (error) {
@@ -92,7 +89,7 @@ export async function getUserTickets(pinCodeRaw: string, keywordHashRaw: string)
 }
 
 // 3. CANLI BİLET DETAYI VE QR KOD (Sadece geçerliyse QR kod döner)
-export async function getTicketForDisplay(ticketIdRaw: string, pinCodeRaw: string, keywordHashRaw: string) {
+export async function getTicketForDisplay(ticketIdRaw: string, pinCodeRaw: string) {
     const ticketIdCheck = UUIDSchema.safeParse(ticketIdRaw);
     const pinCheck = PinCodeSchema.safeParse(pinCodeRaw);
 
@@ -118,7 +115,7 @@ export async function getTicketForDisplay(ticketIdRaw: string, pinCodeRaw: strin
         `)
         .eq('id', ticketId)
         .eq('pin_code', pinCode)
-        .eq('keyword_hash', keywordHashRaw)
+        .eq('keyword_hash', currentUser.keyword_hash)
         .single();
 
     if (error || !ticket) return { error: 'Bilet bulunamadı veya yetkisiz erişim.' };

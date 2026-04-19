@@ -9,10 +9,9 @@ import { acquireTicket } from '@/actions/tickets'
 type Props = {
     eventId: string
     pinCode: string
-    keywordHash: string
 }
 
-export default function TicketAcquireButton({ eventId, pinCode, keywordHash }: Props) {
+export default function TicketAcquireButton({ eventId, pinCode}: Props) {
     const router = useRouter()
     const { showToast } = useToast()
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -22,14 +21,13 @@ export default function TicketAcquireButton({ eventId, pinCode, keywordHash }: P
         setIsSubmitting(true)
 
         try {
-            const result = await acquireTicket(eventId, pinCode, keywordHash)
+            const result = await acquireTicket(eventId, pinCode)
 
             if (result.error) {
                 showToast(result.error, 'error')
                 setIsSubmitting(false)
             } else {
                 showToast('Biletiniz başarıyla oluşturuldu! Cüzdanınıza yönlendiriliyorsunuz.', 'success')
-                // Backend'de revalidatePath olduğu için refresh'e gerek yok, doğrudan push yapıyoruz.
                 router.push('/portal')
             }
         } catch (error) {

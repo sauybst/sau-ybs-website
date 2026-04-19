@@ -168,7 +168,6 @@ export default async function EventTicketConfirmationPage({ params }: Props) {
                                 <TicketAcquireButton 
                                     eventId={event.id}
                                     pinCode={passport.pin_code}
-                                    keywordHash={passport.keyword_hash}
                                 />
                                 <p className="text-xs text-center text-slate-400 mt-4">
                                     Bu işlem kontenjandan 1 kişilik yer ayıracaktır.

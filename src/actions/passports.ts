@@ -14,7 +14,15 @@ import { headers } from 'next/headers'
 const ALLOWED_EMAIL_DOMAIN = '@ogr.sakarya.edu.tr';
 const OTP_EXPIRE_MINUTES = 10;
 const SESSION_COOKIE_NAME = 'zaferops_session';
-const SESSION_MAX_AGE_SEC = 30 * 24 * 60 * 60; 
+const SESSION_MAX_AGE_SEC = 24 * 60 * 60; 
+
+const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const, 
+    maxAge: SESSION_MAX_AGE_SEC,
+    path: '/'
+};
 
 const RATE_LIMITS = {
     OTP_REQUEST: { attempts: 3, windowMs: 15 * 60 * 1000 },
@@ -25,7 +33,20 @@ const RATE_LIMITS = {
 // --- GİRDİ DOĞRULAMA ŞEMALARI ---
 const EmailSchema = z.string().email().endsWith(ALLOWED_EMAIL_DOMAIN, `Sadece ${ALLOWED_EMAIL_DOMAIN} uzantılı mailler kabul edilmektedir.`);
 const OtpSchema = z.string().min(6).max(8); 
-const KeywordSchema = z.string().min(3).max(50);
+
+
+const DENY_LIST = ['123456', 'password', 'sauybs', 'sakarya', 'zaferops', 'admin'];
+
+const KeywordSchema = z.string()
+    .min(10, 'Şifreniz en az 10 karakter uzunluğunda olmalıdır.')
+    .max(50, 'Şifreniz çok uzun.')
+    .regex(/[A-Z]/, 'Şifreniz en az bir büyük harf içermelidir.')
+    .regex(/[a-z]/, 'Şifreniz en az bir küçük harf içermelidir.')
+    .regex(/[0-9]/, 'Şifreniz en az bir rakam içermelidir.')
+    .regex(/[^A-Za-z0-9]/, 'Şifreniz en az bir özel karakter (örn: @, !, ?, *, #) içermelidir.')
+    .refine((val) => !DENY_LIST.some(word => val.toLowerCase().includes(word)), {
+        message: 'Şifreniz çok yaygın, tahmin edilebilir veya kurumsal kelimeler içeremez.'
+    });
 const PinSchema = z.string().length(12); 
 
 // 1. OTP Gönderme İsteği
@@ -99,10 +120,13 @@ export async function verifyAndCreatePassport(email: string, otp: string, keywor
     }
 
     const otpValidation = OtpSchema.safeParse(otp);
-    const keywordValidation = KeywordSchema.safeParse(keyword);
+    if (!otpValidation.success) {
+        return { error: otpValidation.error.issues[0].message || 'Geçersiz OTP formatı.' };
+    }
 
-    if (!otpValidation.success || !keywordValidation.success) {
-        return { error: 'Geçersiz veri formatı.' };
+    const keywordValidation = KeywordSchema.safeParse(keyword);
+    if (!keywordValidation.success) {
+        return { error: keywordValidation.error.issues[0].message };
     }
 
     const { data: verificationData, error: fetchError } = await supabaseAdmin
@@ -142,13 +166,7 @@ export async function verifyAndCreatePassport(email: string, otp: string, keywor
     await supabaseAdmin.from('email_verifications').delete().eq('id', verificationData.id);
 
     const token = signPassportToken({ pin_code: pinCode });
-    (await cookies()).set(SESSION_COOKIE_NAME, token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: SESSION_MAX_AGE_SEC,
-        path: '/'
-    });
+    (await cookies()).set(SESSION_COOKIE_NAME, token, cookieOptions);
 
     return { 
         success: true, 
@@ -188,13 +206,7 @@ export async function loginPassport(pinCode: string, keyword: string) {
     await supabaseAdmin.from('passports').update({ last_active_at: new Date().toISOString() }).eq('pin_code', pinValidation.data);
 
     const token = signPassportToken({ pin_code: passport.pin_code });
-    (await cookies()).set(SESSION_COOKIE_NAME, token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: SESSION_MAX_AGE_SEC,
-        path: '/'
-    });
+    (await cookies()).set(SESSION_COOKIE_NAME, token, cookieOptions);
 
     return { success: true, nameMask: passport.name_mask };
 }
@@ -253,7 +265,9 @@ export async function recoverPassportKeyword(pinCode: string, recoveryKey: strin
     const keywordValidation = KeywordSchema.safeParse(newKeyword);
 
     if (!pinValidation.success) return { error: 'Geçersiz pasaport formatı.' };
-    if (!keywordValidation.success) return { error: 'Yeni şifre en az 3 karakter olmalıdır.' };
+    if (!keywordValidation.success) {
+        return { error: keywordValidation.error.issues[0].message };
+    }
     if (!recoveryKey || recoveryKey.trim() === '') return { error: 'Kurtarma kodu boş bırakılamaz.' };
 
     // 1. Pasaportu PIN ile bul
@@ -287,12 +301,7 @@ export async function recoverPassportKeyword(pinCode: string, recoveryKey: strin
 
     // 4. İşlem başarılıysa kullanıcıyı otomatik olarak içeri al (Oturum aç)
     const token = signPassportToken({ pin_code: passport.pin_code });
-    (await cookies()).set(SESSION_COOKIE_NAME, token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: SESSION_MAX_AGE_SEC,
-        path: '/'
-    });
+    (await cookies()).set(SESSION_COOKIE_NAME, token, cookieOptions);
 
     return { success: true, nameMask: passport.name_mask };
 }

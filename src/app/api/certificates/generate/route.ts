@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { maskName } from '@/utils/masking'
 import { PDFDocument, rgb } from 'pdf-lib'
-import fontkit from '@pdf-lib/fontkit' // ÖZEL FONT MOTORU
+import fontkit from '@pdf-lib/fontkit' 
 import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
@@ -10,6 +10,8 @@ import QRCode from 'qrcode'
 import { TICKET_STATUS } from '@/types/tickets'
 import { verifyPassportToken } from '@/utils/jwt'
 import { cookies } from 'next/headers'
+import { headers } from 'next/headers';
+import { checkRateLimit } from '@/utils/rate-limit';
 
 function maskPII(text: string) {
     if (!text) return '***';
@@ -18,6 +20,25 @@ function maskPII(text: string) {
 }
 
 export async function POST(request: Request) {
+
+    const headersList = await headers();
+    const ip = headersList.get('x-forwarded-for') || '127.0.0.1';
+    
+    const rateLimit = checkRateLimit(`pdf_gen:${ip}`, { 
+        maxAttempts: 5, 
+        windowMs: 60 * 60 * 1000 
+    });
+
+    if (!rateLimit.allowed) {
+        console.warn(`[Security] PDF Abuse Engellendi - IP: ${ip}`);
+        return new Response(JSON.stringify({ 
+            error: 'Çok fazla sertifika indirme isteği gönderdiniz. Güvenlik gereği lütfen 1 saat bekleyin.' 
+        }), { 
+            status: 429, 
+            headers: { 'Content-Type': 'application/json' } 
+        });
+    }
+
     try {
         const cookieStore = await cookies()
         const token = cookieStore.get('zaferops_session')?.value
