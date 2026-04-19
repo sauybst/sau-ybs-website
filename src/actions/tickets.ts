@@ -55,7 +55,6 @@ export async function acquireTicket(eventIdRaw: string, pinCodeRaw: string) {
     
     return { success: true, message: data?.message || 'Bilet başarıyla oluşturuldu.' };
 }
-
 // 2. CÜZDAN: ÖĞRENCİNİN BİLETLERİNİ GETİR
 export async function getUserTickets(pinCodeRaw: string) {
     const pinCheck = PinCodeSchema.safeParse(pinCodeRaw);
@@ -70,14 +69,16 @@ export async function getUserTickets(pinCodeRaw: string) {
 
     const supabase = await createClient();
 
+    // RLS'yi atlayan özel RPC fonksiyonumuzu çağırıyoruz
     const { data: tickets, error } = await supabase
-        .from('tickets')
+        .rpc('get_user_tickets', {
+            p_pin_code: pinCode,
+            p_keyword_hash: currentUser.keyword_hash
+        })
         .select(`
             *,
             events ( title, slug, event_date, location, image_url )
         `)
-        .eq('pin_code', pinCode)
-        .eq('keyword_hash', currentUser.keyword_hash)
         .order('created_at', { ascending: false });
 
     if (error) {
@@ -107,18 +108,23 @@ export async function getTicketForDisplay(ticketIdRaw: string, pinCodeRaw: strin
 
     const supabase = await createClient();
 
-    const { data: ticket, error } = await supabase
-        .from('tickets')
+    // Değişken adını ticketData yaptık ki karışmasın
+    const { data: ticketData, error } = await supabase
+        .rpc('get_user_tickets', {
+            p_pin_code: pinCode,
+            p_keyword_hash: currentUser.keyword_hash
+        })
         .select(`
             *,
             events ( title, event_date, location, image_url )
         `)
-        .eq('id', ticketId)
-        .eq('pin_code', pinCode)
-        .eq('keyword_hash', currentUser.keyword_hash)
-        .single();
+        .eq('id', ticketId); 
 
-    if (error || !ticket) return { error: 'Bilet bulunamadı veya yetkisiz erişim.' };
+    if (error || !ticketData) return { error: 'Bilet bulunamadı veya yetkisiz erişim.' };
+
+    const ticket = Array.isArray(ticketData) ? ticketData[0] : ticketData;
+
+    if (!ticket) return { error: 'Bilet verisi işlenemedi.' };
 
     if (ticket.status === TICKET_STATUS.CANCELLED) {
         return { error: 'Bu bilet iptal edilmiştir.', ticket };
