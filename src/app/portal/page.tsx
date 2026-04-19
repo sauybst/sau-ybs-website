@@ -18,7 +18,7 @@ interface PortalTicket {
         title: string;
         event_date: string;
         location: string;
-    } | null; // Etkinliğin silinmiş olma ihtimaline karşı null eklendi
+    } | null; 
 }
 
 export default async function PortalPage() {
@@ -28,8 +28,8 @@ export default async function PortalPage() {
         redirect('/pasaport')
     }
 
-    // 2. Biletleri Getir
-    const { tickets, error } = await getUserTickets(passport.pin_code, passport.keyword_hash)
+    // 2. Biletleri Getir 
+    const { tickets, error } = await getUserTickets(passport.pin_code)
     
     // Güvenli Hata Yönetimi (Silent failure engellemesi)
     if (error) {
