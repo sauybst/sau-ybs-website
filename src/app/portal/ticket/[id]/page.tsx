@@ -19,7 +19,7 @@ export default async function LiveTicketPage({ params }: Props) {
     if (!passport) redirect('/pasaport')
 
     // Bileti veritabanından getir
-    const { ticket, error } = await getTicketForDisplay(id, passport.pin_code, passport.keyword_hash)
+    const { ticket, error } = await getTicketForDisplay(id, passport.pin_code)
 
     if (!ticket || !ticket.events) {
         return (
