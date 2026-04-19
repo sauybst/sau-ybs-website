@@ -20,7 +20,7 @@ function maskPII(text: string) {
 }
 
 export async function POST(request: Request) {
-
+    
     const headersList = await headers();
     const ip = headersList.get('x-forwarded-for') || '127.0.0.1';
     
@@ -64,48 +64,37 @@ export async function POST(request: Request) {
         }
         
         const supabase = await createClient()
-
         const generatedMask = maskName(requestedName)
 
         // 1. GÜVENLİK KATMAMI
-        const { data: passport, error: passportError } = await supabase
-            .from('passports')
-            .select('name_mask') 
-            .eq('pin_code', normalizedPin)
-            .single()
+        const { data: isValid, error: verifyError } = await supabase
+            .rpc('verify_passport', { 
+                p_pin_code: normalizedPin, 
+                p_name_mask: generatedMask 
+        })
 
-        if (passportError || !passport || generatedMask !== passport?.name_mask) {
-            console.warn(`[Sertifika Yetkisiz Erişim Denemesi] PIN: ${maskPII(normalizedPin)}, İsim: ${maskPII(requestedName)}`)
-            return NextResponse.json({ 
-                error: 'Geçersiz pasaport PIN kodu veya yetkisiz erişim. Lütfen bilgilerinizi kontrol ediniz.' 
-            }, { status: 401 })
+        if (verifyError || !isValid) {
+            console.warn(`[Sertifika Yetkisiz Erişim Denemesi]...`)
+            return NextResponse.json({ error: 'Geçersiz pasaport PIN kodu...' }, { status: 401 })
         }
 
-        // 2. VERİ KATMAMI (Etkinlik Sayısı)
-        const { data: tickets } = await supabase
-            .from('tickets')
-            .select('event_id')
-            .eq('pin_code', normalizedPin)
-            .eq('status', TICKET_STATUS.SCANNED)
-        
-        const uniqueEvents = new Set(tickets?.map(t => t.event_id))
-        const eventCount = uniqueEvents.size
+        // 2. VERİ + İŞ KATMAMI → Artık tek satır RPC
+        const { data: certData, error: certError } = await supabase
+            .rpc('get_or_create_certificate', { p_pin_code: normalizedPin })
 
-        if (eventCount === 0) {
-             return NextResponse.json({ error: 'Henüz hiçbir etkinliğe katılımınız bulunmuyor.' }, { status: 403 })
+        if (certError) {
+            console.error('[Sertifika RPC Hatası]', certError)
+            return NextResponse.json({ error: 'Sertifika işlemi başarısız.' }, { status: 500 })
         }
 
-        // 3. İŞ KATMAMI (Sertifika Hash)
-        let certificateHash = ''
-        const { data: existingCert } = await supabase.from('certificates').select('hash').eq('passport_pin', pinCode).single()
+        // RPC RETURNS TABLE döndürdüğü için bir dizi gelir, ilk elemanı al
+        const result = certData?.[0]
 
-        if (existingCert) {
-            certificateHash = existingCert.hash
-            await supabase.from('certificates').update({ event_count: eventCount }).eq('hash', certificateHash)
-        } else {
-            certificateHash = 'SAU-' + crypto.randomBytes(4).toString('hex').toUpperCase()
-            await supabase.from('certificates').insert({ hash: certificateHash, passport_pin: pinCode, event_count: eventCount })
+        if (!result) {
+            return NextResponse.json({ error: 'Henüz hiçbir etkinliğe katılımınız bulunmuyor.' }, { status: 403 })
         }
+
+        const { r_certificate_hash: certificateHash, r_event_count: eventCount } = result
 
         // 4. ÜRETİM VE ÇİZİM KATMAMI (PDF GENERATION)
         const templatePath = path.join(process.cwd(), 'public', 'certificate-template.pdf')
@@ -206,8 +195,6 @@ export async function POST(request: Request) {
 
         const pdfBytes = await pdfDoc.save()
 
-        // 5. SUNUM KATMAMI (Zero-Storage İndirme)
-        // ----------------------------------------------------
         // 5. SUNUM KATMAMI (Zero-Storage İndirme)
         // ----------------------------------------------------
         
